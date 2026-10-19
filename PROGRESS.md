@@ -28,3 +28,9 @@ Every stage is committed to main as requested. Build verification and limitation
 - Fixed imported stable note links, removed-arc backup references, empty-title persistence, and editor restoration after recreation.
 - README documents build instructions, data safety, implemented scope, and deferred features.
 - Local build and software-emulator validation are still running at this checkpoint; results will be recorded in the next commit.
+
+## Stage 4 — Compile corrections and visual checks
+- Corrected Material tab API opt-in, reader navigation icons, and a JVM setter collision in the theme ViewModel.
+- Added a Robolectric native-rendering flow test for library, workspace, editor, reader, and story bible, with screenshot output.
+- Removed transient Kotlin compiler session files from source tracking.
+- Restored the local build toolchain after workspace tool caches expired. Clean compilation and validation are in progress; no APK is marked verified yet.

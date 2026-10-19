@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.novelforge.app.data.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun ProjectScreen(book: Book, entries: List<EntrySummary>, onOpen:(Long)->Unit, onRead:(Long)->Unit, onAdd:(String)->Unit,onEdit:()->Unit,onExport:(Boolean)->Unit,onMove:(Long,Int)->Unit,onStatus:(Long,String)->Unit,onArc:(Long,Long?)->Unit) {
     var tab by rememberSaveable(book.id) { mutableIntStateOf(0) }
     var filter by rememberSaveable(book.id) { mutableStateOf("All") }

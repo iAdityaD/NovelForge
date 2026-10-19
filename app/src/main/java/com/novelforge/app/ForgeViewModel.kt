@@ -40,7 +40,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
     val canUndo get() = undo.isNotEmpty()
     val canRedo get() = redo.isNotEmpty()
     fun clearError() { error = null }
-    fun setDark(value: Boolean) { dark = value; prefs.edit().putBoolean("dark", value).apply() }
+    fun updateDark(value: Boolean) { dark = value; prefs.edit().putBoolean("dark", value).apply() }
     fun setFont(value: Float) { fontSize = value; prefs.edit().putFloat("fontSize", value).apply() }
     fun setSerif(value: Boolean) { readerSerif = value; prefs.edit().putBoolean("serif", value).apply() }
     fun setWarm(value: Boolean) { readerWarm = value; prefs.edit().putBoolean("warm", value).apply() }

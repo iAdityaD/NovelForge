@@ -49,10 +49,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
                 item {Column(Modifier.fillMaxWidth().padding(vertical=30.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(14.dp)) {Text("✦  ✦  ✦",color=MaterialTheme.colorScheme.secondary); Text("End of ${if(e.kind=="Chapter") "chapter" else "page"}",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant); if(index>=0 && index<chapters.lastIndex) FilledTonalButton(onClick={onOpen(chapters[index+1].id)}) {Text("Next chapter");Spacer(Modifier.width(9.dp));Icon(Icons.AutoMirrored.Outlined.ArrowForward,null,Modifier.size(17.dp))}}}
             }
             Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
-                ActionIcon(Icons.AutoMirrored.Outlined.ChevronLeft,"Previous chapter",{onOpen(chapters[index-1].id)},index>0)
+                ActionIcon(Icons.Outlined.ChevronLeft,"Previous chapter",{onOpen(chapters[index-1].id)},index>0)
                 Text(if(index>=0) "${index+1} / ${chapters.size}" else e.kind,Modifier.weight(1f),textAlign=TextAlign.Center,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 ActionIcon(if(controls) Icons.Outlined.Fullscreen else Icons.Outlined.FullscreenExit,"Toggle reading controls",{controls=!controls})
-                ActionIcon(Icons.AutoMirrored.Outlined.ChevronRight,"Next chapter",{onOpen(chapters[index+1].id)},index>=0 && index<chapters.lastIndex)
+                ActionIcon(Icons.Outlined.ChevronRight,"Next chapter",{onOpen(chapters[index+1].id)},index>=0 && index<chapters.lastIndex)
             }
         }
     }
