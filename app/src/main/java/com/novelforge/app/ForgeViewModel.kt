@@ -92,7 +92,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
             persisted = snapshot
             if (editor == snapshot) saveStatus = "Saved locally"
             true
-        } catch (e: Exception) { saveStatus = "Save failed · tap to retry"; error = "Your latest edit could not be saved. Free some storage and retry before leaving."; false }
+        } catch (e: CancellationException) { throw e } catch (e: Exception) { saveStatus = "Save failed · tap to retry"; error = "Your latest edit could not be saved. Free some storage and retry before leaving."; false }
     }
     suspend fun flush(): Boolean { saveJob?.cancel(); return withContext(Dispatchers.IO) { persist() } }
     fun flushBackground() { saveJob?.cancel(); app.ioScope.launch { persist() } }
@@ -135,7 +135,10 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         try {
             val id = withContext(Dispatchers.IO) {
                 val text = requireNotNull(app.contentResolver.openInputStream(uri)).use { input ->
-                    val bytes = input.readNBytes(BackupCodec.MAX_BYTES + 1)
+                    val out = java.io.ByteArrayOutputStream()
+                    val buffer = ByteArray(8192)
+                    while (true) { val count = input.read(buffer); if (count < 0) break; require(out.size() + count <= BackupCodec.MAX_BYTES) { "Backup exceeds 16 MB." }; out.write(buffer, 0, count) }
+                    val bytes = out.toByteArray()
                     require(bytes.size <= BackupCodec.MAX_BYTES) { "Backup exceeds 16 MB." }; bytes.toString(Charsets.UTF_8)
                 }
                 val (book, entries) = BackupCodec.decode(text)
@@ -143,7 +146,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                     dao.addBook(book)
                     val ids = mutableMapOf<Long, Long>()
                     entries.forEach { ids[it.id] = dao.addEntry(it.copy(id = 0, parentId = null)) }
-                    entries.filter { it.parentId != null }.forEach { e -> dao.updateEntry(e.copy(id = ids.getValue(e.id), parentId = ids[e.parentId])) }
+                    entries.forEach { e -> val body = remapLinks(e.body, ids); dao.updateEntry(e.copy(id = ids.getValue(e.id), parentId = ids[e.parentId], body = body, words = wordCount(body))) }
                 }
                 book.id
             }; done(id)

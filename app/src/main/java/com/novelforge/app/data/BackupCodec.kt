@@ -10,7 +10,7 @@ object BackupCodec {
         put("format", "novelforge"); put("version", 1)
         put("book", JSONObject().apply { put("title", book.title); put("author", book.author); put("genre", book.genre); put("synopsis", book.synopsis); put("cover", book.cover); put("target", book.target) })
         put("entries", JSONArray().apply { entries.forEach { e -> put(JSONObject().apply {
-            put("id", e.id); put("title", e.title); put("body", e.body); put("kind", e.kind); put("status", e.status); put("parentId", e.parentId ?: JSONObject.NULL); put("position", e.position)
+            put("id", e.id); put("title", e.title); put("body", e.body); put("kind", e.kind); put("status", e.status); put("parentId", e.parentId?.takeIf { id -> entries.any { it.id == id && it.kind == "Arc" } } ?: JSONObject.NULL); put("position", e.position)
         }) } })
     }.toString(2)
     fun decode(text: String): Pair<Book, List<Entry>> {
@@ -36,4 +36,8 @@ object BackupCodec {
         append("# ${book.title}\n\n${book.author}\n\n")
         entries.filter { it.kind == "Chapter" }.forEach { append("## ${it.title}\n\n${it.body}\n\n---\n\n") }
     }
+}
+
+fun remapLinks(body: String, ids: Map<Long, Long>): String = Regex("\\[\\[(\\d+)\\|([^]]+)]]").replace(body) { match ->
+    ids[match.groupValues[1].toLong()]?.let { "[[$it|${match.groupValues[2]}]]" } ?: match.groupValues[2]
 }
