@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
     val export=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> if(uri!=null) vm.export(uri,exportBook,markdown) { scope.launch { snack.showSnackbar("Export saved to your selected destination") } } }
     val import=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if(uri!=null) vm.importBackup(uri) { project(it) } }
     fun backup(id: String, md: Boolean) { exportBook=id; markdown=md; export.launch(if(md) "NovelForge-manuscript.md" else "NovelForge-backup.novelforge.json") }
+    LaunchedEffect(Unit) { if (screen in listOf("editor", "reader") && vm.editor == null) { val last = vm.prefs.getLong("lastEntry", 0); if (last > 0) vm.openEntry(last) {} else screen = "project" } }
     BackHandler(screen!="library") { if(screen=="editor" || screen=="reader") vm.leave { screen="project" } else screen="library" }
     Scaffold(
         snackbarHost={ SnackbarHost(snack) },

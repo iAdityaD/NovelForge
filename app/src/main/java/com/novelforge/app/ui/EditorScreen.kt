@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
@@ -58,7 +60,7 @@ import java.util.Locale
         Column(Modifier.weight(1f).verticalScroll(scroll).padding(horizontal=28.dp,vertical=24.dp).widthIn(max=760.dp),verticalArrangement=Arrangement.spacedBy(18.dp)) {
             if(!focus) Row(verticalAlignment=Alignment.CenterVertically) { Eyebrow(e.kind,Modifier.weight(1f)); Box { TextButton(onClick={statusMenu=true}) {StatusPill(e.status); Icon(Icons.Outlined.ExpandMore,null,Modifier.size(16.dp))}; DropdownMenu(expanded=statusMenu,onDismissRequest={statusMenu=false}) {statuses.forEach {s->DropdownMenuItem(text={Text(s)},onClick={vm.setStatus(s);statusMenu=false})}}} }
             BasicTextField(value=e.title,onValueChange={vm.updateTitle(it.take(200))},textStyle=MaterialTheme.typography.headlineLarge.copy(color=MaterialTheme.colorScheme.onBackground),modifier=Modifier.fillMaxWidth(),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->if(e.title.isEmpty()) Text("Untitled page",style=MaterialTheme.typography.headlineLarge,color=MaterialTheme.colorScheme.onSurfaceVariant); inner()})
-            BasicTextField(value=field,onValueChange={field=it;vm.updateBody(it.text)},modifier=Modifier.fillMaxWidth().heightIn(min=350.dp),textStyle=MaterialTheme.typography.bodyLarge.copy(fontFamily=if(e.kind=="Screenplay") FontFamily.Monospace else FontFamily.Serif,fontSize=vm.fontSize.sp,lineHeight=(vm.fontSize*1.7f).sp,color=MaterialTheme.colorScheme.onBackground),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->if(field.text.isEmpty()) Text("Let the story begin…",fontFamily=FontFamily.Serif,fontSize=vm.fontSize.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()})
+            BasicTextField(value=field,onValueChange={field=it;vm.updateBody(it.text)},modifier=Modifier.fillMaxWidth().heightIn(min=350.dp).semantics {contentDescription="Manuscript text"},textStyle=MaterialTheme.typography.bodyLarge.copy(fontFamily=if(e.kind=="Screenplay") FontFamily.Monospace else FontFamily.Serif,fontSize=vm.fontSize.sp,lineHeight=(vm.fontSize*1.7f).sp,color=MaterialTheme.colorScheme.onBackground),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->if(field.text.isEmpty()) Text("Let the story begin…",fontFamily=FontFamily.Serif,fontSize=vm.fontSize.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()})
             Spacer(Modifier.height(120.dp))
         }
         Surface(color=MaterialTheme.colorScheme.surface,tonalElevation=0.dp) { Column {

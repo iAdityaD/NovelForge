@@ -46,8 +46,8 @@ data class Revision(@PrimaryKey(autoGenerate = true) val id: Long = 0, val entry
 @Database(entities = [Book::class, Entry::class, EntryFts::class, Revision::class], version = 1, exportSchema = true)
 abstract class ForgeDb : RoomDatabase() { abstract fun dao(): ForgeDao }
 
-fun wordCount(text: String): Int = Regex("[\\p{L}\\p{N}]+(?:['’][\\p{L}\\p{N}]+)*").findAll(text).count()
-fun searchExpression(text: String): String = Regex("[\\p{L}\\p{N}]+").findAll(text).take(12).joinToString(" AND ") { "\"${it.value}\"*" }
+fun wordCount(text: String): Int = Regex("[\\p{L}\\p{M}\\p{N}]+(?:['’][\\p{L}\\p{M}\\p{N}]+)*").findAll(text).count()
+fun searchExpression(text: String): String = Regex("[\\p{L}\\p{M}\\p{N}]+").findAll(text).take(12).joinToString(" AND ") { "\"${it.value}\"*" }
 val kinds = listOf("Chapter", "Arc", "Character", "Location", "Backstory", "Worldbuilding", "Plot thread", "Research", "Screenplay", "Note")
 val statuses = listOf("Draft", "In progress", "Revised", "Final")
 fun template(kind: String): String = when (kind) {

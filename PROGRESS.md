@@ -21,3 +21,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Added continuous reader with appearance controls, contents, chapter navigation, and persisted scroll position.
 - Added full-text search, settings, external backup/restore, and manuscript Markdown export.
 - Gradle wrapper generated successfully. APK compilation, unit tests, lint and runtime checks are underway; this checkpoint is not yet a verified release.
+
+## Stage 3 — Verification and continuity
+- Added portable-backup unit tests, Android Room/FTS instrumentation test, and a Compose save-before-navigation test.
+- Added GitHub Actions to compile, run unit tests and lint, and retain downloadable debug APK artifacts.
+- Fixed imported stable note links, removed-arc backup references, empty-title persistence, and editor restoration after recreation.
+- README documents build instructions, data safety, implemented scope, and deferred features.
+- Local build and software-emulator validation are still running at this checkpoint; results will be recorded in the next commit.

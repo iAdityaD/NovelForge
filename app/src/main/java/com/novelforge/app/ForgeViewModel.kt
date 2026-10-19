@@ -87,7 +87,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         val snapshot = editor ?: return@withLock true
         if (snapshot == persisted) return@withLock true
         try {
-            val saved = snapshot.copy(words = wordCount(snapshot.body), updated = System.currentTimeMillis())
+            val saved = snapshot.copy(title = snapshot.title.ifBlank { "Untitled page" }, words = wordCount(snapshot.body), updated = System.currentTimeMillis())
             db.withTransaction { dao.updateEntry(saved); dao.touch(saved.bookId, saved.updated) }
             persisted = snapshot
             if (editor == snapshot) saveStatus = "Saved locally"
