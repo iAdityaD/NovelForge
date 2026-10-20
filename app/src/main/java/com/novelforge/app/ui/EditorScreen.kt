@@ -38,6 +38,7 @@ fun EditorScreen(
     onRead: () -> Unit,
     onOpen: (Long) -> Unit,
     onDelete: () -> Unit,
+    onExplorer: () -> Unit = onBack,
 ) {
     var focus by rememberSaveable { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
@@ -69,7 +70,7 @@ fun EditorScreen(
             Modifier.fillMaxWidth().padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ActionIcon(Icons.AutoMirrored.Outlined.ArrowBack, "Back to manuscript", onBack)
+            ActionIcon(Icons.Outlined.MenuOpen, "Open file explorer", onExplorer)
             Column(Modifier.weight(1f)) {
                 Text(
                     if (focus) "Focus mode" else book?.title?.replace('\n', ' ') ?: "Your story",
@@ -135,6 +136,17 @@ fun EditorScreen(
                 }
             }
         }
+        if (!focus)
+            TextButton(onClick = onBack) {
+                Icon(Icons.Outlined.FolderOpen, null, Modifier.size(14.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "${entries.find {it.id==e.folderId}?.title ?: "Workspace"} / ${e.title}.md",
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Column(
             Modifier.weight(1f)
@@ -188,6 +200,9 @@ fun EditorScreen(
             )
             BasicTextField(
                 value = field,
+                visualTransformation =
+                    if (vm.syntaxColors) MarkdownSyntax(MaterialTheme.colorScheme.primary)
+                    else androidx.compose.ui.text.input.VisualTransformation.None,
                 onValueChange = {
                     field = it
                     vm.updateBody(it.text)
@@ -199,9 +214,10 @@ fun EditorScreen(
                 textStyle =
                     MaterialTheme.typography.bodyLarge.copy(
                         fontFamily =
-                            if (e.kind == "Screenplay") FontFamily.Monospace else FontFamily.Serif,
+                            if (e.kind == "Screenplay" || vm.editorMono) FontFamily.Monospace
+                            else FontFamily.SansSerif,
                         fontSize = vm.fontSize.sp,
-                        lineHeight = (vm.fontSize * 1.7f).sp,
+                        lineHeight = (vm.fontSize * 1.6f).sp,
                         color = MaterialTheme.colorScheme.onBackground,
                     ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -258,6 +274,8 @@ fun EditorScreen(
                             { insert("\n- ") },
                         )
                         ActionIcon(Icons.Outlined.Checklist, "Checklist", { insert("\n- [ ] ") })
+                        ActionIcon(Icons.Outlined.FormatQuote, "Blockquote", { insert("\n> ") })
+                        ActionIcon(Icons.Outlined.Info, "Callout", { insert("\n> [!NOTE]\n> ") })
                         ActionIcon(Icons.Outlined.Link, "Link a story note", { sheet = "links" })
                         if (e.kind == "Screenplay")
                             TextButton(onClick = { insert("\n\nINT. LOCATION - DAY\n\n") }) {
@@ -269,7 +287,7 @@ fun EditorScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "${number(words)} words",
+                        "${number(words)} words · ${number(e.body.length)} chars",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
@@ -379,7 +397,10 @@ fun EditorScreen(
                                 Eyebrow("STORY PAGES")
                             }
                         }
-                        items(entries.filter { it.id != e.id }, key = { it.id }) { note ->
+                        items(
+                            entries.filter { it.id != e.id && it.kind != "Folder" },
+                            key = { it.id },
+                        ) { note ->
                             EntryRow(
                                 note,
                                 onClick = {

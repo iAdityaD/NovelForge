@@ -74,3 +74,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Added independent folder hierarchy, workspace status and daily writing activity, with explicit v1-to-v2 migration.
 - Backup v2 preserves folders; v1 import remains supported. Cycle checks and subtree trash/restore protect workspace integrity.
 - UI redesign specification is in docs/REDESIGN.md. Build validation follows after the replacement screens are connected.
+
+## Redesign stage B — Modern shell and workspace UI
+- Replaced primary navigation with Library, Guide, Analytics and Settings. Search is available from the Library toolbar.
+- Added checkbox-based workspace creation and a collapsible file tree with file/folder creation, rename, move, drag-to-folder, and subtree trash.
+- Added contextual editor drawer, syntax coloring, proportional/monospace preference, character metrics, quotes and callouts.
+- Added pan/zoom/tap graph, practical Guide lessons, portfolio-vs-novel analytics, actual writing streak/activity, and category-based settings subpages.
+- Changed visual language to compact sans-serif typography, charcoal/violet and cool light themes, geometric project covers and short crossfades. Verification and screenshots follow.

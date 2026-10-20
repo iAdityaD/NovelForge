@@ -9,9 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
-import org.robolectric.annotation.LooperMode
+import org.robolectric.annotation.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "w393dp-h852dp-xxhdpi")
@@ -22,30 +20,26 @@ class StudioUiTest {
 
     private fun shot(name: String) {
         compose.waitForIdle()
-        val file = File("build/screenshots/$name.png")
-        file.parentFile.mkdirs()
         compose.runOnIdle {
             val view = compose.activity.window.decorView
             val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
             view.draw(Canvas(bitmap))
+            val file = File("build/screenshots/$name.png")
+            file.parentFile?.mkdirs()
             file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             bitmap.recycle()
         }
     }
 
     @Test
-    fun libraryWorkspaceEditorAndReaderRenderAndNavigate() {
-        compose.onNodeWithText("A home for your\nnext great story.").assertExists()
-        shot("01-library")
-        compose.onNodeWithText("Explore a sample project").performScrollTo().performClick()
+    fun redesignedWorkspaceAndFourTabsRender() {
+        compose.onNodeWithText("Open demo").performScrollTo().performClick()
         compose.waitUntil(20000) {
-            compose
-                .onAllNodesWithText("Write", useUnmergedTree = true)
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+            compose.onAllNodesWithText("01_Chapters").fetchSemanticsNodes().isNotEmpty()
         }
+        compose.onNodeWithText("01_Chapters").performClick()
         shot("02-workspace")
-        compose.onNodeWithText("Write").performScrollTo().performClick()
+        compose.onNodeWithText("A map of the missing.md").performClick()
         compose.waitUntil(20000) {
             compose
                 .onAllNodesWithContentDescription("Manuscript text")
@@ -55,25 +49,24 @@ class StudioUiTest {
         shot("03-editor")
         compose
             .onNodeWithContentDescription("Manuscript text")
-            .performTextReplacement(
-                "The city remembered the sea.\n\nA sentence saved before reading."
-            )
+            .performTextReplacement("A new world begins here.")
         compose.onNodeWithContentDescription("Read this page").performClick()
-        compose.waitUntil(20000) {
-            compose.onAllNodesWithText("READING ROOM").fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithText("The city remembered the sea.").assertExists()
-        compose.onNodeWithContentDescription("Bookmark chapter").performClick()
-        compose.onNodeWithContentDescription("Remove bookmark").assertExists()
+        compose.onNodeWithText("A new world begins here.").assertExists()
         shot("04-reader")
         compose.onNodeWithContentDescription("Back to workspace").performClick()
-        compose.onNodeWithText("Story bible").performClick()
-        compose.onNodeWithText("Mara Venn").assertExists()
-        shot("05-story-bible")
-        compose.onNodeWithText("Timeline").performScrollTo().performClick()
-        compose.onNodeWithText("Every story begins somewhere").assertExists()
-        shot("06-timeline")
-        compose.onNodeWithText("Library").performClick()
-        shot("07-bookshelf")
+        compose.onNodeWithContentDescription("Back to library").performClick()
+        shot("01-library")
+        compose.onNodeWithText("Analytics").performClick()
+        compose.onNodeWithText("Your writing portfolio").assertExists()
+        shot("05-analytics")
+        compose.onNodeWithText("Guide").performClick()
+        compose.onNodeWithText("Link characters & worlds").assertExists()
+        shot("06-guide")
+        compose.onNodeWithText("Settings").performClick()
+        compose.onNodeWithText("Data & backup").assertExists()
+        shot("07-settings")
+        compose.onNodeWithText("Editor").performClick()
+        compose.onNodeWithText("Monospace editor").assertExists()
+        shot("08-editor-settings")
     }
 }

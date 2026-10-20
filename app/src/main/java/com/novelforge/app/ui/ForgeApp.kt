@@ -3,6 +3,11 @@ package com.novelforge.app.ui
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -20,15 +25,17 @@ import kotlinx.coroutines.launch
 fun ForgeApp(vm: ForgeViewModel) {
     val books by vm.books.collectAsStateWithLifecycle()
     val entries by vm.summaries.collectAsStateWithLifecycle()
+    val days by vm.writingDays.collectAsStateWithLifecycle()
     var screen by rememberSaveable { mutableStateOf("library") }
     var bookId by rememberSaveable { mutableStateOf(vm.prefs.getString("lastBook", "") ?: "") }
-    var showBook by remember { mutableStateOf(false) }
     var editBook by remember { mutableStateOf<Book?>(null) }
     var showEntry by remember { mutableStateOf<String?>(null) }
-    var exportBook by remember { mutableStateOf("") }
-    var markdown by remember { mutableStateOf(false) }
+    var entryFolder by remember { mutableStateOf<Long?>(null) }
+    var exportBook by rememberSaveable { mutableStateOf("") }
+    var markdown by rememberSaveable { mutableStateOf(false) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val drawer = rememberDrawerState(DrawerValue.Closed)
     val selected = books.find { it.id == bookId }
     val bookEntries = entries.filter { it.bookId == bookId }
     fun project(id: String) {
@@ -48,13 +55,16 @@ fun ForgeApp(vm: ForgeViewModel) {
         ) { uri ->
             if (uri != null)
                 vm.export(uri, exportBook, markdown) {
-                    scope.launch { snack.showSnackbar("Export saved to your selected destination") }
+                    scope.launch { snack.showSnackbar("Export saved") }
                 }
         }
     val import =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) vm.importBackup(uri) { project(it) }
         }
+    fun importBackup() {
+        import.launch(arrayOf("application/json", "application/octet-stream", "text/plain"))
+    }
     fun backup(id: String, md: Boolean) {
         exportBook = id
         markdown = md
@@ -62,37 +72,40 @@ fun ForgeApp(vm: ForgeViewModel) {
     }
     LaunchedEffect(Unit) {
         if (screen in listOf("editor", "reader") && vm.editor == null) {
-            val last = vm.prefs.getLong("lastEntry", 0)
-            if (last > 0) vm.openEntry(last) {} else screen = "project"
+            val id = vm.prefs.getLong("lastEntry", 0)
+            if (id > 0) vm.openEntry(id) {} else screen = "library"
         }
     }
     BackHandler(screen != "library") {
-        if (screen == "editor" || screen == "reader") vm.leave { screen = "project" }
+        if (screen in listOf("editor", "reader")) vm.leave { screen = "project" }
         else screen = "library"
     }
+    val roots = listOf("library", "guide", "analytics", "settings")
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
-            if (screen !in listOf("editor", "reader"))
+            if (screen in roots)
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     tonalElevation = 0.dp,
                 ) {
                     listOf(
-                            Triple("library", "Library", Icons.Outlined.AutoStories),
-                            Triple("project", "Workspace", Icons.Outlined.DashboardCustomize),
-                            Triple("search", "Search", Icons.Outlined.Search),
+                            Triple("library", "Library", Icons.Outlined.GridView),
+                            Triple("guide", "Guide", Icons.Outlined.AutoStories),
+                            Triple("analytics", "Analytics", Icons.Outlined.BarChart),
                             Triple("settings", "Settings", Icons.Outlined.Tune),
                         )
                         .forEach { (route, label, icon) ->
                             NavigationBarItem(
                                 selected = screen == route,
                                 onClick = { screen = route },
-                                icon = { Icon(icon, label) },
+                                icon = { Icon(icon, null) },
                                 label = { Text(label) },
                                 colors =
                                     NavigationBarItemDefaults.colors(
-                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                                     ),
                             )
                         }
@@ -100,122 +113,126 @@ fun ForgeApp(vm: ForgeViewModel) {
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            when (screen) {
-                "library" ->
-                    LibraryScreen(
-                        books,
-                        entries,
-                        onBook = { project(it) },
-                        onNew = { showBook = true },
-                        onImport = {
-                            import.launch(
-                                arrayOf(
-                                    "application/json",
-                                    "application/octet-stream",
-                                    "text/plain",
-                                )
+            AnimatedContent(
+                targetState = screen,
+                transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(100)) },
+                label = "screen",
+            ) { route ->
+                when (route) {
+                    "library" ->
+                        LibraryScreen(
+                            books,
+                            entries,
+                            { project(it) },
+                            { screen = "new" },
+                            { importBackup() },
+                            { vm.loadDemo { project(it) } },
+                            { open(it) },
+                            { screen = "search" },
+                        )
+                    "new" ->
+                        NewWorkspaceScreen({ screen = "library" }) {
+                            title,
+                            author,
+                            genre,
+                            cover,
+                            target,
+                            synopsis,
+                            folders ->
+                            vm.createBook(title, author, genre, cover, target, synopsis, folders) {
+                                project(it)
+                            }
+                        }
+                    "guide" -> GuideScreen()
+                    "analytics" -> AnalyticsScreen(books, entries, days)
+                    "settings" ->
+                        SettingsNavigation(vm, books, { importBackup() }, { backup(it, false) })
+                    "search" ->
+                        Column {
+                            TextButton(onClick = { screen = "library" }) { Text("Back to library") }
+                            SearchScreen(vm, books, { open(it) })
+                        }
+                    "project" ->
+                        selected?.let { b ->
+                            WorkspaceScreen(
+                                vm,
+                                b,
+                                bookEntries,
+                                { screen = "library" },
+                                { open(it) },
+                                { editBook = b },
+                                { folder, kind ->
+                                    entryFolder = folder
+                                    showEntry = kind
+                                },
+                                { backup(b.id, it) },
                             )
-                        },
-                        onDemo = { vm.loadDemo { project(it) } },
-                        onContinue = { open(it) },
-                        onSearch = { screen = "search" },
-                    )
-                "project" ->
-                    if (selected == null)
-                        EmptyState(
-                            "Choose your next world",
-                            "Open a novel from your library, or create a new one.",
-                            action = "Open library",
-                            onAction = { screen = "library" },
-                        )
-                    else
-                        ProjectScreen(
-                            selected,
-                            bookEntries,
-                            onOpen = { open(it) },
-                            onRead = { open(it, true) },
-                            onAdd = { showEntry = it },
-                            onEdit = { editBook = selected },
-                            onExport = { backup(bookId, it) },
-                            onMove = { id, delta -> vm.moveEntry(id, delta) },
-                            onStatus = { id, status -> vm.boardStatus(id, status) },
-                            onArc = { id, arc -> vm.assignArc(id, arc) },
-                            connections = vm.connections,
-                            onConnections = { vm.loadConnections(bookId) },
-                        )
-                "editor" ->
-                    vm.editor?.let { e ->
-                        EditorScreen(
-                            vm,
-                            e,
-                            selected,
-                            bookEntries,
-                            onBack = { vm.leave { screen = "project" } },
-                            onRead = { vm.leave { screen = "reader" } },
-                            onOpen = { open(it) },
-                            onDelete = { vm.deleteEntry(e.id) { screen = "project" } },
-                        )
-                    }
-                "reader" ->
-                    vm.editor?.let { e ->
-                        ReaderScreen(
-                            vm,
-                            e,
-                            selected,
-                            bookEntries,
-                            onBack = { screen = "project" },
-                            onEdit = { screen = "editor" },
-                            onOpen = { open(it, true) },
-                        )
-                    }
-                "search" -> SearchScreen(vm, books, onOpen = { open(it) })
-                "settings" ->
-                    SettingsScreen(
-                        vm,
-                        onImport = {
-                            import.launch(
-                                arrayOf(
-                                    "application/json",
-                                    "application/octet-stream",
-                                    "text/plain",
+                        }
+                    "editor" ->
+                        vm.editor?.let { e ->
+                            ModalNavigationDrawer(
+                                drawerState = drawer,
+                                drawerContent = {
+                                    ModalDrawerSheet(Modifier.fillMaxWidth(.88f)) {
+                                        TextButton(
+                                            onClick = {
+                                                scope.launch { drawer.close() }
+                                                vm.leave { screen = "project" }
+                                            }
+                                        ) {
+                                            Text("Open workspace")
+                                        }
+                                        selected?.let { b ->
+                                            ExplorerTree(
+                                                vm,
+                                                b,
+                                                bookEntries,
+                                                { id ->
+                                                    scope.launch { drawer.close() }
+                                                    open(id)
+                                                },
+                                                {},
+                                                e.folderId,
+                                                Modifier.weight(1f),
+                                            )
+                                        }
+                                    }
+                                },
+                            ) {
+                                EditorScreen(
+                                    vm,
+                                    e,
+                                    selected,
+                                    bookEntries,
+                                    { vm.leave { screen = "project" } },
+                                    { vm.leave { screen = "reader" } },
+                                    { open(it) },
+                                    { vm.deleteEntry(e.id) { screen = "project" } },
+                                    { scope.launch { drawer.open() } },
                                 )
+                            }
+                        }
+                    "reader" ->
+                        vm.editor?.let { e ->
+                            ReaderScreen(
+                                vm,
+                                e,
+                                selected,
+                                bookEntries,
+                                { screen = "project" },
+                                { screen = "editor" },
+                                { open(it, true) },
                             )
-                        },
-                        onBackup = {
-                            if (selected != null) backup(bookId, false)
-                            else
-                                scope.launch {
-                                    snack.showSnackbar("Open a project before creating a backup")
-                                }
-                        },
-                    )
+                        }
+                }
             }
             if (vm.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
-    if (showBook)
-        BookDialog(null, onDismiss = { showBook = false }) {
-            title,
-            author,
-            genre,
-            cover,
-            target,
-            synopsis ->
-            vm.createBook(title, author, genre, cover, target, synopsis) { id ->
-                showBook = false
-                project(id)
-            }
-        }
-    editBook?.let { book ->
-        BookDialog(book, onDismiss = { editBook = null }) {
-            title,
-            author,
-            genre,
-            cover,
-            target,
-            synopsis ->
+    editBook?.let { b ->
+        BookDialog(b, { editBook = null }) { title, author, genre, cover, target, synopsis ->
             vm.editBook(
-                book.copy(
+                b.copy(
                     title = title,
                     author = author,
                     genre = genre,
@@ -228,17 +245,17 @@ fun ForgeApp(vm: ForgeViewModel) {
         }
     }
     showEntry?.let { kind ->
-        EntryDialog(kind, onDismiss = { showEntry = null }) { title, type ->
-            vm.createEntry(bookId, title, type, null) { id ->
+        EntryDialog(kind, { showEntry = null }) { title, type ->
+            vm.createEntry(bookId, title, type, null, entryFolder) {
                 showEntry = null
-                open(id)
+                open(it)
             }
         }
     }
     vm.error?.let { message ->
         AlertDialog(
             onDismissRequest = { vm.clearError() },
-            title = { Text("We couldn't complete that") },
+            title = { Text("Couldn’t complete that") },
             text = { Text(message) },
             confirmButton = { TextButton(onClick = { vm.clearError() }) { Text("OK") } },
         )

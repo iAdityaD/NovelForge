@@ -9,5 +9,9 @@ import kotlinx.coroutines.SupervisorJob
 
 class ForgeApplication : Application() {
     val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    val db by lazy { Room.databaseBuilder(this, ForgeDb::class.java, "novelforge.db").addMigrations(com.novelforge.app.data.MIGRATION_1_2).build() }
+    val db by lazy {
+        Room.databaseBuilder(this, ForgeDb::class.java, "novelforge.db")
+            .addMigrations(com.novelforge.app.data.MIGRATION_1_2)
+            .build()
+    }
 }

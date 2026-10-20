@@ -165,35 +165,43 @@ fun ReaderScreen(
                     }
                 }
             }
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ActionIcon(
-                    Icons.Outlined.ChevronLeft,
-                    "Previous chapter",
-                    { onOpen(chapters[index - 1].id) },
-                    index > 0,
-                )
-                Text(
-                    if (index >= 0) "${index+1} / ${chapters.size}" else e.kind,
-                    Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                ActionIcon(
-                    if (controls) Icons.Outlined.Fullscreen else Icons.Outlined.FullscreenExit,
-                    "Toggle reading controls",
-                    { controls = !controls },
-                )
-                ActionIcon(
-                    Icons.Outlined.ChevronRight,
-                    "Next chapter",
-                    { onOpen(chapters[index + 1].id) },
-                    index >= 0 && index < chapters.lastIndex,
-                )
-            }
+            if (controls)
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ActionIcon(
+                        Icons.Outlined.ChevronLeft,
+                        "Previous chapter",
+                        { onOpen(chapters[index - 1].id) },
+                        index > 0,
+                    )
+                    Text(
+                        if (index >= 0) "${index+1} / ${chapters.size}" else e.kind,
+                        Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    ActionIcon(
+                        if (controls) Icons.Outlined.Fullscreen else Icons.Outlined.FullscreenExit,
+                        "Toggle reading controls",
+                        { controls = !controls },
+                    )
+                    ActionIcon(
+                        Icons.Outlined.ChevronRight,
+                        "Next chapter",
+                        { onOpen(chapters[index + 1].id) },
+                        index >= 0 && index < chapters.lastIndex,
+                    )
+                }
+            if (!controls)
+                TextButton(
+                    onClick = { controls = true },
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text("Show controls")
+                }
         }
     }
     if (appearance)

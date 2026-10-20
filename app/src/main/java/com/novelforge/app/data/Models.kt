@@ -87,8 +87,16 @@ data class WritingDay(val bookId: String, val day: String, val words: Int = 0, v
 @Dao
 interface ForgeDao {
     @Query("SELECT * FROM WritingDay ORDER BY day") fun writingDays(): Flow<List<WritingDay>>
-    @Query("INSERT OR IGNORE INTO WritingDay(bookId, day, words, edits) VALUES (:bookId, :day, 0, 0)") suspend fun ensureDay(bookId: String, day: String)
-    @Query("UPDATE WritingDay SET words = words + :words, edits = edits + 1 WHERE bookId = :bookId AND day = :day") suspend fun recordWriting(bookId: String, day: String, words: Int)
+
+    @Query(
+        "INSERT OR IGNORE INTO WritingDay(bookId, day, words, edits) VALUES (:bookId, :day, 0, 0)"
+    )
+    suspend fun ensureDay(bookId: String, day: String)
+
+    @Query(
+        "UPDATE WritingDay SET words = words + :words, edits = edits + 1 WHERE bookId = :bookId AND day = :day"
+    )
+    suspend fun recordWriting(bookId: String, day: String, words: Int)
 
     @Query("SELECT * FROM Book ORDER BY updated DESC") fun books(): Flow<List<Book>>
 

@@ -42,7 +42,12 @@ object BackupCodec {
                                         } ?: JSONObject.NULL,
                                     )
                                     put("position", e.position)
-                                    put("folderId", e.folderId?.takeIf { id -> entries.any { it.id == id && it.kind == "Folder" } } ?: JSONObject.NULL)
+                                    put(
+                                        "folderId",
+                                        e.folderId?.takeIf { id ->
+                                            entries.any { it.id == id && it.kind == "Folder" }
+                                        } ?: JSONObject.NULL,
+                                    )
                                 }
                             )
                         }
@@ -66,7 +71,9 @@ object BackupCodec {
                 author = b.optString("author"),
                 genre = b.optString("genre"),
                 synopsis = b.optString("synopsis"),
-                status = b.optString("status", "In progress").takeIf { it in bookStatuses } ?: "In progress",
+                status =
+                    b.optString("status", "In progress").takeIf { it in bookStatuses }
+                        ?: "In progress",
                 cover = b.optInt("cover").coerceIn(0, 3),
                 target = b.optInt("target", 80000).coerceIn(1, 10000000),
             )
@@ -105,7 +112,9 @@ object BackupCodec {
             val visited = mutableSetOf(e.id)
             var parent = e.folderId
             while (parent != null) {
-                require(visited.add(parent) && parent in folders) { "Invalid or cyclic folder hierarchy." }
+                require(visited.add(parent) && parent in folders) {
+                    "Invalid or cyclic folder hierarchy."
+                }
                 parent = folders.getValue(parent).folderId
             }
         }

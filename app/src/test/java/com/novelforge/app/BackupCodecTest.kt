@@ -41,7 +41,7 @@ class BackupCodecTest {
     fun rejectsUnknownVersion() {
         BackupCodec.decode(
             BackupCodec.encode(Book(title = "A"), emptyList())
-                .replace("\"version\": 1", "\"version\": 99")
+                .replace("\"version\": 2", "\"version\": 99")
         )
     }
 
