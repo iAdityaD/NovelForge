@@ -41,3 +41,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Fixed native screenshot capture in the Compose UI test. Improved text contrast and responsive cover typography.
 - The previous session's uncommitted planning additions were not retained by the workspace. Restoring them from the documented checkpoint next.
 - GitHub Actions is the verification authority for this checkpoint; final results follow.
+
+## Stage 6 — Planning, connections and reader tools
+- Added a reorderable timeline, event guidance template, wiki-link connection map/list, and incoming backlinks in story references.
+- Added chapter bookmarks in the reader and contents list, plus selectable text.
+- Fixed new-project synopsis persistence; formatted Kotlin sources.
+- Added Room/FTS regression coverage to JVM tests and screenshot artifacts to CI.
+- Build, tests and lint for this exact stage are pending CI completion.

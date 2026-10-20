@@ -9,10 +9,15 @@ import com.novelforge.app.ui.*
 
 class MainActivity : ComponentActivity() {
     private val vm: ForgeViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent { ForgeTheme(vm.dark) { ForgeApp(vm) } }
     }
-    override fun onStop() { vm.flushBackground(); super.onStop() }
+
+    override fun onStop() {
+        vm.flushBackground()
+        super.onStop()
+    }
 }
