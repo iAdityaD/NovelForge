@@ -48,3 +48,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Fixed new-project synopsis persistence; formatted Kotlin sources.
 - Added Room/FTS regression coverage to JVM tests and screenshot artifacts to CI.
 - Build, tests and lint for this exact stage are pending CI completion.
+
+## Stage 7 — Final regression pass
+- Stage 5 passed GitHub Actions compilation, JVM tests and Android lint.
+- Extended native UI navigation coverage to bookmark toggling and timeline-event creation.
+- Fixed save status after undo returns to the persisted draft; deleted wiki-link targets now report a recoverable error.
+- Connection refresh flushes pending edits before reading links.
+- Final stage verification and APK packaging are underway.

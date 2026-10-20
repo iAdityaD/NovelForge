@@ -63,10 +63,32 @@ class StudioUiTest {
             compose.onAllNodesWithText("READING ROOM").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithText("The city remembered the sea.").assertExists()
+        compose.onNodeWithContentDescription("Bookmark chapter").performClick()
+        compose.onNodeWithContentDescription("Remove bookmark").assertExists()
         shot("04-reader")
         compose.onNodeWithContentDescription("Back to workspace").performClick()
         compose.onNodeWithText("Story bible").performClick()
         compose.onNodeWithText("Mara Venn").assertExists()
         shot("05-story-bible")
+        compose.onNodeWithText("Timeline").performClick()
+        compose.onNodeWithText("Every story begins somewhere").assertExists()
+        compose.onAllNodesWithText("Add event")[0].performClick()
+        compose.onNodeWithText("Timeline event title").performTextInput("The first midnight")
+        compose.onNodeWithText("Create timeline event").performClick()
+        compose.waitUntil(20000) {
+            compose
+                .onAllNodesWithContentDescription("Manuscript text")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        compose
+            .onNodeWithContentDescription("Manuscript text")
+            .assertTextContains("## When", substring = true)
+        compose.onNodeWithContentDescription("Back to manuscript").performClick()
+        compose.onNodeWithText("Timeline").performClick()
+        compose.onNodeWithText("The first midnight").assertExists()
+        shot("06-timeline")
+        compose.onNodeWithText("Library").performClick()
+        shot("07-bookshelf")
     }
 }

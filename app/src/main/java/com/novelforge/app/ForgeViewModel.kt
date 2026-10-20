@@ -60,6 +60,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     fun loadConnections(bookId: String) = launchWork {
+        if (!flush()) return@launchWork
         val pages = dao.entries(bookId)
         val ids = pages.map { it.id }.toSet()
         connections =
@@ -186,7 +187,11 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openEntry(id: Long, done: () -> Unit) = launchWork {
         if (!flush()) return@launchWork
-        val e = dao.entry(id) ?: return@launchWork
+        val e = dao.entry(id)
+        if (e == null || e.deleted) {
+            error = "This page is unavailable. Deleted pages can be restored from Settings."
+            return@launchWork
+        }
         editor = e
         persisted = e
         undo.clear()
@@ -254,7 +259,10 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun persist(): Boolean =
         saveMutex.withLock {
             val snapshot = editor ?: return@withLock true
-            if (snapshot == persisted) return@withLock true
+            if (snapshot == persisted) {
+                saveStatus = "Saved locally"
+                return@withLock true
+            }
             try {
                 val saved =
                     snapshot.copy(
