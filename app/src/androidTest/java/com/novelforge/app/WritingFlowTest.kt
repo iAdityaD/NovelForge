@@ -37,5 +37,21 @@ class WritingFlowTest {
         val app = compose.activity.application as ForgeApplication
         val id = app.getSharedPreferences("preferences", 0).getLong("lastEntry", 0)
         runBlocking { assertTrue(app.db.dao().entry(id)!!.body.contains("durable sentence")) }
+        compose.onNodeWithText("Timeline").performScrollTo().performClick()
+        compose.onAllNodesWithText("Add event")[0].performClick()
+        compose.onNodeWithText("Timeline event title").performTextInput("The first midnight")
+        compose.onNodeWithText("Create timeline event").performClick()
+        compose.waitUntil(20000) {
+            compose
+                .onAllNodesWithContentDescription("Manuscript text")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        compose
+            .onNodeWithContentDescription("Manuscript text")
+            .assertTextContains("## When", substring = true)
+        compose.onNodeWithContentDescription("Back to manuscript").performClick()
+        compose.onNodeWithText("Timeline").performScrollTo().performClick()
+        compose.onNodeWithText("The first midnight").assertExists()
     }
 }

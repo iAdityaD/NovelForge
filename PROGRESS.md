@@ -55,3 +55,7 @@ Every stage is committed to main as requested. Build verification and limitation
 - Fixed save status after undo returns to the persisted draft; deleted wiki-link targets now report a recoverable error.
 - Connection refresh flushes pending edits before reading links.
 - Final stage verification and APK packaging are underway.
+
+## Stage 8 — On-device dialog regression
+- JVM native-rendering checks passed the writing/reading flow and bookmark toggle, but timed out on dialog layout. The timeline creation interaction now runs as an Android instrumentation test; the JVM check retains timeline navigation/empty-state coverage.
+- Added an accelerated API 34 emulator job to exercise the actual dialog and database behavior. Do not treat a compiled device test as a passing device test; final job results follow.
