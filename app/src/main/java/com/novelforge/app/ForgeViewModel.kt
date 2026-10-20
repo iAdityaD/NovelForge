@@ -22,10 +22,15 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         dao.summaries().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val trash =
         dao.trash().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val writingDays = dao.writingDays().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val prefs = app.getSharedPreferences("preferences", 0)
-    var dark by mutableStateOf(prefs.getBoolean("dark", false))
+    var dark by mutableStateOf(prefs.getBoolean("dark", true))
         private set
 
+    var editorMono by mutableStateOf(prefs.getBoolean("editorMono", false)); private set
+    var syntaxColors by mutableStateOf(prefs.getBoolean("syntaxColors", true)); private set
+    fun setEditorMono(value: Boolean) { editorMono=value; prefs.edit().putBoolean("editorMono",value).apply() }
+    fun setSyntaxColors(value: Boolean) { syntaxColors=value; prefs.edit().putBoolean("syntaxColors",value).apply() }
     var fontSize by mutableFloatStateOf(prefs.getFloat("fontSize", 19f))
         private set
 
@@ -138,6 +143,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         cover: Int,
         target: Int,
         synopsis: String,
+        folders: Set<String> = workspaceTemplates.map { it.name }.toSet(),
         done: (String) -> Unit,
     ) = launchWork {
         val book =
@@ -151,7 +157,9 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
             )
         db.withTransaction {
             dao.addBook(book)
-            dao.addEntry(Entry(bookId = book.id, title = "Chapter 1"))
+            val ids = folders.associateWith { name -> dao.addEntry(Entry(bookId=book.id,title=name,kind="Folder")) }
+            if ("01_Chapters" in folders) dao.addEntry(Entry(bookId=book.id,title="Chapter 1",folderId=ids["01_Chapters"]))
+            if ("05_Metadata" in folders) dao.addEntry(Entry(bookId=book.id,title="Novel overview",kind="Note",folderId=ids["05_Metadata"],body="## Genre\n${book.genre}\n\n## Premise\n${book.synopsis}\n\n## Themes\n\n## Links & references\n"))
         }
         done(book.id)
     }
@@ -165,6 +173,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         title: String,
         kind: String,
         parentId: Long?,
+        folderId: Long? = null,
         done: (Long) -> Unit,
     ) = launchWork {
         val position =
@@ -177,6 +186,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                     title = title.trim(),
                     kind = kind,
                     parentId = parentId,
+                    folderId = folderId,
                     body = body,
                     position = position,
                     words = wordCount(body),
@@ -273,6 +283,11 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                 db.withTransaction {
                     dao.updateEntry(saved)
                     dao.touch(saved.bookId, saved.updated)
+                    if (snapshot.body != persisted?.body) {
+                        val day = java.time.LocalDate.now().toString()
+                        dao.ensureDay(saved.bookId, day)
+                        dao.recordWriting(saved.bookId, day, (wordCount(snapshot.body) - wordCount(persisted?.body ?: "")).coerceAtLeast(0))
+                    }
                 }
                 persisted = snapshot
                 if (editor == snapshot) saveStatus = "Saved locally"
@@ -317,14 +332,40 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteEntry(id: Long, done: () -> Unit) = launchWork {
-        if (flush()) {
-            dao.setDeleted(id, true)
-            done()
+        if (!flush()) return@launchWork
+        val e=dao.entry(id) ?: return@launchWork
+        val all=dao.entries(e.bookId)
+        val ids=descendantIds(id,all)
+        db.withTransaction { ids.forEach { dao.setDeleted(it,true) } }
+        done()
+    }
+    fun restoreEntry(id: Long) = launchWork {
+        val e=dao.entry(id) ?: return@launchWork
+        val all=trash.value.filter {it.bookId==e.bookId}
+        db.withTransaction {
+            descendantIds(id,all).forEach { dao.setDeleted(it,false) }
+            var parent=e.folderId
+            val seen=mutableSetOf<Long>()
+            while(parent!=null && seen.add(parent)) { val folder=dao.entry(parent) ?: break; dao.setDeleted(folder.id,false); parent=folder.folderId }
         }
     }
-
-    fun restoreEntry(id: Long) = launchWork { dao.setDeleted(id, false) }
-
+    fun renameEntry(id: Long, title: String) = launchWork {
+        require(title.trim().isNotEmpty()) { "A name is required." }
+        dao.entry(id)?.let { dao.updateEntry(it.copy(title=title.trim().take(200),updated=System.currentTimeMillis())) }
+    }
+    fun createFolder(bookId: String, title: String, parent: Long?) = launchWork {
+        require(title.trim().isNotEmpty()) { "A folder name is required." }
+        if(parent!=null) require(dao.entry(parent)?.let {it.bookId==bookId && it.kind=="Folder" && !it.deleted}==true)
+        dao.addEntry(Entry(bookId=bookId,title=title.trim().take(200),kind="Folder",folderId=parent))
+    }
+    fun relocate(id: Long, destination: Long?) = launchWork {
+        if(!flush()) return@launchWork
+        val e=dao.entry(id) ?: return@launchWork
+        val all=dao.entries(e.bookId)
+        require(canRelocate(e, destination, all)) { "A folder cannot contain itself or its descendants." }
+        dao.updateEntry(e.copy(folderId=destination,updated=System.currentTimeMillis()))
+    }
+    fun setBookStatus(book: Book, status: String) = launchWork { require(status in bookStatuses);dao.updateBook(book.copy(status=status)) }
     fun moveEntry(id: Long, delta: Int) = launchWork {
         val e = dao.entry(id) ?: return@launchWork
         val entries = dao.entries(e.bookId).filter { it.kind == e.kind }
@@ -407,7 +448,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                         dao.addBook(book)
                         val ids = mutableMapOf<Long, Long>()
                         entries.forEach {
-                            ids[it.id] = dao.addEntry(it.copy(id = 0, parentId = null))
+                            ids[it.id] = dao.addEntry(it.copy(id = 0, parentId = null, folderId = null))
                         }
                         entries.forEach { e ->
                             val body = remapLinks(e.body, ids)
@@ -415,6 +456,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                                 e.copy(
                                     id = ids.getValue(e.id),
                                     parentId = ids[e.parentId],
+                                folderId = ids[e.folderId],
                                     body = body,
                                     words = wordCount(body),
                                 )
@@ -505,6 +547,9 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                     position = 5,
                 )
             )
+            val existing=dao.entries(book.id)
+            val folders=workspaceTemplates.associate { it.name to dao.addEntry(Entry(bookId=book.id,title=it.name,kind="Folder")) }
+            existing.forEach { e -> dao.updateEntry(e.copy(folderId=folders[defaultFolder(e.kind)])) }
         }
         done(book.id)
     }

@@ -11,7 +11,7 @@ object BackupCodec {
         JSONObject()
             .apply {
                 put("format", "novelforge")
-                put("version", 1)
+                put("version", 2)
                 put(
                     "book",
                     JSONObject().apply {
@@ -21,6 +21,7 @@ object BackupCodec {
                         put("synopsis", book.synopsis)
                         put("cover", book.cover)
                         put("target", book.target)
+                        put("status", book.status)
                     },
                 )
                 put(
@@ -41,6 +42,7 @@ object BackupCodec {
                                         } ?: JSONObject.NULL,
                                     )
                                     put("position", e.position)
+                                    put("folderId", e.folderId?.takeIf { id -> entries.any { it.id == id && it.kind == "Folder" } } ?: JSONObject.NULL)
                                 }
                             )
                         }
@@ -52,7 +54,7 @@ object BackupCodec {
     fun decode(text: String): Pair<Book, List<Entry>> {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds 16 MB." }
         val root = JSONObject(text)
-        require(root.getString("format") == "novelforge" && root.getInt("version") == 1) {
+        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..2) {
             "Unsupported backup format."
         }
         val b = root.getJSONObject("book")
@@ -64,6 +66,7 @@ object BackupCodec {
                 author = b.optString("author"),
                 genre = b.optString("genre"),
                 synopsis = b.optString("synopsis"),
+                status = b.optString("status", "In progress").takeIf { it in bookStatuses } ?: "In progress",
                 cover = b.optInt("cover").coerceIn(0, 3),
                 target = b.optInt("target", 80000).coerceIn(1, 10000000),
             )
@@ -74,7 +77,7 @@ object BackupCodec {
                 val e = array.getJSONObject(i)
                 val body = e.getString("body")
                 val kind = e.getString("kind")
-                require(kind in kinds)
+                require(kind in kinds || kind == "Folder")
                 require(e.getString("title").isNotBlank())
                 require(body.length <= 2000000) { "An entry is too large." }
                 Entry(
@@ -86,7 +89,8 @@ object BackupCodec {
                     status = e.optString("status", "Draft").takeIf { it in statuses } ?: "Draft",
                     parentId = if (e.isNull("parentId")) null else e.getLong("parentId"),
                     position = e.optInt("position"),
-                    words = wordCount(body),
+                    words = if (kind == "Folder") 0 else wordCount(body),
+                    folderId = if (e.isNull("folderId")) null else e.getLong("folderId"),
                 )
             }
         require(entries.map { it.id }.distinct().size == entries.size) { "Duplicate entry IDs." }
@@ -95,6 +99,15 @@ object BackupCodec {
             entries.all { it.parentId == null || it.parentId in arcs && it.parentId != it.id }
         ) {
             "Invalid arc reference."
+        }
+        val folders = entries.filter { it.kind == "Folder" }.associateBy { it.id }
+        entries.forEach { e ->
+            val visited = mutableSetOf(e.id)
+            var parent = e.folderId
+            while (parent != null) {
+                require(visited.add(parent) && parent in folders) { "Invalid or cyclic folder hierarchy." }
+                parent = folders.getValue(parent).folderId
+            }
         }
         return book to entries
     }

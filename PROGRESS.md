@@ -69,3 +69,8 @@ Every stage is committed to main as requested. Build verification and limitation
 - Inspected actual UI renderings; committed bookshelf/editor/reader screenshots.
 - Source is clean and checkpointed. README's Scope section is the remaining roadmap; do not claim a store-ready release, physical-device certification, or completed advanced export/media features.
 - Next development should preserve Room schema compatibility and provide stable production signing before distribution.
+
+## Redesign stage A — Workspace data model
+- Added independent folder hierarchy, workspace status and daily writing activity, with explicit v1-to-v2 migration.
+- Backup v2 preserves folders; v1 import remains supported. Cycle checks and subtree trash/restore protect workspace integrity.
+- UI redesign specification is in docs/REDESIGN.md. Build validation follows after the replacement screens are connected.

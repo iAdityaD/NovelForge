@@ -13,6 +13,7 @@ data class Book(
     val synopsis: String = "",
     val cover: Int = 0,
     val target: Int = 80000,
+    @ColumnInfo(defaultValue = "'In progress'") val status: String = "In progress",
     val updated: Long = System.currentTimeMillis(),
 )
 
@@ -40,6 +41,7 @@ data class Entry(
     val words: Int = 0,
     val updated: Long = System.currentTimeMillis(),
     val deleted: Boolean = false,
+    val folderId: Long? = null,
 )
 
 @Fts4(contentEntity = Entry::class)
@@ -56,6 +58,7 @@ data class EntrySummary(
     val position: Int,
     val words: Int,
     val updated: Long,
+    val folderId: Long? = null,
 )
 
 @Entity(
@@ -78,12 +81,19 @@ data class Revision(
     val created: Long = System.currentTimeMillis(),
 )
 
+@Entity(primaryKeys = ["bookId", "day"])
+data class WritingDay(val bookId: String, val day: String, val words: Int = 0, val edits: Int = 0)
+
 @Dao
 interface ForgeDao {
+    @Query("SELECT * FROM WritingDay ORDER BY day") fun writingDays(): Flow<List<WritingDay>>
+    @Query("INSERT OR IGNORE INTO WritingDay(bookId, day, words, edits) VALUES (:bookId, :day, 0, 0)") suspend fun ensureDay(bookId: String, day: String)
+    @Query("UPDATE WritingDay SET words = words + :words, edits = edits + 1 WHERE bookId = :bookId AND day = :day") suspend fun recordWriting(bookId: String, day: String, words: Int)
+
     @Query("SELECT * FROM Book ORDER BY updated DESC") fun books(): Flow<List<Book>>
 
     @Query(
-        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated FROM Entry WHERE deleted = 0 ORDER BY position, rowid"
+        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated, folderId FROM Entry WHERE deleted = 0 ORDER BY position, rowid"
     )
     fun summaries(): Flow<List<EntrySummary>>
 
@@ -112,7 +122,7 @@ interface ForgeDao {
     fun trash(): Flow<List<Entry>>
 
     @Query(
-        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated FROM Entry WHERE deleted = 0 AND rowid IN (SELECT rowid FROM entry_fts WHERE entry_fts MATCH :query) ORDER BY updated DESC LIMIT 80"
+        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated, folderId FROM Entry WHERE deleted = 0 AND kind != 'Folder' AND rowid IN (SELECT rowid FROM entry_fts WHERE entry_fts MATCH :query) ORDER BY updated DESC LIMIT 80"
     )
     suspend fun search(query: String): List<EntrySummary>
 
@@ -130,8 +140,8 @@ interface ForgeDao {
 }
 
 @Database(
-    entities = [Book::class, Entry::class, EntryFts::class, Revision::class],
-    version = 1,
+    entities = [Book::class, Entry::class, EntryFts::class, Revision::class, WritingDay::class],
+    version = 2,
     exportSchema = true,
 )
 abstract class ForgeDb : RoomDatabase() {
