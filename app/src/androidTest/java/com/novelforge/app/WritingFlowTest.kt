@@ -19,7 +19,7 @@ class WritingFlowTest {
         compose.onNodeWithText("03_Lore").performClick()
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) {
-            compose.onAllNodesWithText("01_Chapters").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithContentDescription("New folder").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithText("03_Lore").assertDoesNotExist()
         compose.onNodeWithContentDescription("New folder").performClick()
