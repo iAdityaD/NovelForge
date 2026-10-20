@@ -1,8 +1,8 @@
 package com.novelforge.app.data
 
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
 import com.novelforge.domain.story.*
+import com.novelforge.domain.workspace.*
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,13 +14,13 @@ object BackupCodec {
         JSONObject()
             .apply {
                 put("format", "novelforge")
-                put("version", 2)
+                put("version", 3)
                 put(
                     "book",
                     JSONObject().apply {
                         put("title", book.title)
                         put("author", book.author)
-                        put("genre", book.genre)
+                        put("genres", JSONArray(book.genres))
                         put("synopsis", book.synopsis)
                         put("cover", book.cover)
                         put("target", book.target)
@@ -62,7 +62,7 @@ object BackupCodec {
     fun decode(text: String): Pair<Book, List<Entry>> {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds 16 MB." }
         val root = JSONObject(text)
-        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..2) {
+        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..3) {
             "Unsupported backup format."
         }
         val b = root.getJSONObject("book")
@@ -72,7 +72,13 @@ object BackupCodec {
             Book(
                 title = "$title (restored)",
                 author = b.optString("author"),
-                genre = b.optString("genre"),
+                genres =
+                    MetadataPolicy.genres(
+                        if (root.getInt("version") >= 3) {
+                            val values = b.getJSONArray("genres")
+                            (0 until values.length()).map { values.getString(it) }
+                        } else listOf(b.optString("genre"))
+                    ),
                 synopsis = b.optString("synopsis"),
                 status =
                     b.optString("status", "In progress").takeIf { it in bookStatuses }

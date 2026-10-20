@@ -19,7 +19,10 @@ class WritingFlowTest {
         compose.onNodeWithText("03_Lore").performClick()
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) {
-            compose.onAllNodesWithContentDescription("New folder").fetchSemanticsNodes().isNotEmpty()
+            compose
+                .onAllNodesWithContentDescription("New folder")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
         }
         compose.onNodeWithText("03_Lore").assertDoesNotExist()
         compose.onNodeWithContentDescription("New folder").performClick()
@@ -41,7 +44,7 @@ class WritingFlowTest {
         compose.onNodeWithContentDescription("Read this page").performClick()
         compose.onNodeWithText("Magic has a cost.").assertExists()
         compose.onNodeWithContentDescription("Back to workspace").performClick()
-        compose.onNodeWithText("World Two").performClick()
+        compose.onNodeWithContentDescription("Expand World Two").performClick()
         compose.onNodeWithText("Magic system.md").assertExists()
         compose.onNodeWithContentDescription("Actions for Magic system").performClick()
         compose.onNodeWithText("Move").performClick()

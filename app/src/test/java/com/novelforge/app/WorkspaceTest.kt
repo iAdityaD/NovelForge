@@ -2,8 +2,8 @@ package com.novelforge.app
 
 import com.novelforge.app.data.*
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
 import com.novelforge.domain.analytics.*
+import com.novelforge.domain.workspace.*
 import java.time.LocalDate
 import org.junit.Assert.*
 import org.junit.Test
@@ -36,7 +36,7 @@ class WorkspaceTest {
         assertEquals(1L, items[1].folderId)
         val legacy =
             BackupCodec.encode(b, listOf(files[1].copy(folderId = null)))
-                .replace("\"version\": 2", "\"version\": 1")
+                .replace("\"version\": 3", "\"version\": 1")
         assertNull(BackupCodec.decode(legacy).second.single().folderId)
     }
 

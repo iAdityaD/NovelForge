@@ -6,8 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.novelforge.app.data.*
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
 import com.novelforge.domain.analytics.*
+import com.novelforge.domain.workspace.*
 import org.junit.*
 import org.junit.runner.RunWith
 
@@ -32,7 +32,8 @@ class MigrationTest {
             )
             close()
         }
-        val db = helper.runMigrationsAndValidate("migration-test", 2, true, MIGRATION_1_2)
+        val db =
+            helper.runMigrationsAndValidate("migration-test", 3, true, MIGRATION_1_2, MIGRATION_2_3)
         db.query(
                 "SELECT e.body,f.title FROM Entry e JOIN Entry f ON e.folderId=f.rowid WHERE e.rowid=7"
             )
@@ -44,6 +45,32 @@ class MigrationTest {
         db.query("SELECT rowid FROM entry_fts WHERE entry_fts MATCH 'ocean'").use {
             Assert.assertTrue(it.moveToFirst())
             Assert.assertEquals(7L, it.getLong(0))
+        }
+        db.query("SELECT name FROM BookGenre WHERE bookId='old'").use {
+            Assert.assertTrue(it.moveToFirst())
+            Assert.assertEquals("Fantasy", it.getString(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun preservesV2SynopsisAndLegacyGenre() {
+        val synopsis = "A very long legacy synopsis. ".repeat(200)
+        helper.createDatabase("migration-v2", 2).apply {
+            execSQL(
+                "INSERT INTO Book(id,title,author,genre,synopsis,cover,target,status,updated) VALUES ('legacy','Old','','Historical, literary',?,0,80000,'In progress',0)",
+                arrayOf(synopsis),
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("migration-v2", 3, true, MIGRATION_2_3)
+        db.query("SELECT synopsis FROM Book WHERE id='legacy'").use {
+            Assert.assertTrue(it.moveToFirst())
+            Assert.assertEquals(synopsis, it.getString(0))
+        }
+        db.query("SELECT name FROM BookGenre WHERE bookId='legacy'").use {
+            Assert.assertTrue(it.moveToFirst())
+            Assert.assertEquals("Historical, literary", it.getString(0))
         }
         db.close()
     }

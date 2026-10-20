@@ -107,3 +107,12 @@ Every stage is committed to main as requested. Build verification and limitation
 - Extracted eight UI feature modules, a design system and a small presentation foundation. Removed obsolete screens.
 - Added typed destination enum and CI checks against forbidden module dependencies.
 - Database canonical name, tables and schema version remain compatible at this stage. Build validation underway; next stage adds genres, limits, creation controls and the explorer fixes.
+
+## 0.3 stage B — Metadata and explorer improvements
+- Full-screen novel details replaces the overflowing dialog. Synopsis uses a bounded, internally scrolling editor, scrollbar, word counter and explicit oversized-input feedback. Unsaved edits require discard confirmation.
+- Settings → Writing → Content limits controls the global synopsis limit (50–10,000, default 500). Existing over-limit text can be retained or shortened; imports preserve it intact.
+- Genres are distinct domain values, normalized in BookGenre rows and backed up in format v3. Legacy genre strings are preserved verbatim as one value. Library supports genre filters.
+- Creation supports adding, renaming and removing custom starter folders. Shared policies reject invalid or duplicate folder names.
+- Explorer now uses flat compact rows, independent expand/select actions, search, expand/collapse all, active-file highlighting and reveal, plus drawer create/close controls.
+- Frozen migration rules preserve schema history; v2→v3 migration only adds genre storage.
+- Stage A compiled and passed JVM/lint; emulator startup failed before app execution. New migration and device cases added for stage B validation.

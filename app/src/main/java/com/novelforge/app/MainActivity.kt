@@ -1,12 +1,12 @@
 package com.novelforge.app
 
 import android.os.Bundle
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.novelforge.app.ui.*
 
 @dagger.hilt.android.AndroidEntryPoint

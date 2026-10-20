@@ -12,7 +12,6 @@ import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,11 +21,9 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.novelforge.presentation.ReaderViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
-import com.novelforge.domain.story.*
-import com.novelforge.domain.analytics.*
+import com.novelforge.presentation.ReaderViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,8 +40,7 @@ fun ReaderScreen(
     val preferences by vm.state.collectAsStateWithLifecycle()
     var appearance by remember { mutableStateOf(false) }
     var contents by remember { mutableStateOf(false) }
-    var bookmarked by
-        remember(e.id) { mutableStateOf(vm.bookmark(e.id)) }
+    var bookmarked by remember(e.id) { mutableStateOf(vm.bookmark(e.id)) }
     var controls by rememberSaveable { mutableStateOf(true) }
     val bg =
         if (preferences.dark) MaterialTheme.colorScheme.background
@@ -61,9 +57,7 @@ fun ReaderScreen(
         LaunchedEffect(state) {
             snapshotFlow { state.firstVisibleItemIndex to state.firstVisibleItemScrollOffset }
                 .distinctUntilChanged()
-                .collect { (i, offset) ->
-                    vm.readingPosition(e.id, i, offset)
-                }
+                .collect { (i, offset) -> vm.readingPosition(e.id, i, offset) }
         }
         Column(Modifier.fillMaxSize().background(bg)) {
             if (controls)
@@ -138,7 +132,12 @@ fun ReaderScreen(
                     }
                 itemsIndexed(paragraphs) { _, text ->
                     SelectionContainer {
-                        MarkdownParagraph(text, preferences.fontSize, preferences.readerSerif, onLink = onOpen)
+                        MarkdownParagraph(
+                            text,
+                            preferences.fontSize,
+                            preferences.readerSerif,
+                            onLink = onOpen,
+                        )
                     }
                 }
                 item {
@@ -240,8 +239,7 @@ fun ReaderScreen(
                         ListItem(
                             headlineContent = { Text(c.title) },
                             trailingContent = {
-                                if (vm.bookmark(c.id))
-                                    Icon(Icons.Outlined.Bookmark, "Bookmarked")
+                                if (vm.bookmark(c.id)) Icon(Icons.Outlined.Bookmark, "Bookmarked")
                             },
                             leadingContent = {
                                 Text(

@@ -1,19 +1,21 @@
 package com.novelforge.core.model
 
 import java.util.UUID
-import kotlinx.coroutines.flow.Flow
 
 data class Book(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
     val author: String = "",
-    val genre: String = "Fantasy",
+    val genres: List<String> = listOf("Fantasy"),
     val synopsis: String = "",
     val cover: Int = 0,
     val target: Int = 80000,
     val status: String = "In progress",
     val updated: Long = System.currentTimeMillis(),
-)
+) {
+    val genre: String
+        get() = genres.joinToString(" · ")
+}
 
 data class Entry(
     val id: Long = 0,
@@ -62,4 +64,3 @@ fun searchExpression(text: String): String =
     Regex("[\\p{L}\\p{M}\\p{N}]+").findAll(text).take(12).joinToString(" AND ") {
         "\"${it.value}\"*"
     }
-

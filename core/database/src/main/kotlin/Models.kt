@@ -1,8 +1,8 @@
 package com.novelforge.app.data
 
 import androidx.room.*
-import java.util.UUID
 import com.novelforge.core.model.EntrySummary
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "Book")
@@ -50,7 +50,6 @@ data class EntryEntity(
 @Entity(tableName = "entry_fts")
 data class EntryFts(val title: String, val body: String)
 
-
 @Entity(
     tableName = "Revision",
     indices = [Index("entryId")],
@@ -73,10 +72,47 @@ data class RevisionEntity(
 )
 
 @Entity(tableName = "WritingDay", primaryKeys = ["bookId", "day"])
-data class WritingDayEntity(val bookId: String, val day: String, val words: Int = 0, val edits: Int = 0)
+data class WritingDayEntity(
+    val bookId: String,
+    val day: String,
+    val words: Int = 0,
+    val edits: Int = 0,
+)
+
+@Entity(
+    tableName = "BookGenre",
+    primaryKeys = ["bookId", "name"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = BookEntity::class,
+                parentColumns = ["id"],
+                childColumns = ["bookId"],
+                onDelete = ForeignKey.CASCADE,
+            )
+        ],
+)
+data class BookGenreEntity(val bookId: String, val name: String, val position: Int)
+
+data class BookRecord(
+    @Embedded val book: BookEntity,
+    @Relation(parentColumn = "id", entityColumn = "bookId") val genres: List<BookGenreEntity>,
+)
 
 @Dao
 interface ForgeDao {
+    @Transaction
+    @Query("SELECT * FROM Book ORDER BY updated DESC")
+    fun bookRecords(): Flow<List<BookRecord>>
+
+    @Transaction
+    @Query("SELECT * FROM Book WHERE id=:id")
+    suspend fun bookRecord(id: String): BookRecord?
+
+    @Query("DELETE FROM BookGenre WHERE bookId=:id") suspend fun clearGenres(id: String)
+
+    @Insert suspend fun addGenres(values: List<BookGenreEntity>)
+
     @Query("SELECT * FROM WritingDay ORDER BY day") fun writingDays(): Flow<List<WritingDayEntity>>
 
     @Query(
@@ -139,11 +175,18 @@ interface ForgeDao {
 }
 
 @Database(
-    entities = [BookEntity::class, EntryEntity::class, EntryFts::class, RevisionEntity::class, WritingDayEntity::class],
-    version = 2,
+    entities =
+        [
+            BookEntity::class,
+            EntryEntity::class,
+            EntryFts::class,
+            RevisionEntity::class,
+            WritingDayEntity::class,
+            BookGenreEntity::class,
+        ],
+    version = 3,
     exportSchema = true,
 )
 abstract class ForgeDb : RoomDatabase() {
     abstract fun dao(): ForgeDao
 }
-

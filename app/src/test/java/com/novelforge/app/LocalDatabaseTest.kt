@@ -4,8 +4,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.novelforge.app.data.*
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
 import com.novelforge.domain.analytics.*
+import com.novelforge.domain.workspace.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -29,7 +29,9 @@ class LocalDatabaseTest {
             val book = BookEntity(title = "Test")
             dao.addBook(book)
             val id =
-                dao.addEntry(EntryEntity(bookId = book.id, title = "Dawn", body = "A forgotten ocean"))
+                dao.addEntry(
+                    EntryEntity(bookId = book.id, title = "Dawn", body = "A forgotten ocean")
+                )
             assertEquals(id, dao.search(searchExpression("ocean")).single().id)
             val entry = dao.entry(id)!!
             dao.updateEntry(entry.copy(body = "A remembered forest"))

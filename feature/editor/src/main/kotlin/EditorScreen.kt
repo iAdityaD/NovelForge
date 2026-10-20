@@ -10,7 +10,6 @@ import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,11 +21,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.novelforge.presentation.EditorViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
 import com.novelforge.domain.story.*
-import com.novelforge.domain.analytics.*
+import com.novelforge.domain.workspace.*
+import com.novelforge.presentation.EditorViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -221,7 +220,8 @@ fun EditorScreen(
                 textStyle =
                     MaterialTheme.typography.bodyLarge.copy(
                         fontFamily =
-                            if (e.kind == "Screenplay" || preferences.editorMono) FontFamily.Monospace
+                            if (e.kind == "Screenplay" || preferences.editorMono)
+                                FontFamily.Monospace
                             else FontFamily.SansSerif,
                         fontSize = preferences.fontSize.sp,
                         lineHeight = (preferences.fontSize * 1.6f).sp,

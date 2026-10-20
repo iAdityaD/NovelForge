@@ -41,7 +41,7 @@ class StudioUiTest {
         compose.waitUntil(20000) {
             compose.onAllNodesWithText("01_Chapters").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("01_Chapters").performClick()
+        compose.onNodeWithContentDescription("Expand 01_Chapters").performClick()
         shot("02-workspace")
         compose.onNodeWithText("A map of the missing.md").performClick()
         compose.waitUntil(20000) {
@@ -51,6 +51,10 @@ class StudioUiTest {
                 .isNotEmpty()
         }
         shot("03-editor")
+        compose.onNodeWithContentDescription("Open file explorer").performClick()
+        compose.onNodeWithContentDescription("Close file explorer").assertExists()
+        shot("09-drawer")
+        compose.onNodeWithContentDescription("Close file explorer").performClick()
         compose
             .onNodeWithContentDescription("Manuscript text")
             .performTextReplacement("A new world begins here.")

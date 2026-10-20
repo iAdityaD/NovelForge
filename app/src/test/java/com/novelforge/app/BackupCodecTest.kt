@@ -2,8 +2,8 @@ package com.novelforge.app
 
 import com.novelforge.app.data.*
 import com.novelforge.core.model.*
-import com.novelforge.domain.workspace.*
 import com.novelforge.domain.analytics.*
+import com.novelforge.domain.workspace.*
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -44,7 +44,7 @@ class BackupCodecTest {
     fun rejectsUnknownVersion() {
         BackupCodec.decode(
             BackupCodec.encode(Book(title = "A"), emptyList())
-                .replace("\"version\": 2", "\"version\": 99")
+                .replace("\"version\": 3", "\"version\": 99")
         )
     }
 

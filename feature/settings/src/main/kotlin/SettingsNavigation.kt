@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.novelforge.presentation.SettingsViewModel
 import com.novelforge.core.model.Book
+import com.novelforge.presentation.SettingsViewModel
 
 @Composable
 fun SettingsNavigation(
@@ -29,7 +29,10 @@ fun SettingsNavigation(
     var backupId by rememberSaveable { mutableStateOf<String?>(null) }
     var picker by remember { mutableStateOf(false) }
     val trash by vm.trash.collectAsStateWithLifecycle()
-    BackHandler(page.isNotEmpty()) { page = "" }
+    fun back() {
+        page = if (page == "Content limits") "Writing" else ""
+    }
+    BackHandler(page.isNotEmpty()) { back() }
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -40,8 +43,9 @@ fun SettingsNavigation(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ActionIcon(
                         Icons.AutoMirrored.Outlined.ArrowBack,
-                        "Back to settings",
-                        { page = "" },
+                        if (page == "Content limits") "Back to writing settings"
+                        else "Back to settings",
+                        { back() },
                     )
                     Text(page, style = MaterialTheme.typography.headlineMedium)
                 }
@@ -82,6 +86,12 @@ fun SettingsNavigation(
                     { page = "Editor" },
                 )
                 SettingsAction(
+                    Icons.Outlined.Rule,
+                    "Writing",
+                    "Content limits",
+                    { page = "Writing" },
+                )
+                SettingsAction(
                     Icons.Outlined.MenuBook,
                     "Reading",
                     "Text size, typeface and paper",
@@ -110,6 +120,17 @@ fun SettingsNavigation(
                 )
             }
         }
+        if (page == "Writing")
+            item {
+                SettingsAction(
+                    Icons.Outlined.TextFields,
+                    "Content limits",
+                    "Synopsis word limit",
+                    { page = "Content limits" },
+                )
+            }
+        if (page == "Content limits")
+            item { SynopsisLimitSettings(preferences.synopsisLimit) { vm.setSynopsisLimit(it) } }
         if (page == "Appearance")
             item {
                 SettingToggle(
@@ -265,7 +286,7 @@ fun SettingsNavigation(
             item {
                 SurfaceCard {
                     Text("NovelForge", style = MaterialTheme.typography.headlineMedium)
-                    Text("0.2.0 · Workspace edition", color = MaterialTheme.colorScheme.primary)
+                    Text("0.3.0 · Workspace edition", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Your stories stay in a local SQLite database. No internet permission, analytics service, or account. The explorer organizes files inside your workspace; it does not browse arbitrary Android folders.",
@@ -297,5 +318,54 @@ private fun SettingToggle(
             )
         }
         Switch(value, change)
+    }
+}
+
+@Composable
+private fun SynopsisLimitSettings(limit: Int, onSave: (Int) -> Unit) {
+    var value by rememberSaveable(limit) { mutableStateOf(limit.toString()) }
+    var saved by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("Synopsis word limit", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Applies to every novel on this device. Existing text and restored backups are never shortened automatically.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value,
+            {
+                value = it.filter(Char::isDigit).take(5)
+                saved = false
+            },
+            label = { Text("Maximum synopsis words") },
+            supportingText = { Text("50–10,000 words · Default 500") },
+            singleLine = true,
+            isError = value.toIntOrNull()?.let { it !in 50..10000 } ?: true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = {
+                onSave(value.toInt())
+                saved = true
+            },
+            enabled = value.toIntOrNull()?.let { it in 50..10000 } == true,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Save limit")
+        }
+        TextButton(
+            onClick = {
+                value = "500"
+                onSave(500)
+                saved = true
+            }
+        ) {
+            Text("Reset to 500 words")
+        }
+        if (saved) Text("Limit saved", color = MaterialTheme.colorScheme.primary)
+        Text(
+            "Chapter word goals are targets, not hard writing limits.",
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }

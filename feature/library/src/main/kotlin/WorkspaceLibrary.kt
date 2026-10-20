@@ -19,8 +19,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.novelforge.core.model.*
 import com.novelforge.domain.workspace.*
-import com.novelforge.domain.story.*
-import com.novelforge.domain.analytics.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,7 +35,13 @@ fun LibraryScreen(
 ) {
     var grid by rememberSaveable { mutableStateOf(true) }
     var filter by rememberSaveable { mutableStateOf("All") }
-    val visible = books.filter { filter == "All" || it.status == filter }
+    var genreFilter by rememberSaveable { mutableStateOf<String?>(null) }
+    val availableGenres = books.flatMap { it.genres }.distinct().sorted()
+    val visible =
+        books.filter {
+            (filter == "All" || it.status == filter) &&
+                (genreFilter == null || genreFilter in it.genres)
+        }
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 100.dp),
@@ -62,6 +66,26 @@ fun LibraryScreen(
                     }
                 }
             }
+            if (availableGenres.isNotEmpty())
+                item {
+                    Row(
+                        Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = genreFilter == null,
+                            onClick = { genreFilter = null },
+                            label = { Text("All genres") },
+                        )
+                        availableGenres.forEach { genre ->
+                            FilterChip(
+                                selected = genreFilter == genre,
+                                onClick = { genreFilter = genre },
+                                label = { Text(genre) },
+                            )
+                        }
+                    }
+                }
             val recent = entries.filter { it.kind != "Folder" }.maxByOrNull { it.updated }
             if (recent != null)
                 item {
@@ -242,12 +266,17 @@ private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Bool
 @Composable
 fun NewWorkspaceScreen(
     onBack: () -> Unit,
-    onCreate: (String, String, String, Int, Int, String, Set<String>) -> Unit,
+    onCreate: (String, String, List<String>, Int, Int, String, Set<String>) -> Unit,
 ) {
     var title by rememberSaveable { mutableStateOf("") }
     var author by rememberSaveable { mutableStateOf("") }
-    var genre by rememberSaveable { mutableStateOf("Fantasy") }
-    var selected by remember { mutableStateOf(workspaceTemplates.map { it.name }.toSet()) }
+    var genres by rememberSaveable { mutableStateOf(listOf("Fantasy")) }
+    var selected by rememberSaveable { mutableStateOf(workspaceTemplates.map { it.name }) }
+    var customFolders by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    var addingFolder by rememberSaveable { mutableStateOf(false) }
+    var folderName by rememberSaveable { mutableStateOf("") }
+    var folderError by remember { mutableStateOf<String?>(null) }
+    var editingFolder by rememberSaveable { mutableStateOf<String?>(null) }
     var cover by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().imePadding()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -261,7 +290,7 @@ fun NewWorkspaceScreen(
         LazyColumn(
             Modifier.weight(1f).testTag("workspace-form"),
             contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
                 Text(
@@ -284,23 +313,15 @@ fun NewWorkspaceScreen(
                 )
             }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        author,
-                        { author = it.take(120) },
-                        label = { Text("Author") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                    )
-                    OutlinedTextField(
-                        genre,
-                        { genre = it.take(80) },
-                        label = { Text("Genre") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                    )
-                }
+                OutlinedTextField(
+                    author,
+                    { author = it.take(120) },
+                    label = { Text("Author") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
+            item { GenreInput(genres, { genres = it }) }
             item {
                 Text("Workspace color", style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -326,7 +347,23 @@ fun NewWorkspaceScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            items(workspaceTemplates) { t ->
+            item {
+                TextButton(
+                    onClick = {
+                        editingFolder = null
+                        folderName = ""
+                        folderError = null
+                        addingFolder = true
+                    }
+                ) {
+                    Icon(Icons.Outlined.CreateNewFolder, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add folder")
+                }
+            }
+            items(
+                workspaceTemplates + customFolders.map { WorkspaceTemplate(it, "Custom folder") }
+            ) { t ->
                 Row(
                     Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
@@ -334,7 +371,7 @@ fun NewWorkspaceScreen(
                             selected =
                                 if (t.name in selected) selected - t.name else selected + t.name
                         }
-                        .padding(vertical = 6.dp),
+                        .padding(vertical = 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
@@ -351,12 +388,32 @@ fun NewWorkspaceScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    if (t.name in customFolders) {
+                        ActionIcon(
+                            Icons.Outlined.Edit,
+                            "Rename ${t.name}",
+                            {
+                                editingFolder = t.name
+                                folderName = t.name
+                                folderError = null
+                                addingFolder = true
+                            },
+                        )
+                        ActionIcon(
+                            Icons.Outlined.Close,
+                            "Remove ${t.name}",
+                            {
+                                customFolders = customFolders - t.name
+                                selected = selected - t.name
+                            },
+                        )
+                    }
                 }
             }
         }
         Button(
             onClick = {
-                onCreate(title.trim(), author.trim(), genre.trim(), cover, 80000, "", selected)
+                onCreate(title.trim(), author.trim(), genres, cover, 80000, "", selected.toSet())
             },
             enabled = title.isNotBlank(),
             modifier = Modifier.fillMaxWidth().padding(20.dp).height(52.dp),
@@ -365,4 +422,51 @@ fun NewWorkspaceScreen(
             Text("Create workspace")
         }
     }
+    if (addingFolder)
+        AlertDialog(
+            onDismissRequest = { addingFolder = false },
+            title = {
+                Text(if (editingFolder == null) "Add starter folder" else "Rename starter folder")
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        folderName,
+                        {
+                            folderName = it
+                            folderError = null
+                        },
+                        label = { Text("Folder name") },
+                        singleLine = true,
+                        isError = folderError != null,
+                    )
+                    folderError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        try {
+                            val name = MetadataPolicy.folder(folderName)
+                            MetadataPolicy.folders(
+                                workspaceTemplates.map { it.name } +
+                                    customFolders.filter { it != editingFolder } +
+                                    name
+                            )
+                            val old = editingFolder
+                            customFolders =
+                                if (old == null) customFolders + name
+                                else customFolders.map { if (it == old) name else it }
+                            selected = selected.filter { it != old } + name
+                            addingFolder = false
+                        } catch (e: IllegalArgumentException) {
+                            folderError = e.message
+                        }
+                    }
+                ) {
+                    Text("Save folder")
+                }
+            },
+            dismissButton = { TextButton(onClick = { addingFolder = false }) { Text("Cancel") } },
+        )
 }

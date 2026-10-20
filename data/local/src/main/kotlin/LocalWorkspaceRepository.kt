@@ -1,29 +1,47 @@
 package com.novelforge.data.local
-import com.novelforge.core.model.*
+
+import androidx.room.withTransaction
 import com.novelforge.app.data.*
-import com.novelforge.domain.workspace.*
-import com.novelforge.domain.writing.*
-import com.novelforge.domain.story.*
+import com.novelforge.core.model.*
 import com.novelforge.domain.analytics.*
 import com.novelforge.domain.backup.*
 import com.novelforge.domain.preferences.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import androidx.room.withTransaction
+import com.novelforge.domain.story.*
+import com.novelforge.domain.workspace.*
+import com.novelforge.domain.writing.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
 @Singleton
-class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):WorkspaceRepository {
- private val dao=Records(db.dao())
- override val books=dao.books()
- override val summaries=dao.summaries()
- override val trash=dao.trash()
- override suspend fun createBook(title:String,author:String,genre:String,cover:Int,target:Int,synopsis:String,folders:Set<String>):String {
+class LocalWorkspaceRepository
+@Inject
+constructor(private val db: ForgeDb, private val preferences: PreferencesRepository) :
+    WorkspaceRepository {
+    private val dao = Records(db.dao())
+    override val books = dao.books()
+    override val summaries = dao.summaries()
+    override val trash = dao.trash()
+
+    override suspend fun createBook(
+        title: String,
+        author: String,
+        genres: List<String>,
+        cover: Int,
+        target: Int,
+        synopsis: String,
+        folders: Set<String>,
+    ): String {
+        require(title.isNotBlank())
+        MetadataPolicy.synopsis("", synopsis, preferences.state.value.synopsisLimit)
+        MetadataPolicy.folders(folders)
+
         val book =
             Book(
                 title = title.trim(),
                 author = author.trim(),
-                genre = genre,
+                genres = MetadataPolicy.genres(genres),
                 cover = cover,
                 target = target,
                 synopsis = synopsis,
@@ -51,13 +69,32 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
                 )
         }
         return book.id
-    
- }
- override suspend fun editBook(book:Book) {
-        dao.updateBook(book.copy(updated = System.currentTimeMillis()))
-    
- }
- override suspend fun createEntry(bookId:String,title:String,kind:String,parentId:Long?,folderId:Long?):Long {
+    }
+
+    override suspend fun editBook(book: Book) {
+        db.withTransaction {
+            val previous = dao.book(book.id) ?: error("Workspace is unavailable.")
+            MetadataPolicy.synopsis(
+                previous.synopsis,
+                book.synopsis,
+                preferences.state.value.synopsisLimit,
+            )
+            dao.updateBook(
+                book.copy(
+                    genres = MetadataPolicy.genres(book.genres),
+                    updated = System.currentTimeMillis(),
+                )
+            )
+        }
+    }
+
+    override suspend fun createEntry(
+        bookId: String,
+        title: String,
+        kind: String,
+        parentId: Long?,
+        folderId: Long?,
+    ): Long {
         require(title.isNotBlank()) { "A file name is required." }
         if (folderId != null)
             require(
@@ -68,7 +105,8 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
                 "The destination folder is unavailable."
             }
         val position =
-            summaries.first().filter { it.bookId == bookId }.maxOfOrNull { it.position }?.plus(1) ?: 0
+            summaries.first().filter { it.bookId == bookId }.maxOfOrNull { it.position }?.plus(1)
+                ?: 0
         val body = template(kind)
         val id =
             dao.addEntry(
@@ -85,10 +123,17 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
             )
         dao.touch(bookId, System.currentTimeMillis())
         return id
-    
- }
- override suspend fun createFolder(bookId:String,title:String,parent:Long?) {
-        require(title.trim().isNotEmpty()) { "A folder name is required." }
+    }
+
+    override suspend fun createFolder(bookId: String, title: String, parent: Long?) {
+        val validName = MetadataPolicy.folder(title)
+        require(
+            dao.entries(bookId).none {
+                it.kind == "Folder" && it.folderId == parent && it.title.equals(validName, true)
+            }
+        ) {
+            "A folder with this name already exists here."
+        }
         if (parent != null)
             require(
                 dao.entry(parent)?.let {
@@ -104,39 +149,61 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
             )
         )
         dao.touch(bookId, System.currentTimeMillis())
-    
- }
- override suspend fun renameEntry(id:Long,title:String) {
-        
+    }
+
+    override suspend fun renameEntry(id: Long, title: String) {
+
         require(title.trim().isNotEmpty()) { "A name is required." }
         dao.entry(id)?.let { entry ->
+            if (entry.kind == "Folder") {
+                MetadataPolicy.folder(title)
+                require(
+                    dao.entries(entry.bookId).none {
+                        it.id != id &&
+                            it.kind == "Folder" &&
+                            it.folderId == entry.folderId &&
+                            it.title.equals(title.trim(), true)
+                    }
+                ) {
+                    "A folder with this name already exists here."
+                }
+            }
             val changed =
                 entry.copy(title = title.trim().take(200), updated = System.currentTimeMillis())
             db.withTransaction {
                 dao.updateEntry(changed)
                 dao.touch(changed.bookId, changed.updated)
             }
-
         }
-    
- }
- override suspend fun relocate(id:Long,destination:Long?) {
-        
+    }
+
+    override suspend fun relocate(id: Long, destination: Long?) {
+
         val e = dao.entry(id) ?: return
         val all = dao.entries(e.bookId)
         require(canRelocate(e, destination, all)) {
             "A folder cannot contain itself or its descendants."
         }
+        if (e.kind == "Folder")
+            require(
+                all.none {
+                    it.id != id &&
+                        it.kind == "Folder" &&
+                        it.folderId == destination &&
+                        it.title.equals(e.title, true)
+                }
+            ) {
+                "A folder with this name already exists at the destination."
+            }
         val changed = e.copy(folderId = destination, updated = System.currentTimeMillis())
         db.withTransaction {
             dao.updateEntry(changed)
             dao.touch(changed.bookId, changed.updated)
         }
+    }
 
-    
- }
- override suspend fun deleteEntry(id:Long) {
-        
+    override suspend fun deleteEntry(id: Long) {
+
         val e = dao.entry(id) ?: return
         val all = dao.entries(e.bookId)
         val ids = descendantIds(id, all)
@@ -144,11 +211,9 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
             ids.forEach { dao.setDeleted(it, true) }
             dao.touch(e.bookId, System.currentTimeMillis())
         }
+    }
 
-
-    
- }
- override suspend fun restoreEntry(id:Long) {
+    override suspend fun restoreEntry(id: Long) {
         val e = dao.entry(id) ?: return
         val all = trash.first().filter { it.bookId == e.bookId }
         db.withTransaction {
@@ -161,9 +226,9 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
                 parent = folder.folderId
             }
         }
-    
- }
- override suspend fun moveEntry(id:Long,delta:Int) {
+    }
+
+    override suspend fun moveEntry(id: Long, delta: Int) {
         val e = dao.entry(id) ?: return
         val entries =
             dao.entries(e.bookId)
@@ -180,19 +245,21 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
         db.withTransaction {
             list.forEachIndexed { i, item -> dao.updateEntry(item.copy(position = i)) }
         }
-    
- }
- override suspend fun setBookStatus(book:Book,status:String) {
+    }
+
+    override suspend fun setBookStatus(book: Book, status: String) {
         require(status in bookStatuses)
-        dao.updateBook(book.copy(status = status, updated = System.currentTimeMillis()))
-    
- }
- override suspend fun loadDemo():String {
+        db.withTransaction {
+            dao.updateBook(book.copy(status = status, updated = System.currentTimeMillis()))
+        }
+    }
+
+    override suspend fun loadDemo(): String {
         val book =
             Book(
                 title = "The Atlas of\nForgotten Things",
                 author = "E. W. Arden",
-                genre = "Literary fantasy",
+                genres = listOf("Literary fantasy"),
                 synopsis =
                     "In a city that forgets one thing every midnight, a young cartographer begins drawing a map of everything that has disappeared.",
                 cover = 0,
@@ -274,9 +341,9 @@ class LocalWorkspaceRepository @Inject constructor(private val db:ForgeDb):Works
             }
         }
         return book.id
-    
- }
+    }
 }
+
 val DEMO_TEXT =
     """The city had forgotten the sea.
 

@@ -1,7 +1,8 @@
 package com.novelforge.app.data
+
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.novelforge.domain.workspace.*
+
 val MIGRATION_1_2 =
     object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -16,16 +17,17 @@ val MIGRATION_1_2 =
             }
             books.forEach { book ->
                 val ids = mutableMapOf<String, Long>()
-                workspaceTemplates.forEachIndexed { i, t ->
-                    db.execSQL(
-                        "INSERT INTO Entry(bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (?,?,'','Folder','Draft',NULL,?,0,0,0,NULL)",
-                        arrayOf(book, t.name, i),
-                    )
-                    db.query("SELECT last_insert_rowid()").use {
-                        it.moveToFirst()
-                        ids[t.name] = it.getLong(0)
+                listOf("01_Chapters", "02_Characters", "03_Lore", "04_Plot", "05_Metadata")
+                    .forEachIndexed { i, name ->
+                        db.execSQL(
+                            "INSERT INTO Entry(bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (?,?,'','Folder','Draft',NULL,?,0,0,0,NULL)",
+                            arrayOf(book, name, i),
+                        )
+                        db.query("SELECT last_insert_rowid()").use {
+                            it.moveToFirst()
+                            ids[name] = it.getLong(0)
+                        }
                     }
-                }
                 val entries = mutableListOf<Pair<Long, String>>()
                 db.query(
                         "SELECT rowid,kind FROM Entry WHERE bookId=? AND kind!='Folder'",
@@ -35,9 +37,37 @@ val MIGRATION_1_2 =
                 entries.forEach { (id, kind) ->
                     db.execSQL(
                         "UPDATE Entry SET folderId=? WHERE rowid=?",
-                        arrayOf(ids.getValue(defaultFolder(kind)), id),
+                        arrayOf(ids.getValue(legacyFolder(kind)), id),
                     )
                 }
             }
         }
+    }
+
+val MIGRATION_2_3 =
+    object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS BookGenre (bookId TEXT NOT NULL, name TEXT NOT NULL, position INTEGER NOT NULL, PRIMARY KEY(bookId,name), FOREIGN KEY(bookId) REFERENCES Book(id) ON UPDATE NO ACTION ON DELETE CASCADE)"
+            )
+            // Preserve legacy text as one genre; commas may be intentional parts of a custom genre.
+            db.execSQL(
+                "INSERT INTO BookGenre(bookId,name,position) SELECT id,trim(genre),0 FROM Book WHERE trim(genre)!=''"
+            )
+        }
+    }
+
+private fun legacyFolder(kind: String) =
+    when (kind) {
+        "Chapter",
+        "Screenplay" -> "01_Chapters"
+        "Character",
+        "Backstory" -> "02_Characters"
+        "Location",
+        "Worldbuilding",
+        "Research" -> "03_Lore"
+        "Arc",
+        "Plot thread",
+        "Timeline event" -> "04_Plot"
+        else -> "05_Metadata"
     }

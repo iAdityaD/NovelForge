@@ -1,7 +1,6 @@
 package com.novelforge.domain.workspace
 
 import com.novelforge.core.model.*
-import java.time.LocalDate
 
 val bookStatuses = listOf("In progress", "Completed", "On hold")
 
@@ -51,4 +50,3 @@ fun canRelocate(entry: Entry, destination: Long?, entries: List<Entry>): Boolean
         !folder.deleted &&
         destination !in descendantIds(entry.id, entries)
 }
-

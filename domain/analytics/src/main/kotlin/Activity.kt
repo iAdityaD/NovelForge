@@ -1,6 +1,8 @@
 package com.novelforge.domain.analytics
+
 import com.novelforge.core.model.*
 import java.time.LocalDate
+
 fun writingStreak(days: List<WritingDay>, today: LocalDate = LocalDate.now()): Int {
     val active = days.filter { it.edits > 0 }.map { it.day }.toSet()
     var day = if (today.toString() in active) today else today.minusDays(1)
@@ -11,4 +13,3 @@ fun writingStreak(days: List<WritingDay>, today: LocalDate = LocalDate.now()): I
     }
     return count
 }
-
