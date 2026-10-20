@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -44,7 +45,6 @@ android {
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 
-ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.03.00"))
@@ -57,7 +57,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.room:room-runtime:2.7.2")
     implementation("androidx.room:room-ktx:2.7.2")
-    ksp("androidx.room:room-compiler:2.7.2")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.03.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
@@ -70,4 +70,28 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+}
+
+dependencies {
+ implementation(project(":core:model"))
+ implementation(project(":core:designsystem"))
+ implementation(project(":core:presentation"))
+ implementation(project(":data:local"))
+ implementation(project(":domain:preferences"))
+ implementation(project(":domain:workspace"))
+ implementation(project(":domain:writing"))
+ implementation(project(":domain:story"))
+ implementation(project(":domain:analytics"))
+ implementation(project(":feature:workspace"))
+ implementation(project(":feature:editor"))
+ implementation(project(":feature:reader"))
+ implementation(project(":feature:library"))
+ implementation(project(":feature:guide"))
+ implementation(project(":feature:analytics"))
+ implementation(project(":feature:settings"))
+ implementation(project(":feature:backup"))
+ testImplementation(project(":core:database"))
+ androidTestImplementation(project(":core:database"))
+ implementation("com.google.dagger:hilt-android:2.55"); ksp("com.google.dagger:hilt-compiler:2.55")
+ implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 }

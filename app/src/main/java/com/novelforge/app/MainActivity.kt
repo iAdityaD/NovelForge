@@ -1,34 +1,39 @@
 package com.novelforge.app
 
 import android.os.Bundle
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.novelforge.app.ui.*
 
+@dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val vm: ForgeViewModel by viewModels()
+    private val editor: com.novelforge.presentation.EditorViewModel by viewModels()
+    private val settings: com.novelforge.presentation.SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ForgeTheme(vm.dark) {
+            val prefs by settings.state.collectAsStateWithLifecycle()
+            ForgeTheme(prefs.dark) {
                 androidx.compose.runtime.SideEffect {
                     androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
                         .apply {
-                            isAppearanceLightStatusBars = !vm.dark
-                            isAppearanceLightNavigationBars = !vm.dark
+                            isAppearanceLightStatusBars = !prefs.dark
+                            isAppearanceLightNavigationBars = !prefs.dark
                         }
                 }
-                ForgeApp(vm)
+                ForgeApp()
             }
         }
     }
 
     override fun onStop() {
-        vm.flushBackground()
+        editor.flushBackground()
         super.onStop()
     }
 }

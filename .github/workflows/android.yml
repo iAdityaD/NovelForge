@@ -21,7 +21,7 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Compile, unit tests and lint
-        run: ./gradlew assembleDebug testDebugUnitTest lintDebug assembleDebugAndroidTest
+        run: python3 scripts/check_architecture.py && ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
           name: NovelForge-debug

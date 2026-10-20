@@ -1,17 +1,5 @@
 package com.novelforge.app
-
 import android.app.Application
-import androidx.room.Room
-import com.novelforge.app.data.ForgeDb
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-
-class ForgeApplication : Application() {
-    val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    val db by lazy {
-        Room.databaseBuilder(this, ForgeDb::class.java, "novelforge.db")
-            .addMigrations(com.novelforge.app.data.MIGRATION_1_2)
-            .build()
-    }
-}
+import dagger.hilt.android.HiltAndroidApp
+@HiltAndroidApp
+class ForgeApplication:Application()

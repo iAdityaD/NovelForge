@@ -99,3 +99,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - Confirmed old 0.1 and new 0.2 debug signing certificates differ. Users must export all project backups before uninstalling the older build; reinstall/restore does not preserve revisions, bookmarks or activity history. Production signing remains future work.
 - README and docs/REDESIGN.md describe the new four-tab UI, workspace hierarchy, data semantics and remaining limits. No further code changes after the verified commit; final checkpoint only updates documentation/screenshots.
 - Next: stable release signing, physical-device performance/accessibility review, and the explicitly listed export/media roadmap. Do not imply those are completed.
+
+## 0.3 stage A — Modular architecture
+- Extracted pure Kotlin model and Workspace, Writing, Story, Analytics, Backup and Preferences domains.
+- Added Room entity/domain mappings and repository implementations in data:local, with Hilt wiring.
+- Replaced ForgeViewModel with feature-specific ViewModels and read-only StateFlows; a shared pure Kotlin editing session coordinates autosave and explorer mutations.
+- Extracted eight UI feature modules, a design system and a small presentation foundation. Removed obsolete screens.
+- Added typed destination enum and CI checks against forbidden module dependencies.
+- Database canonical name, tables and schema version remain compatible at this stage. Build validation underway; next stage adds genres, limits, creation controls and the explorer fixes.

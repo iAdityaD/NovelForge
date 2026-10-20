@@ -5,6 +5,9 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.novelforge.app.data.*
+import com.novelforge.core.model.*
+import com.novelforge.domain.workspace.*
+import com.novelforge.domain.analytics.*
 import org.junit.*
 import org.junit.runner.RunWith
 

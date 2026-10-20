@@ -1,6 +1,9 @@
 package com.novelforge.app
 
 import com.novelforge.app.data.*
+import com.novelforge.core.model.*
+import com.novelforge.domain.workspace.*
+import com.novelforge.domain.analytics.*
 import org.junit.Assert.*
 import org.junit.Test
 

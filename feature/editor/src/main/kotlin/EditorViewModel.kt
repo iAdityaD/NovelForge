@@ -1,0 +1,33 @@
+package com.novelforge.presentation
+import com.novelforge.core.model.*
+import com.novelforge.core.presentation.FeatureViewModel
+import com.novelforge.domain.workspace.*
+import com.novelforge.domain.writing.*
+import com.novelforge.domain.story.*
+import com.novelforge.domain.preferences.*
+import com.novelforge.domain.backup.*
+import com.novelforge.domain.analytics.*
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+data class ReferencesState(val revisions:List<Revision> = emptyList(),val backlinks:List<EntrySummary> = emptyList())
+@HiltViewModel
+class EditorViewModel @Inject constructor(private val session:EditorSession,private val repository:WritingRepository,private val story:StoryRepository,private val workspace:WorkspaceRepository,private val preferences:PreferencesRepository):FeatureViewModel(){
+ val state=session.state
+ private val refs=MutableStateFlow(ReferencesState());val references=refs.asStateFlow()
+ fun openEntry(id:Long,done:()->Unit)=launchWork{if(session.open(id)){refs.value=ReferencesState();state.value.entry?.let(preferences::rememberEntry);done()}}
+ fun updateBody(text:String)=session.body(text)
+ fun updateTitle(text:String)=session.title(text)
+ fun setStatus(value:String)=session.status(value)
+ fun undo()=session.undo()
+ fun redo()=session.redo()
+ fun flushBackground()=session.flushBackground()
+ fun leave(done:()->Unit)=launchWork{if(session.flush())done()}
+ fun checkpoint()=launchWork{if(session.flush())state.value.entry?.let{repository.checkpoint(it);refs.update{r->r.copy(revisions=repository.revisions(it.id))}}}
+ fun loadRevisions()=launchWork{state.value.entry?.let{e->refs.update{it.copy(revisions=repository.revisions(e.id))}}}
+ fun restoreRevision(revision:Revision){updateBody(revision.body);updateTitle(revision.title)}
+ fun loadConnections(bookId:String)=launchWork{if(session.flush()){val links=story.connections(bookId);val id=state.value.entry?.id;val entries=workspace.summaries.first();refs.update{it.copy(backlinks=entries.filter{e->links.any{it.first==e.id && it.second==id}})}}}
+ fun clearSessionError()=session.clearError()
+}

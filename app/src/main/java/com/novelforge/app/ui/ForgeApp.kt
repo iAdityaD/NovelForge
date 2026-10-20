@@ -17,17 +17,36 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.novelforge.app.ForgeViewModel
-import com.novelforge.app.data.*
+import com.novelforge.presentation.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.novelforge.domain.preferences.*
+import com.novelforge.core.model.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun ForgeApp(vm: ForgeViewModel) {
-    val books by vm.books.collectAsStateWithLifecycle()
-    val entries by vm.summaries.collectAsStateWithLifecycle()
-    val days by vm.writingDays.collectAsStateWithLifecycle()
-    var screen by rememberSaveable { mutableStateOf("library") }
-    var bookId by rememberSaveable { mutableStateOf(vm.prefs.getString("lastBook", "") ?: "") }
+fun ForgeApp() {
+    val workspace:WorkspaceViewModel=hiltViewModel()
+    val editor:EditorViewModel=hiltViewModel()
+    val settings:SettingsViewModel=hiltViewModel()
+    val reader:ReaderViewModel=hiltViewModel()
+    val library:LibraryViewModel=hiltViewModel()
+    val analytics:AnalyticsViewModel=hiltViewModel()
+    val backups:BackupViewModel=hiltViewModel()
+    val nav:NavigationViewModel=hiltViewModel()
+    val workspaceUi by workspace.state.collectAsStateWithLifecycle()
+    val editorUi by editor.state.collectAsStateWithLifecycle()
+    val prefs by settings.state.collectAsStateWithLifecycle()
+    val books=workspaceUi.books
+    val entries=workspaceUi.entries
+    val days by analytics.days.collectAsStateWithLifecycle()
+    val busy by backups.busy.collectAsStateWithLifecycle()
+    val workspaceError by workspace.error.collectAsStateWithLifecycle()
+    val editorError by editor.error.collectAsStateWithLifecycle()
+    val backupError by backups.error.collectAsStateWithLifecycle()
+    val settingsError by settings.error.collectAsStateWithLifecycle()
+    val error=workspaceError ?: editorError ?: backupError ?: settingsError ?: editorUi.error
+    var screen by rememberSaveable { mutableStateOf(Destination.Library) }
+    var bookId by rememberSaveable { mutableStateOf(nav.lastBook()) }
     var editBook by remember { mutableStateOf<Book?>(null) }
     var showEntry by remember { mutableStateOf<String?>(null) }
     var entryFolder by remember { mutableStateOf<Long?>(null) }
@@ -40,13 +59,13 @@ fun ForgeApp(vm: ForgeViewModel) {
     val bookEntries = entries.filter { it.bookId == bookId }
     fun project(id: String) {
         bookId = id
-        vm.prefs.edit().putString("lastBook", id).apply()
-        screen = "project"
+        nav.rememberBook(id)
+        screen = Destination.Project
     }
     fun open(id: Long, read: Boolean = false) {
-        vm.openEntry(id) {
-            bookId = vm.editor?.bookId ?: bookId
-            screen = if (read) "reader" else "editor"
+        editor.openEntry(id) {
+            bookId = editorUi.entry?.bookId ?: bookId
+            screen = if (read) Destination.Reader else Destination.Editor
         }
     }
     val export =
@@ -54,13 +73,13 @@ fun ForgeApp(vm: ForgeViewModel) {
             ActivityResultContracts.CreateDocument("application/octet-stream")
         ) { uri ->
             if (uri != null)
-                vm.export(uri, exportBook, markdown) {
+                backups.export(uri.toString(), exportBook, markdown) {
                     scope.launch { snack.showSnackbar("Export saved") }
                 }
         }
     val import =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri != null) vm.importBackup(uri) { project(it) }
+            if (uri != null) backups.importBackup(uri.toString()) { project(it) }
         }
     fun importBackup() {
         import.launch(arrayOf("application/json", "application/octet-stream", "text/plain"))
@@ -71,19 +90,19 @@ fun ForgeApp(vm: ForgeViewModel) {
         export.launch(if (md) "NovelForge-manuscript.md" else "NovelForge-backup.novelforge.json")
     }
     LaunchedEffect(Unit) {
-        if (screen in listOf("editor", "reader") && vm.editor == null) {
-            val id = vm.prefs.getLong("lastEntry", 0)
-            if (id > 0) vm.openEntry(id) {} else screen = "library"
+        if (screen in listOf(Destination.Editor, Destination.Reader) && editorUi.entry == null) {
+            val id = nav.lastEntry()
+            if (id > 0) editor.openEntry(id) {} else screen = Destination.Library
         }
     }
-    LaunchedEffect(vm.editor?.deleted) {
-        if (vm.editor?.deleted == true && screen in listOf("editor", "reader")) screen = "project"
+    LaunchedEffect(editorUi.entry?.deleted) {
+        if (editorUi.entry?.deleted == true && screen in listOf(Destination.Editor, Destination.Reader)) screen = Destination.Project
     }
-    BackHandler(screen != "library") {
-        if (screen in listOf("editor", "reader")) vm.leave { screen = "project" }
-        else screen = "library"
+    BackHandler(screen != Destination.Library) {
+        if (screen in listOf(Destination.Editor, Destination.Reader)) editor.leave { screen = Destination.Project }
+        else screen = Destination.Library
     }
-    val roots = listOf("library", "guide", "analytics", "settings")
+    val roots = listOf(Destination.Library, Destination.Guide, Destination.Analytics, Destination.Settings)
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
@@ -93,10 +112,10 @@ fun ForgeApp(vm: ForgeViewModel) {
                     tonalElevation = 0.dp,
                 ) {
                     listOf(
-                            Triple("library", "Library", Icons.Outlined.GridView),
-                            Triple("guide", "Guide", Icons.Outlined.AutoStories),
-                            Triple("analytics", "Analytics", Icons.Outlined.BarChart),
-                            Triple("settings", "Settings", Icons.Outlined.Tune),
+                            Triple(Destination.Library, "Library", Icons.Outlined.GridView),
+                            Triple(Destination.Guide, "Guide", Icons.Outlined.AutoStories),
+                            Triple(Destination.Analytics, "Analytics", Icons.Outlined.BarChart),
+                            Triple(Destination.Settings, "Settings", Icons.Outlined.Tune),
                         )
                         .forEach { (route, label, icon) ->
                             NavigationBarItem(
@@ -122,19 +141,19 @@ fun ForgeApp(vm: ForgeViewModel) {
                 label = "screen",
             ) { route ->
                 when (route) {
-                    "library" ->
+                    Destination.Library ->
                         LibraryScreen(
                             books,
                             entries,
                             { project(it) },
-                            { screen = "new" },
+                            { screen = Destination.New },
                             { importBackup() },
-                            { vm.loadDemo { project(it) } },
+                            { workspace.loadDemo { project(it) } },
                             { open(it) },
-                            { screen = "search" },
+                            { screen = Destination.Search },
                         )
-                    "new" ->
-                        NewWorkspaceScreen({ screen = "library" }) {
+                    Destination.New ->
+                        NewWorkspaceScreen({ screen = Destination.Library }) {
                             title,
                             author,
                             genre,
@@ -142,26 +161,26 @@ fun ForgeApp(vm: ForgeViewModel) {
                             target,
                             synopsis,
                             folders ->
-                            vm.createBook(title, author, genre, cover, target, synopsis, folders) {
+                            workspace.createBook(title, author, genre, cover, target, synopsis, folders) {
                                 project(it)
                             }
                         }
-                    "guide" -> GuideScreen()
-                    "analytics" -> AnalyticsScreen(books, entries, days)
-                    "settings" ->
-                        SettingsNavigation(vm, books, { importBackup() }, { backup(it, false) })
-                    "search" ->
+                    Destination.Guide -> GuideScreen()
+                    Destination.Analytics -> AnalyticsScreen(books, entries, days)
+                    Destination.Settings ->
+                        SettingsNavigation(settings, books, { importBackup() }, { backup(it, false) })
+                    Destination.Search ->
                         Column {
-                            TextButton(onClick = { screen = "library" }) { Text("Back to library") }
-                            SearchScreen(vm, books, { open(it) })
+                            TextButton(onClick = { screen = Destination.Library }) { Text("Back to library") }
+                            SearchScreen(library, books, { open(it) })
                         }
-                    "project" ->
+                    Destination.Project ->
                         selected?.let { b ->
                             WorkspaceScreen(
-                                vm,
+                                workspace,
                                 b,
                                 bookEntries,
-                                { screen = "library" },
+                                { screen = Destination.Library },
                                 { open(it) },
                                 { editBook = b },
                                 { folder, kind ->
@@ -171,8 +190,8 @@ fun ForgeApp(vm: ForgeViewModel) {
                                 { backup(b.id, it) },
                             )
                         }
-                    "editor" ->
-                        vm.editor?.let { e ->
+                    Destination.Editor ->
+                        editorUi.entry?.let { e ->
                             ModalNavigationDrawer(
                                 drawerState = drawer,
                                 drawerContent = {
@@ -180,14 +199,14 @@ fun ForgeApp(vm: ForgeViewModel) {
                                         TextButton(
                                             onClick = {
                                                 scope.launch { drawer.close() }
-                                                vm.leave { screen = "project" }
+                                                editor.leave { screen = Destination.Project }
                                             }
                                         ) {
                                             Text("Open workspace")
                                         }
                                         selected?.let { b ->
                                             ExplorerTree(
-                                                vm,
+                                                workspace,
                                                 b,
                                                 bookEntries,
                                                 { id ->
@@ -203,38 +222,39 @@ fun ForgeApp(vm: ForgeViewModel) {
                                 },
                             ) {
                                 EditorScreen(
-                                    vm,
+                                    editor,
+                                    prefs,
                                     e,
                                     selected,
                                     bookEntries,
-                                    { vm.leave { screen = "project" } },
-                                    { vm.leave { screen = "reader" } },
+                                    { editor.leave { screen = Destination.Project } },
+                                    { editor.leave { screen = Destination.Reader } },
                                     { open(it) },
-                                    { vm.deleteEntry(e.id) { screen = "project" } },
+                                    { workspace.deleteEntry(e.id) { screen = Destination.Project } },
                                     { scope.launch { drawer.open() } },
                                 )
                             }
                         }
-                    "reader" ->
-                        vm.editor?.let { e ->
+                    Destination.Reader ->
+                        editorUi.entry?.let { e ->
                             ReaderScreen(
-                                vm,
+                                reader,
                                 e,
                                 selected,
                                 bookEntries,
-                                { screen = "project" },
-                                { screen = "editor" },
+                                { screen = Destination.Project },
+                                { screen = Destination.Editor },
                                 { open(it, true) },
                             )
                         }
                 }
             }
-            if (vm.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
     editBook?.let { b ->
         BookDialog(b, { editBook = null }) { title, author, genre, cover, target, synopsis ->
-            vm.editBook(
+            workspace.editBook(
                 b.copy(
                     title = title,
                     author = author,
@@ -249,18 +269,20 @@ fun ForgeApp(vm: ForgeViewModel) {
     }
     showEntry?.let { kind ->
         EntryDialog(kind, { showEntry = null }) { title, type ->
-            vm.createEntry(bookId, title, type, null, entryFolder) {
+            workspace.createEntry(bookId, title, type, null, entryFolder) {
                 showEntry = null
                 open(it)
             }
         }
     }
-    vm.error?.let { message ->
+    error?.let { message ->
         AlertDialog(
-            onDismissRequest = { vm.clearError() },
+            onDismissRequest = { workspace.clearError(); editor.clearError(); backups.clearError(); settings.clearError(); editor.clearSessionError() },
             title = { Text("Couldn’t complete that") },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = { vm.clearError() }) { Text("OK") } },
+            confirmButton = { TextButton(onClick = { workspace.clearError(); editor.clearError(); backups.clearError(); settings.clearError(); editor.clearSessionError() }) { Text("OK") } },
         )
     }
 }
+
+private enum class Destination { Library, Guide, Analytics, Settings, New, Search, Project, Editor, Reader }
