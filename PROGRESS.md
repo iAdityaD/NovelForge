@@ -116,3 +116,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - Explorer now uses flat compact rows, independent expand/select actions, search, expand/collapse all, active-file highlighting and reveal, plus drawer create/close controls.
 - Frozen migration rules preserve schema history; v2→v3 migration only adds genre storage.
 - Stage A compiled and passed JVM/lint; emulator startup failed before app execution. New migration and device cases added for stage B validation.
+
+## 0.3 stage C — Build verified; device run pending
+- Source 7d004b89de5704b16767fa8be2b348274b748962 passes architecture boundaries, compilation, 19 JVM tests and lint (0 errors, 14 warnings).
+- CI: https://github.com/iAdityaD/NovelForge/actions/runs/39495977321. Device-test job 118881003493 was still running at this checkpoint; do not report emulator success until its result is inspected.
+- Fixed shared status definitions after narrowing feature dependencies.
+- Inspected native-rendered creation and drawer screenshots; saved refreshed repository screenshots and docs/ARCHITECTURE.md. Generated Room schema 3 is retained for migration testing.
+- Built APK 0.3.0/versionCode 3/minSDK 26. Signature verified. SHA256 a439363648d2897f2c7760e672bcc0227ed00420c8aa8ecad16b4550c406c4bc, 17,460,642 bytes. Final packaging waits for device verification.
+- Next: inspect device tests and their synopsis/limits screenshots, fix any failures, package APK/installation ZIP and update final validation record.

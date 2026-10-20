@@ -1,4 +1,4 @@
-# Workspace redesign — 0.2
+# Workspace redesign — 0.3
 
 Each novel is an independent local workspace. Folders are user-controlled, not rigid categories. A file's type (chapter, character, lore, etc.) remains independent of its location, keeping analytics accurate when authors reorganize a world.
 
@@ -24,10 +24,10 @@ The editor uses a compact file header and breadcrumb, source Markdown with optio
 The landing page has a title, global search action, status filters, a Continue writing card and a workspace grid/list toggle. Project cards use lightweight geometric covers, title, genre, manuscript-word progress and last-edited date. New workspace stays available as a floating action. Empty results explain whether there are no novels or simply no novels matching the selected status.
 
 ### Create workspace
-Creation is a full screen, so the keyboard does not compete with a cramped dialog. Enter title, author and genre; select a color; check or uncheck each starter folder. No folders are mandatory. Selecting Chapters creates a first chapter; selecting Metadata creates a novel-overview note. Authors can add missing folders later without recreating a novel.
+Creation is a full screen, so the keyboard does not compete with a cramped dialog. Enter title and author; select multiple genre chips or add custom genres; select a color; check or uncheck each starter folder. Add folder creates an additional checkbox entry, with rename/remove controls before creation. No folders are mandatory. Selecting Chapters creates a first chapter; selecting Metadata creates a novel-overview note. Authors can add missing folders later without recreating a novel.
 
 ### Workspace explorer
-The header identifies the novel and provides details, completion status, export and backup actions. Files and Graph are local views inside the workspace; they do not replace the four global navigation tabs. The root row clears the current folder selection. Tapping a folder expands/collapses it and sets the destination for new files and folders. The tree shows file type and word count beside its Markdown title.
+The header identifies the novel and provides details, completion status, export and backup actions. Files and Graph are local views inside the workspace; they do not replace the four global navigation tabs. The root row clears the current folder selection. Tapping the folder row selects the destination for new files and folders. Its separate arrow expands/collapses it. Search includes matching files and their ancestors; expand/collapse-all controls are available. The tree shows file type and word count beside its Markdown title.
 
 A file menu offers rename, move to another folder/root, sibling ordering and recoverable trash. Dragging after a long press moves an item onto a folder. Invalid self/descendant folder moves are rejected. Trashing a folder includes its subtree; restoring it brings the subtree back. Restoring one child also restores its required ancestor folders.
 
@@ -55,3 +55,13 @@ The index only lists categories. Appearance controls light/dark theme; Editor co
 - Dark/light system-bar contrast follows the app theme.
 - Persisted records, not decorative cards, drive analytics and progress.
 - Native rendering, emulator interaction and database migration are tested in CI. Physical-device frame-time, screen-reader and large-font certification must not be inferred from those checks.
+
+## Novel details and content limits (0.3)
+
+Novel details opens as a full-screen form rather than a growing dialog. The synopsis occupies a fixed-height text area with internal scrolling, a visible scrollbar when needed, and a word counter. Save remains outside the scrolling form, with keyboard insets applied. Closing changed details asks whether to discard.
+
+Settings → Writing → Content limits controls the global synopsis cap, default 500 words, valid range 50–10,000. A paste exceeding the cap is rejected as a whole with an explanation. Lowering the cap does not delete existing text. Legacy/restored synopses above the cap can be retained or shortened but cannot grow until the limit is raised. Chapter goals remain non-blocking targets.
+
+The drawer has a compact novel header, explicit close action, create-file/create-folder actions, and the same searchable flat explorer. Active-file highlighting differs from the selected destination folder. Opening the drawer reveals the active file's ancestor folders.
+
+The implementation boundaries and future-feature workflow are documented in ARCHITECTURE.md.

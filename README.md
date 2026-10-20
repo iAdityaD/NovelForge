@@ -1,6 +1,6 @@
 # NovelForge — local Android writing workspace
 
-NovelForge 0.2 organizes each novel like a coding project: an independent workspace with a flexible folder tree, Markdown pages and linked story references. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
+NovelForge 0.3 organizes each novel like a coding project: an independent workspace with a flexible folder tree, Markdown pages and linked story references. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
 
 ## Screens
 
@@ -14,7 +14,15 @@ Actual Compose screens captured by the automated native-rendering test.
 | --- | --- | --- |
 | ![Creation](docs/screenshots/creation.png) | ![Editor](docs/screenshots/editor.png) | ![Settings](docs/screenshots/settings.png) |
 
+| Editor explorer |
+| --- |
+| ![Explorer drawer](docs/screenshots/drawer.png) |
+
 See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactions.
+
+## Architecture
+
+A domain-based modular monolith with Clean Architecture boundaries, Hilt dependency injection and feature-specific MVVM/StateFlow. Plain Kotlin domains define contracts and rules; local repositories implement persistence; UI modules consume domain interfaces. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for module ownership, dependency direction and the steps for adding a feature.
 
 ## Navigation and features
 
@@ -22,8 +30,9 @@ See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactio
 - **Guide:** five practical offline lessons on workspace structure, linking characters/worlds, scene planning, revision and backup.
 - **Analytics:** writing streak above the workspace dropdown. All workspaces shows portfolio totals by status; one workspace shows manuscript progress, chapter states and story-bible statistics. Both include words, estimated pages, chapters, character profiles and daily activity.
 - **Settings:** a category index leading to separate Appearance, Editor, Reading, Data & backup, Recently deleted and About screens.
-- **Workspace setup:** optional checkbox templates for Chapters, Characters, Lore, Plot and Metadata. Add any nested folders and files later.
-- **Explorer:** expand/collapse, rename, move, sibling ordering, long-press drag onto folders, and recoverable subtree deletion. File type remains independent of folder location.
+- **Workspace setup:** optional checkbox templates plus Add folder, rename and remove controls for custom starter folders. Add nested folders and files later.
+- **Explorer:** compact flat rows, separate expand/select controls, search, expand/collapse all, active-file reveal, rename, move, sibling ordering, drag-to-folder and recoverable subtree deletion. The editor drawer includes create actions and an explicit close button.
+- **Novel details:** a full-screen form, multiple genre chips/custom genres, a bounded scrolling synopsis with a scrollbar and live word count, and unsaved-change protection. Settings → Writing → Content limits sets a global 50–10,000-word synopsis cap (default 500). Existing over-limit text can be retained or shortened; oversized new input is rejected with an explanation.
 - **Writing:** autosave, syntax coloring, proportional/monospace choice, formatting toolbar, wiki-link picker, focus mode, undo/redo, checkpoints, backlinks and word/character/reading-time metrics.
 - **Reading:** typography controls, warm paper, contents, bookmarks, remembered position and fullscreen controls.
 - **Connections:** pan/zoom/tap graph plus a textual link list. Graph display caps at 40 nodes; the list retains all references.
@@ -33,7 +42,7 @@ The explorer is a logical tree in the local database, not an external Markdown v
 
 ## Verification and installation
 
-[CI run 39430284995](https://github.com/iAdityaD/NovelForge/actions/runs/39430284995) passed for source `272686aaa8b749dd2fe66ec12e7ec46495a336c5`: 14 JVM tests, 3 API 34 emulator tests, compilation and lint (0 errors, 24 warnings). APK signature, package/version and minimum Android version were verified. APK size is 17,024,634 bytes. GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer.
+The 0.3 build at source `7d004b89de5704b16767fa8be2b348274b748962` passes compilation, architecture boundaries, 19 JVM tests and lint (0 errors, 14 warnings). [CI run 39495977321](https://github.com/iAdityaD/NovelForge/actions/runs/39495977321) contains the current verification; emulator results are pending at this documentation checkpoint. GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer.
 
 **Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
 
@@ -56,7 +65,7 @@ Project backups contain current active pages, metadata, and story structure. Res
 
 No destructive database migrations are enabled. Schema exports live under `app/schemas`; future schema changes need explicit migrations and restore testing.
 
-Room schema v2 migrates installed v1 databases without destructive fallback, preserving entry IDs, revisions, arc references and full-text search, and organizing existing pages into default folders. Backup v2 includes folder hierarchy and project status; v1 backups remain importable. Backup imports do not restore writing streak history.
+Room schema v3 migrates installed v1/v2 databases without destructive fallback, preserving entry IDs, revisions, arc references and full-text search, and organizing existing pages into default folders. Backup v3 includes multiple genres, folder hierarchy and project status; v1/v2 backups remain importable. Schema v3 adds normalized BookGenre storage, preserving legacy genre strings as one value. Over-limit restored synopses remain intact. Backup imports do not restore writing streak history.
 
 ## Limits and next work
 
