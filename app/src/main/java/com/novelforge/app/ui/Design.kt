@@ -238,6 +238,7 @@ fun BookCover(book: Book, modifier: Modifier = Modifier, compact: Boolean = fals
             .clip(RoundedCornerShape(12.dp))
             .background(Brush.linearGradient(listOf(accent.copy(alpha = .7f), Color(0xFF202336))))
     ) {
+        val coverWidth = maxWidth
         Canvas(Modifier.fillMaxSize()) {
             repeat(7) { i ->
                 val x = size.width * (.3f + i * .16f)
@@ -268,8 +269,8 @@ fun BookCover(book: Book, modifier: Modifier = Modifier, compact: Boolean = fals
                 Column {
                     Text(
                         book.title.replace('\n', ' '),
-                        fontSize = (maxWidth.value * .115f).coerceIn(12f, 23f).sp,
-                        lineHeight = (maxWidth.value * .14f).coerceIn(16f, 28f).sp,
+                        fontSize = (coverWidth.value * .115f).coerceIn(12f, 23f).sp,
+                        lineHeight = (coverWidth.value * .14f).coerceIn(16f, 28f).sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
                         maxLines = 4,
@@ -286,7 +287,7 @@ fun BookCover(book: Book, modifier: Modifier = Modifier, compact: Boolean = fals
             else
                 Text(
                     book.title.take(1).uppercase(),
-                    fontSize = (maxWidth.value * .3f).sp,
+                    fontSize = (coverWidth.value * .3f).sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )

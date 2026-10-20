@@ -263,12 +263,15 @@ fun ReaderScreen(
 @Composable
 fun MarkdownParagraph(source: String, size: Float, serif: Boolean, onLink: (Long) -> Unit) {
     val heading = source.startsWith("#")
+    val quote = source.startsWith(">")
     val text =
         source
             .replace(Regex("^#{1,6}\\s+"), "")
             .replace(Regex("(?m)^- \\[ \\] "), "☐ ")
             .replace(Regex("(?m)^- \\[x\\] "), "☑ ")
             .replace(Regex("(?m)^- "), "• ")
+            .replace(Regex("(?m)^> ?"), "")
+            .replace("[!NOTE]", "NOTE")
     val accent = MaterialTheme.colorScheme.primary
     val annotated = buildAnnotatedString {
         val regex = Regex("\\[\\[(\\d+)\\|([^]]+)]]|\\*\\*(.+?)\\*\\*|\\*([^*]+)\\*")
@@ -293,6 +296,15 @@ fun MarkdownParagraph(source: String, size: Float, serif: Boolean, onLink: (Long
         append(text.substring(start))
     }
     ClickableText(
+        modifier =
+            if (quote)
+                Modifier.fillMaxWidth()
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer,
+                        androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    )
+                    .padding(16.dp)
+            else Modifier,
         text = annotated,
         style =
             TextStyle(

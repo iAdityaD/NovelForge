@@ -205,6 +205,15 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         folderId: Long? = null,
         done: (Long) -> Unit,
     ) = launchWork {
+        require(title.isNotBlank()) { "A file name is required." }
+        if (folderId != null)
+            require(
+                dao.entry(folderId)?.let {
+                    it.bookId == bookId && it.kind == "Folder" && !it.deleted
+                } == true
+            ) {
+                "The destination folder is unavailable."
+            }
         val position =
             summaries.value.filter { it.bookId == bookId }.maxOfOrNull { it.position }?.plus(1) ?: 0
         val body = template(kind)
@@ -221,6 +230,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                     words = wordCount(body),
                 )
             )
+        dao.touch(bookId, System.currentTimeMillis())
         done(id)
     }
 
@@ -370,7 +380,14 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         val e = dao.entry(id) ?: return@launchWork
         val all = dao.entries(e.bookId)
         val ids = descendantIds(id, all)
-        db.withTransaction { ids.forEach { dao.setDeleted(it, true) } }
+        db.withTransaction {
+            ids.forEach { dao.setDeleted(it, true) }
+            dao.touch(e.bookId, System.currentTimeMillis())
+        }
+        if (editor?.id in ids) {
+            editor = editor?.copy(deleted = true)
+            persisted = editor
+        }
         done()
     }
 
@@ -390,11 +407,19 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun renameEntry(id: Long, title: String) = launchWork {
+        if (!flush()) return@launchWork
         require(title.trim().isNotEmpty()) { "A name is required." }
-        dao.entry(id)?.let {
-            dao.updateEntry(
-                it.copy(title = title.trim().take(200), updated = System.currentTimeMillis())
-            )
+        dao.entry(id)?.let { entry ->
+            val changed =
+                entry.copy(title = title.trim().take(200), updated = System.currentTimeMillis())
+            db.withTransaction {
+                dao.updateEntry(changed)
+                dao.touch(changed.bookId, changed.updated)
+            }
+            if (editor?.id == id) {
+                editor = changed
+                persisted = changed
+            }
         }
     }
 
@@ -414,6 +439,7 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
                 folderId = parent,
             )
         )
+        dao.touch(bookId, System.currentTimeMillis())
     }
 
     fun relocate(id: Long, destination: Long?) = launchWork {
@@ -423,12 +449,20 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
         require(canRelocate(e, destination, all)) {
             "A folder cannot contain itself or its descendants."
         }
-        dao.updateEntry(e.copy(folderId = destination, updated = System.currentTimeMillis()))
+        val changed = e.copy(folderId = destination, updated = System.currentTimeMillis())
+        db.withTransaction {
+            dao.updateEntry(changed)
+            dao.touch(changed.bookId, changed.updated)
+        }
+        if (editor?.id == id) {
+            editor = changed
+            persisted = changed
+        }
     }
 
     fun setBookStatus(book: Book, status: String) = launchWork {
         require(status in bookStatuses)
-        dao.updateBook(book.copy(status = status))
+        dao.updateBook(book.copy(status = status, updated = System.currentTimeMillis()))
     }
 
     fun moveEntry(id: Long, delta: Int) = launchWork {

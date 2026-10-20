@@ -76,6 +76,9 @@ fun ForgeApp(vm: ForgeViewModel) {
             if (id > 0) vm.openEntry(id) {} else screen = "library"
         }
     }
+    LaunchedEffect(vm.editor?.deleted) {
+        if (vm.editor?.deleted == true && screen in listOf("editor", "reader")) screen = "project"
+    }
     BackHandler(screen != "library") {
         if (screen in listOf("editor", "reader")) vm.leave { screen = "project" }
         else screen = "library"

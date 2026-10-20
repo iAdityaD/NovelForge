@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.pointerInput
@@ -327,6 +328,7 @@ fun ExplorerTree(
                 )
             }
         items(rows, key = { it.first.id }) { (e, depth) ->
+            DisposableEffect(e.id) { onDispose { bounds.remove(e.id) } }
             var menu by remember { mutableStateOf(false) }
             val folder = e.kind == "Folder"
             val hover =

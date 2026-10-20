@@ -13,7 +13,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { ForgeTheme(vm.dark) { ForgeApp(vm) } }
+        setContent {
+            ForgeTheme(vm.dark) {
+                androidx.compose.runtime.SideEffect {
+                    androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+                        .apply {
+                            isAppearanceLightStatusBars = !vm.dark
+                            isAppearanceLightNavigationBars = !vm.dark
+                        }
+                }
+                ForgeApp(vm)
+            }
+        }
     }
 
     override fun onStop() {
