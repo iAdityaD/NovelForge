@@ -75,6 +75,7 @@ fun EditorScreen(
                     if (focus) "Focus mode" else book?.title?.replace('\n', ' ') ?: "Your story",
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
                 Text(
                     vm.saveStatus,

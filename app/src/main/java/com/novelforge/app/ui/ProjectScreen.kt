@@ -129,15 +129,15 @@ fun ProjectScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
-                                "${chapters.size} chapters",
+                                countLabel(chapters.size, "chapter"),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                             Text(
-                                "${entries.count {it.kind=="Character"}} characters",
+                                countLabel(entries.count { it.kind == "Character" }, "character"),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                             Text(
-                                "${entries.count {it.kind=="Arc"}} arcs",
+                                countLabel(entries.count { it.kind == "Arc" }, "arc"),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
@@ -615,3 +615,5 @@ fun EntryRow(e: EntrySummary, onClick: () -> Unit) {
         Icon(Icons.Outlined.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+private fun countLabel(count: Int, noun: String) = "$count $noun${if (count == 1) "" else "s"}"
