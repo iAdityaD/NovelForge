@@ -2,6 +2,26 @@
 
 An offline Android app for drafting novels, organizing a story bible, and reading your manuscript. Kotlin + Jetpack Compose + Room. Editorial ivory/forest design, dark mode, and lightweight procedural covers.
 
+## Screenshots
+
+Actual Compose screens rendered by the automated Android UI test.
+
+| Bookshelf | Writing | Reading |
+| --- | --- | --- |
+| ![Bookshelf](docs/screenshots/bookshelf.png) | ![Editor](docs/screenshots/editor.png) | ![Reader](docs/screenshots/reader.png) |
+
+## Verified build
+
+[CI run 39361773110](https://github.com/iAdityaD/NovelForge/actions/runs/39361773110) passed for source commit `8accbf9e6f89992643ff9f390a7196ce542a50e1`:
+
+- Debug APK and instrumentation APK compiled.
+- 10 JVM tests passed (backup validation, SQLite/FTS, native-rendered UI navigation and bookmarks).
+- 2 tests passed on an accelerated Android 14 / API 34 emulator, including timeline creation through the dialog and save-before-navigation.
+- Android lint passed with 0 errors and 21 non-blocking warnings (dependency/target updates, extraction-rule recommendation, KTX suggestions).
+- APK signature verified. Debug APK is 16,844,410 bytes; Android 8.0+.
+
+Download `NovelForge-debug` from that run's Artifacts section. This is a development-signed build; export a project backup before switching builds or reinstalling. Future production distribution needs a stable private signing key. Physical-device accessibility and frame-time certification remain pending.
+
 ## Run
 
 Open this repository in Android Studio, use JDK 17, install Android SDK 35, and run the `app` configuration. Android 8.0 (API 26) or newer is required.

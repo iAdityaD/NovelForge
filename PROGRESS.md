@@ -59,3 +59,13 @@ Every stage is committed to main as requested. Build verification and limitation
 ## Stage 8 — On-device dialog regression
 - JVM native-rendering checks passed the writing/reading flow and bookmark toggle, but timed out on dialog layout. The timeline creation interaction now runs as an Android instrumentation test; the JVM check retains timeline navigation/empty-state coverage.
 - Added an accelerated API 34 emulator job to exercise the actual dialog and database behavior. Do not treat a compiled device test as a passing device test; final job results follow.
+
+## Stage 9 — Verified APK delivered (2026-10-20)
+- Source commit: 8accbf9e6f89992643ff9f390a7196ce542a50e1. CI run: https://github.com/iAdityaD/NovelForge/actions/runs/39361773110.
+- Passed assembleDebug, assembleDebugAndroidTest, 10 JVM tests, Android lint (0 errors, 21 warnings), and 2 instrumentation tests on API 34.
+- The on-device timeline-dialog test passed. The earlier dialog-idling timeout was limited to the JVM test run.
+- Downloaded the CI APK, verified its package/minSDK and APK v2 signature, and saved the installable artifact.
+- APK SHA-256: a253859cd4b4318e2973ad62270b7f2163fb3489e13fff9870357d4f6d06c429. Size: 16,844,410 bytes.
+- Inspected actual UI renderings; committed bookshelf/editor/reader screenshots.
+- Source is clean and checkpointed. README's Scope section is the remaining roadmap; do not claim a store-ready release, physical-device certification, or completed advanced export/media features.
+- Next development should preserve Room schema compatibility and provide stable production signing before distribution.
