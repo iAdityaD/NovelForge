@@ -13,7 +13,7 @@ val kinds =
         "Timeline event",
         "Note",
     )
-val statuses = listOf("Draft", "In progress", "Revised", "Final")
+
 
 fun template(kind: String): String =
     when (kind) {

@@ -64,3 +64,5 @@ fun searchExpression(text: String): String =
     Regex("[\\p{L}\\p{M}\\p{N}]+").findAll(text).take(12).joinToString(" AND ") {
         "\"${it.value}\"*"
     }
+
+val statuses = listOf("Draft", "In progress", "Revised", "Final")
