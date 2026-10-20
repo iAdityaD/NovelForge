@@ -26,10 +26,10 @@ import com.novelforge.app.data.Book
 import kotlin.math.*
 
 val Pine = Color(0xFF244C40)
-val Gold = Color(0xFFA58045)
+val Gold = Color(0xFF86632D)
 val Paper = Color(0xFFF7F5EF)
 val Ink = Color(0xFF242E29)
-val Muted = Color(0xFF768078)
+val Muted = Color(0xFF5F6B62)
 val Line = Color(0xFFE3E5DB)
 private val Light = lightColorScheme(primary=Pine, onPrimary=Color.White, primaryContainer=Color(0xFFE3EBDF), onPrimaryContainer=Pine, secondary=Gold, background=Paper, onBackground=Ink, surface=Color(0xFFFFFEFA), onSurface=Ink, surfaceVariant=Color(0xFFEEEFE6), onSurfaceVariant=Muted, outline=Color(0xFFB8C0B5), outlineVariant=Line)
 private val Dark = darkColorScheme(primary=Color(0xFFA6CBB7), onPrimary=Color(0xFF10372A), primaryContainer=Color(0xFF2B4538), onPrimaryContainer=Color(0xFFCCE5D2), secondary=Color(0xFFD9BA82), background=Color(0xFF151C18), onBackground=Color(0xFFE4E7DD), surface=Color(0xFF1E2822), onSurface=Color(0xFFE4E7DD), surfaceVariant=Color(0xFF2B352E), onSurfaceVariant=Color(0xFFAAB4A9), outlineVariant=Color(0xFF35433A))
@@ -72,22 +72,23 @@ fun kindIcon(kind: String): ImageVector = when(kind) { "Character" -> Icons.Outl
 @Composable fun BookCover(book: Book, modifier: Modifier=Modifier, compact: Boolean=false) {
     val palettes = listOf(listOf(Color(0xFF183D38),Color(0xFF44695B)),listOf(Color(0xFF29374F),Color(0xFF6F798D)),listOf(Color(0xFF704337),Color(0xFFA37C59)),listOf(Color(0xFF554766),Color(0xFF928096)))
     val palette = palettes[book.cover.coerceIn(0,3)]
-    Box(modifier.clip(RoundedCornerShape(10.dp)).background(Brush.verticalGradient(palette))) {
+    BoxWithConstraints(modifier.clip(RoundedCornerShape(10.dp)).background(Brush.verticalGradient(palette))) {
+        val coverType = (maxWidth.value * .105f).coerceIn(8f,22f)
         Canvas(Modifier.fillMaxSize()) {
             val w=size.width; val h=size.height
             drawRect(Color.Black.copy(alpha=.15f),size=Size(w*.045f,h))
             drawLine(Color.White.copy(alpha=.15f),Offset(w*.06f,0f),Offset(w*.06f,h),1f)
             drawRect(Color(0xFFE7D6A8).copy(alpha=.35f),Offset(w*.13f,h*.08f),Size(w*.74f,h*.84f),style=Stroke(1f))
-            drawCircle(Color(0xFFE8DBB1),w*.105f,Offset(w*.68f,h*.39f))
-            drawCircle(palette[0].copy(alpha=.95f),w*.093f,Offset(w*.72f,h*.365f))
-            repeat(20) { i -> val x=(sin(i*19.7)*.36+.52).toFloat()*w; val y=(cos(i*7.3)*.19+.38).toFloat()*h; drawCircle(Color(0xFFE7D6A8).copy(alpha=.6f),if(i%4==0)2.2f else 1.2f,Offset(x,y)) }
+            drawCircle(Color(0xFFE8DBB1),w*.105f,Offset(w*.68f,h*.57f))
+            drawCircle(palette[0].copy(alpha=.95f),w*.093f,Offset(w*.72f,h*.545f))
+            repeat(20) { i -> val x=(sin(i*19.7)*.36+.52).toFloat()*w; val y=(cos(i*7.3)*.1+.55).toFloat()*h; drawCircle(Color(0xFFE7D6A8).copy(alpha=.6f),if(i%4==0)2.2f else 1.2f,Offset(x,y)) }
             repeat(3) { layer ->
                 val path=Path().apply { moveTo(0f,h); lineTo(0f,h*(.71f+layer*.07f)); for(i in 0..12) { val x=w*i/12f; val y=h*(.68f+layer*.075f)+(sin(i*.8+layer)*h*.07).toFloat(); lineTo(x,y) }; lineTo(w,h); close() }
                 drawPath(path,Color(0xFF071E1B).copy(alpha=.23f+layer*.16f))
             }
         }
-        Column(Modifier.fillMaxSize().padding(horizontal=if(compact) 12.dp else 23.dp,vertical=if(compact) 15.dp else 26.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-            Text(book.title.replace('\n',' '),color=Color(0xFFF2EAD1),fontFamily=FontFamily.Serif,fontSize=if(compact) 13.sp else 22.sp,lineHeight=if(compact) 17.sp else 27.sp,textAlign=androidx.compose.ui.text.style.TextAlign.Center,maxLines=4,overflow=TextOverflow.Ellipsis)
+        Column(Modifier.fillMaxSize().padding(horizontal=maxWidth*.12f,vertical=maxHeight*.1f),horizontalAlignment=Alignment.CenterHorizontally) {
+            Text(book.title.replace('\n',' '),color=Color(0xFFF2EAD1),fontFamily=FontFamily.Serif,fontSize=coverType.sp,lineHeight=(coverType*1.25f).sp,textAlign=androidx.compose.ui.text.style.TextAlign.Center,maxLines=4,overflow=TextOverflow.Ellipsis)
             Spacer(Modifier.weight(1f))
             Text(book.author.ifBlank { "A NOVEL IN THE MAKING" }.uppercase(),color=Color(0xFFE4D6B8),fontSize=if(compact) 7.sp else 9.sp,letterSpacing=1.4.sp,maxLines=1,overflow=TextOverflow.Ellipsis)
         }

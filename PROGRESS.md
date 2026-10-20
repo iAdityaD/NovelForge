@@ -34,3 +34,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Added a Robolectric native-rendering flow test for library, workspace, editor, reader, and story bible, with screenshot output.
 - Removed transient Kotlin compiler session files from source tracking.
 - Restored the local build toolchain after workspace tool caches expired. Clean compilation and validation are in progress; no APK is marked verified yet.
+
+## Stage 5 — Reproducible build and visual corrections
+- Upgraded Room to 2.7.2 and switched to KSP2 to resolve clean-build code generation incompatibilities.
+- Fixed API 26 theme compatibility using version-qualified navigation bar resources.
+- Fixed native screenshot capture in the Compose UI test. Improved text contrast and responsive cover typography.
+- The previous session's uncommitted planning additions were not retained by the workspace. Restoring them from the documented checkpoint next.
+- GitHub Actions is the verification authority for this checkpoint; final results follow.

@@ -1,7 +1,7 @@
 package com.novelforge.app
 
 import android.graphics.Bitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
+import android.graphics.Canvas
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import org.junit.Rule
@@ -22,7 +22,13 @@ class StudioUiTest {
     private fun shot(name: String) {
         compose.waitForIdle()
         val file=File("build/screenshots/$name.png");file.parentFile.mkdirs()
-        file.outputStream().use {compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG,100,it)}
+        compose.runOnIdle {
+            val view = compose.activity.window.decorView
+            val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+            view.draw(Canvas(bitmap))
+            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG,100,it) }
+            bitmap.recycle()
+        }
     }
     @Test fun libraryWorkspaceEditorAndReaderRenderAndNavigate() {
         compose.onNodeWithText("A home for your\nnext great story.").assertExists()
