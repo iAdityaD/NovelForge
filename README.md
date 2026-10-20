@@ -1,26 +1,41 @@
-# NovelForge — Android writing studio
+# NovelForge — local Android writing workspace
 
-An offline Android app for drafting novels, organizing a story bible, and reading your manuscript. Kotlin + Jetpack Compose + Room. Editorial ivory/forest design, dark mode, and lightweight procedural covers.
+NovelForge 0.2 organizes each novel like a coding project: an independent workspace with a flexible folder tree, Markdown pages and linked story references. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
 
-## Screenshots
+## Screens
 
-Actual Compose screens rendered by the automated Android UI test.
+Actual Compose screens captured by the automated native-rendering test.
 
-| Bookshelf | Writing | Reading |
+| Library | Workspace | Analytics |
 | --- | --- | --- |
-| ![Bookshelf](docs/screenshots/bookshelf.png) | ![Editor](docs/screenshots/editor.png) | ![Reader](docs/screenshots/reader.png) |
+| ![Library](docs/screenshots/bookshelf.png) | ![Workspace](docs/screenshots/workspace.png) | ![Analytics](docs/screenshots/analytics.png) |
 
-## Verified build
+| Create workspace | Editor | Settings |
+| --- | --- | --- |
+| ![Creation](docs/screenshots/creation.png) | ![Editor](docs/screenshots/editor.png) | ![Settings](docs/screenshots/settings.png) |
 
-[CI run 39361773110](https://github.com/iAdityaD/NovelForge/actions/runs/39361773110) passed for source commit `8accbf9e6f89992643ff9f390a7196ce542a50e1`:
+See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactions.
 
-- Debug APK and instrumentation APK compiled.
-- 10 JVM tests passed (backup validation, SQLite/FTS, native-rendered UI navigation and bookmarks).
-- 2 tests passed on an accelerated Android 14 / API 34 emulator, including timeline creation through the dialog and save-before-navigation.
-- Android lint passed with 0 errors and 21 non-blocking warnings (dependency/target updates, extraction-rule recommendation, KTX suggestions).
-- APK signature verified. Debug APK is 16,844,410 bytes; Android 8.0+.
+## Navigation and features
 
-Download `NovelForge-debug` from that run's Artifacts section. This is a development-signed build; export a project backup before switching builds or reinstalling. Future production distribution needs a stable private signing key. Physical-device accessibility and frame-time certification remain pending.
+- **Library:** grid/list workspaces, covers, status filters, word goals, continue writing and global full-text search.
+- **Guide:** five practical offline lessons on workspace structure, linking characters/worlds, scene planning, revision and backup.
+- **Analytics:** writing streak above the workspace dropdown. All workspaces shows portfolio totals by status; one workspace shows manuscript progress, chapter states and story-bible statistics. Both include words, estimated pages, chapters, character profiles and daily activity.
+- **Settings:** a category index leading to separate Appearance, Editor, Reading, Data & backup, Recently deleted and About screens.
+- **Workspace setup:** optional checkbox templates for Chapters, Characters, Lore, Plot and Metadata. Add any nested folders and files later.
+- **Explorer:** expand/collapse, rename, move, sibling ordering, long-press drag onto folders, and recoverable subtree deletion. File type remains independent of folder location.
+- **Writing:** autosave, syntax coloring, proportional/monospace choice, formatting toolbar, wiki-link picker, focus mode, undo/redo, checkpoints, backlinks and word/character/reading-time metrics.
+- **Reading:** typography controls, warm paper, contents, bookmarks, remembered position and fullscreen controls.
+- **Connections:** pan/zoom/tap graph plus a textual link list. Graph display caps at 40 nodes; the list retains all references.
+- **Local-first data:** Room/SQLite, FTS search, portable JSON backups and Markdown manuscript export. No account, network permission or remote analytics service.
+
+The explorer is a logical tree in the local database, not an external Markdown vault. Pages are estimated at 250 manuscript words. Writing history starts with 0.2; old streaks are not invented. Word additions measure positive net changes between saves.
+
+## Verification and installation
+
+[CI run 39430284995](https://github.com/iAdityaD/NovelForge/actions/runs/39430284995) passed for source `272686aaa8b749dd2fe66ec12e7ec46495a336c5`: 14 JVM tests, 3 API 34 emulator tests, compilation and lint (0 errors, 24 warnings). APK signature, package/version and minimum Android version were verified. APK size is 17,024,634 bytes. GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer.
+
+**Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
 
 ## Run
 
@@ -33,23 +48,6 @@ Open this repository in Android Studio, use JDK 17, install Android SDK 35, and 
 
 The development APK is `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions builds and retains this APK after each successful push to main. Debug builds are for evaluation, not store distribution. Configure your own signing key for release builds.
 
-## Working features
-
-- Local bookshelf with grid/list layouts and four cover editions.
-- Create novels, edit title/author/genre/synopsis/word goal.
-- Chapters, arcs, ordering, arc assignment, and a drafting-status board.
-- Character, location, backstory, worldbuilding, plot, research, screenplay, and free-note templates.
-- Markdown-source editor, selection formatting, focus mode, grouped undo/redo, autosave and visible failure handling.
-- Reorderable story timeline with event templates; connection map and incoming backlinks.
-- Chapter bookmarks and selectable reader text.
-- Stable-ID wiki links (`[[123|Mara]]`), rendered as tappable links in reading mode.
-- Twenty manual revision checkpoints per page; recoverable deleted pages.
-- Continuous reader, contents, previous/next chapters, serif/sans, warm paper, adjustable type, remembered scroll position.
-- Room FTS4 full-text search across all books, excluding trash.
-- Portable JSON project backup/restore and Markdown manuscript export through Android's document picker.
-- Optional sample project; no sample data is silently inserted.
-- No INTERNET permission, accounts, analytics, or remote services.
-
 ## Data and safety
 
 Room is the source of truth. Library and outline screens load summary projections; full text is loaded when opening a page. Edits are saved after a 400 ms pause, flushed before navigation, and flushed when the activity stops. A sudden process kill during the unsaved debounce window can still lose that latest fragment; the UI displays `Saving…` until persistence completes. Explicit save failures block editor navigation.
@@ -58,12 +56,14 @@ Project backups contain current active pages, metadata, and story structure. Res
 
 No destructive database migrations are enabled. Schema exports live under `app/schemas`; future schema changes need explicit migrations and restore testing.
 
-## Scope of this build
+Room schema v2 migrates installed v1 databases without destructive fallback, preserving entry IDs, revisions, arc references and full-text search, and organizing existing pages into default folders. Backup v2 includes folder hierarchy and project status; v1 backups remain importable. Backup imports do not restore writing streak history.
 
-This is a functional first Android build, not a claim that the entire product roadmap is finished. The screenplay editor currently provides a monospace template and scene-heading insertion, not industry-standard screenplay pagination/export. Reader rendering supports headings, emphasis, bullets/checklists and wiki links, not the full CommonMark specification.
+## Limits and next work
 
-Still to implement: user-imported cover/media attachments, image deduplication, WYSIWYG editing, general Markdown-folder import, EPUB/PDF/DOCX export, reader pagination/highlights/TTS, automatic revision diffs, typed relationships and alias management, richer scene/volume hierarchy, split-pane tablet navigation, automatic external backup scheduling, local model integrations, release signing and physical-device performance/accessibility certification.
+This is a functional development build. Physical-device frame-time, large-font and screen-reader certification remain pending. The screenplay template does not implement professional screenplay pagination. Reader rendering supports a Markdown subset rather than full CommonMark.
+
+Future work includes imported cover/media attachments, general Markdown-vault import, EPUB/PDF/DOCX export, reader pagination/highlights/TTS, revision diffs, richer link aliases, split-pane tablet navigation, scheduled external backups and release signing. Backups use Android's document picker; automatic cloud sync is not implemented.
 
 ## Resume work
 
-Read `PROGRESS.md` first. It records stage commits, validation, limitations, and the next work. Preserve existing data and user edits; commit each completed stage as requested by the owner.
+Read `PROGRESS.md` and `docs/REDESIGN.md` first. Preserve existing data and user edits; commit each completed stage as requested by the owner.

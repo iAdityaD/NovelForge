@@ -88,3 +88,14 @@ Every stage is committed to main as requested. Build verification and limitation
 - Preserved renamed/moved file metadata across later editor saves; protected trashed open files from resurrection.
 - Updated system bars for both themes and added quote/callout rendering in reading mode.
 - CI compilation, migration tests, device interactions and visual inspection are in progress.
+
+## Redesign stage D — Verified 0.2 delivery (2026-10-20)
+- Source commit: 272686aaa8b749dd2fe66ec12e7ec46495a336c5. CI: https://github.com/iAdityaD/NovelForge/actions/runs/39430284995.
+- Passed assembleDebug, testDebugUnitTest (14 tests), lintDebug (0 errors, 24 warnings), assembleDebugAndroidTest and connectedDebugAndroidTest (3 tests, API 34).
+- Device checks cover FTS edits/trash, installed schema v1-to-v2 migration, and custom workspace creation with unchecked Lore, custom folder/file, writing/reading, move-to-root and portfolio/novel analytics filtering.
+- Fixed asynchronous test navigation waits and library card text clipping. Inspected native-rendered creation, Library, explorer, editor, analytics, Guide and Settings screenshots.
+- APK 0.2.0, versionCode 2, minimum API 26; verified APK signature. Size 17,024,634 bytes. SHA256 e6bd06c03240db46a92f28f85b0d6db87758a5e5f7a9387526c64dd5c5694264.
+- Packaged APK and installation instructions as NovelForge-v0.2-Android.zip to avoid the earlier direct APK attachment download issue.
+- Confirmed old 0.1 and new 0.2 debug signing certificates differ. Users must export all project backups before uninstalling the older build; reinstall/restore does not preserve revisions, bookmarks or activity history. Production signing remains future work.
+- README and docs/REDESIGN.md describe the new four-tab UI, workspace hierarchy, data semantics and remaining limits. No further code changes after the verified commit; final checkpoint only updates documentation/screenshots.
+- Next: stable release signing, physical-device performance/accessibility review, and the explicitly listed export/media roadmap. Do not imply those are completed.
