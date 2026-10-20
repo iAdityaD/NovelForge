@@ -33,6 +33,10 @@ class StudioUiTest {
 
     @Test
     fun redesignedWorkspaceAndFourTabsRender() {
+        compose.onAllNodesWithText("New workspace").onLast().performClick()
+        compose.onNodeWithText("Novel title").assertExists()
+        shot("00-creation")
+        compose.onNodeWithContentDescription("Cancel workspace creation").performClick()
         compose.onNodeWithText("Open demo").performScrollTo().performClick()
         compose.waitUntil(20000) {
             compose.onAllNodesWithText("01_Chapters").fetchSemanticsNodes().isNotEmpty()

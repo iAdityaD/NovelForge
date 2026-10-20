@@ -15,7 +15,8 @@ class WritingFlowTest {
     fun createsCustomWorkspaceFileAndAnalytics() {
         compose.onAllNodesWithText("New workspace").onLast().performClick()
         compose.onNodeWithText("Novel title").performTextInput("The Glass World")
-        compose.onNodeWithText("03_Lore").performScrollTo().performClick()
+        compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("03_Lore"))
+        compose.onNodeWithText("03_Lore").performClick()
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) {
             compose.onAllNodesWithText("01_Chapters").fetchSemanticsNodes().isNotEmpty()

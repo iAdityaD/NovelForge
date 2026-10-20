@@ -13,6 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -147,9 +148,10 @@ fun LibraryScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         row.forEach { book ->
                             Column(
-                                Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).clickable {
-                                    onBook(book.id)
-                                }
+                                Modifier.weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable { onBook(book.id) }
+                                    .padding(bottom = 12.dp)
                             ) {
                                 WorkspaceCard(book, entries.filter { it.bookId == book.id }, false)
                             }
@@ -274,7 +276,7 @@ fun NewWorkspaceScreen(
             )
         }
         LazyColumn(
-            Modifier.weight(1f),
+            Modifier.weight(1f).testTag("workspace-form"),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
