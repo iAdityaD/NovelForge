@@ -425,6 +425,30 @@ fun ExplorerTree(
                 Box {
                     ActionIcon(Icons.Outlined.MoreHoriz, "Actions for ${e.title}", { menu = true })
                     DropdownMenu(menu, { menu = false }) {
+                        val siblings =
+                            entries
+                                .filter {
+                                    it.folderId == e.folderId && (it.kind == "Folder") == folder
+                                }
+                                .sortedWith(
+                                    compareBy<EntrySummary> { it.position }.thenBy { it.title }
+                                )
+                        DropdownMenuItem(
+                            text = { Text("Move up") },
+                            enabled = siblings.firstOrNull()?.id != e.id,
+                            onClick = {
+                                vm.moveEntry(e.id, -1)
+                                menu = false
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Move down") },
+                            enabled = siblings.lastOrNull()?.id != e.id,
+                            onClick = {
+                                vm.moveEntry(e.id, 1)
+                                menu = false
+                            },
+                        )
                         listOf("Rename", "Move", "Trash").forEach { name ->
                             DropdownMenuItem(
                                 text = { Text(name) },

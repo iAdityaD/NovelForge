@@ -124,7 +124,7 @@ fun SettingsNavigation(
                     "Monospace editor",
                     "A code-editor feel for Markdown",
                     vm.editorMono,
-                    { vm.setEditorMono(it) },
+                    { vm.updateEditorMono(it) },
                 )
             }
             item {
@@ -132,7 +132,7 @@ fun SettingsNavigation(
                     "Markdown syntax colors",
                     "Highlight headings, emphasis, quotes and links",
                     vm.syntaxColors,
-                    { vm.setSyntaxColors(it) },
+                    { vm.updateSyntaxColors(it) },
                 )
             }
             item {

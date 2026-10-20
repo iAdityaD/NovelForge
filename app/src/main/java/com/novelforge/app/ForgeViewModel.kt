@@ -34,12 +34,12 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
     var syntaxColors by mutableStateOf(prefs.getBoolean("syntaxColors", true))
         private set
 
-    fun setEditorMono(value: Boolean) {
+    fun updateEditorMono(value: Boolean) {
         editorMono = value
         prefs.edit().putBoolean("editorMono", value).apply()
     }
 
-    fun setSyntaxColors(value: Boolean) {
+    fun updateSyntaxColors(value: Boolean) {
         syntaxColors = value
         prefs.edit().putBoolean("syntaxColors", value).apply()
     }
@@ -467,7 +467,12 @@ class ForgeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun moveEntry(id: Long, delta: Int) = launchWork {
         val e = dao.entry(id) ?: return@launchWork
-        val entries = dao.entries(e.bookId).filter { it.kind == e.kind }
+        val entries =
+            dao.entries(e.bookId)
+                .filter {
+                    it.folderId == e.folderId && (it.kind == "Folder") == (e.kind == "Folder")
+                }
+                .sortedWith(compareBy<Entry> { it.position }.thenBy { it.title })
         val index = entries.indexOfFirst { it.id == id }
         val target = index + delta
         if (target !in entries.indices) return@launchWork
