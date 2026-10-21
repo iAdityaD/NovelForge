@@ -124,3 +124,15 @@ Every stage is committed to main as requested. Build verification and limitation
 - Inspected native-rendered creation and drawer screenshots; saved refreshed repository screenshots and docs/ARCHITECTURE.md. Generated Room schema 3 is retained for migration testing.
 - Built APK 0.3.0/versionCode 3/minSDK 26. Signature verified. SHA256 a439363648d2897f2c7760e672bcc0227ed00420c8aa8ecad16b4550c406c4bc, 17,460,642 bytes. Final packaging waits for device verification.
 - Next: inspect device tests and their synopsis/limits screenshots, fix any failures, package APK/installation ZIP and update final validation record.
+
+
+## 0.3 stage D — Verified delivery (2026-10-21)
+- Final app source: 2e7911d4c92910113de2cb05bedc700b582ca451. CI: https://github.com/iAdityaD/NovelForge/actions/runs/39533043838.
+- Passed compilation, module boundaries, 19 JVM tests, lint (0 errors, 14 warnings), and all five API 34 instrumentation tests with no failures/skips.
+- Device tests cover v1→v3 and v2→v3 migration, FTS, custom starter folders, genre persistence, synopsis overflow rejection/save/reopen, settings limits, writing/reading, file moves and analytics filters.
+- Corrected test synchronization: scroll to the synopsis section label, use a stable first workspace action while data loads, scope move destination to its dialog, bound test runtime, and retain screenshots in shared test media before UTP app cleanup.
+- Visual inspection found keyboard panning in the full-screen dialog. Novel details now uses the Activity layout; verified title, bounded synopsis/scrollbar and Save changes remain visible above the keyboard. Test asserts header/save visibility.
+- Captured and inspected synopsis, limits and custom-folder screens; repository screenshots and architecture documentation are current.
+- APK: 0.3.0, versionCode 3, minSDK 26, 17,460,642 bytes. SHA256 d16353d0fe924f81b72dea44b9b7edbd77cc4b5485351127101f292f44417576. APK signature verified; certificate SHA256 9f0ae48f8c91fffee48b12277e549c308a1f7e6a6aeb16ed7076138d637481f5.
+- Delivery: NovelForge-v0.3-Android.zip contains APK and INSTALL.txt. Export every novel before uninstalling an older debug build with a different signing key; portable backups exclude revisions, trash, bookmarks and activity history.
+- No application code changes after the verified source. Remaining work is the documented future roadmap: stable production signing, physical-device performance/accessibility review, and export/media capabilities. Requested 0.3 architecture/metadata/explorer upgrade is complete.

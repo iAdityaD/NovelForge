@@ -18,6 +18,12 @@ Actual Compose screens captured by the automated native-rendering test.
 | --- |
 | ![Explorer drawer](docs/screenshots/drawer.png) |
 
+API 34 device captures, including the keyboard-open form:
+
+| Synopsis | Content limits | Custom folders |
+| --- | --- | --- |
+| ![Synopsis](docs/screenshots/synopsis.png) | ![Limits](docs/screenshots/limits.png) | ![Custom folders](docs/screenshots/custom-folders.png) |
+
 See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactions.
 
 ## Architecture
@@ -42,7 +48,9 @@ The explorer is a logical tree in the local database, not an external Markdown v
 
 ## Verification and installation
 
-The 0.3 build at source `7d004b89de5704b16767fa8be2b348274b748962` passes compilation, architecture boundaries, 19 JVM tests and lint (0 errors, 14 warnings). [CI run 39495977321](https://github.com/iAdityaD/NovelForge/actions/runs/39495977321) contains the current verification; emulator results are pending at this documentation checkpoint. GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer.
+The 0.3 build at source `2e7911d4c92910113de2cb05bedc700b582ca451` passes compilation, architecture boundaries, 19 JVM tests, five Android API 34 device tests, and lint (0 errors, 14 warnings). [CI run 39533043838](https://github.com/iAdityaD/NovelForge/actions/runs/39533043838) retains the APK, reports and device screenshots. Device coverage includes both database migrations, full-text search, synopsis limits and persistence, multiple genres, custom folders, writing/reading, file moves and analytics filters. The keyboard-open details screen was visually inspected and its header/save visibility is asserted.
+
+GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer. The packaged download is `NovelForge-v0.3-Android.zip` (APK plus installation instructions). APK SHA256: `d16353d0fe924f81b72dea44b9b7edbd77cc4b5485351127101f292f44417576`.
 
 **Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
 
