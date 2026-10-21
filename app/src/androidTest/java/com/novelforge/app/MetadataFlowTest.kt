@@ -55,7 +55,7 @@ class MetadataFlowTest {
         compose.waitUntil(10000) {
             compose.onAllNodesWithText("New workspace", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onAllNodesWithText("New workspace", useUnmergedTree = true).onLast().performClick()
+        compose.onAllNodesWithText("New workspace", useUnmergedTree = true).onFirst().performClick()
         android.util.Log.i("MetadataFlow", "Step 38")
         compose.onNodeWithText("Novel title").performTextInput("The Two Worlds")
         android.util.Log.i("MetadataFlow", "Step 39")
