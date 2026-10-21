@@ -51,7 +51,7 @@ class WritingFlowTest {
         compose.onNodeWithText("Magic system.md").assertExists()
         compose.onNodeWithContentDescription("Actions for Magic system").performClick()
         compose.onNodeWithText("Move").performClick()
-        compose.onNodeWithText("Workspace root").performClick()
+        compose.onNode(hasText("Workspace root") and hasAnyAncestor(isDialog())).performClick()
         compose.onNodeWithContentDescription("Back to library").performClick()
         compose.onNodeWithText("Analytics").performClick()
         compose.onNodeWithText("Your writing portfolio").assertExists()
