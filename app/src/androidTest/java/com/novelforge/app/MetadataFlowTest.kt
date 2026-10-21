@@ -116,6 +116,7 @@ class MetadataFlowTest {
         android.util.Log.i("MetadataFlow", "Step 72")
         compose.onNodeWithText("50 / 50 words").assertExists()
         android.util.Log.i("MetadataFlow", "Step 73")
+        compose.onNodeWithText("Novel details").assertIsDisplayed()
         compose.onNodeWithText("Save changes").assertIsDisplayed()
         android.util.Log.i("MetadataFlow", "Step 74")
         screenshot("synopsis")

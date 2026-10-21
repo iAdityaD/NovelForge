@@ -22,8 +22,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.novelforge.core.model.*
 import com.novelforge.domain.story.*
 import com.novelforge.domain.workspace.*
@@ -50,11 +48,7 @@ fun NovelDetailsScreen(book: Book, limit: Int, onDismiss: () -> Unit, onSave: (B
     }
     val words = wordCount(synopsis)
     val scroll = rememberScrollState()
-    Dialog(
-        onDismissRequest = { close() },
-        properties =
-            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-    ) {
+    Box(Modifier.fillMaxSize()) {
         BackHandler { close() }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {

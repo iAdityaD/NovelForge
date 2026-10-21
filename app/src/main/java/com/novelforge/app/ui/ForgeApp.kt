@@ -112,6 +112,7 @@ fun ForgeApp() {
     }
     val roots =
         listOf(Destination.Library, Destination.Guide, Destination.Analytics, Destination.Settings)
+    if (editBook == null) {
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
@@ -335,6 +336,7 @@ fun ForgeApp() {
             workspace.createFolder(bookId, name, drawerFolder)
             newDrawerFolder = false
         }
+    }
     editBook?.let { b ->
         NovelDetailsScreen(b, prefs.synopsisLimit, { editBook = null }) { updated ->
             workspace.editBook(updated) { editBook = null }
