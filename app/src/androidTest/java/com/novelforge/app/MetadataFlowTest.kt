@@ -43,7 +43,7 @@ class MetadataFlowTest {
         android.util.Log.i("MetadataFlow", "Step 36")
         compose.onNodeWithText("Library").performClick()
         android.util.Log.i("MetadataFlow", "Step 37")
-        compose.onAllNodesWithText("New workspace").onLast().performClick()
+        compose.onAllNodes(hasText("New workspace") and hasClickAction()).onLast().performClick()
         android.util.Log.i("MetadataFlow", "Step 38")
         compose.onNodeWithText("Novel title").performTextInput("The Two Worlds")
         android.util.Log.i("MetadataFlow", "Step 39")
@@ -93,7 +93,7 @@ class MetadataFlowTest {
         compose.onNodeWithText("Historical fiction").assertExists()
         compose
             .onNodeWithTag("novel-details-form")
-            .performScrollToNode(hasTestTag("synopsis-input"))
+            .performScrollToNode(hasText("Synopsis", substring = false))
         android.util.Log.i("MetadataFlow", "Step 67")
         compose.onNodeWithTag("synopsis-input").performTextReplacement("Word ".repeat(51))
         android.util.Log.i("MetadataFlow", "Step 68")
@@ -119,7 +119,7 @@ class MetadataFlowTest {
         compose.onNodeWithText("Edit workspace details").performClick()
         compose
             .onNodeWithTag("novel-details-form")
-            .performScrollToNode(hasTestTag("synopsis-input"))
+            .performScrollToNode(hasText("Synopsis", substring = false))
         android.util.Log.i("MetadataFlow", "Step 84")
         compose.onNodeWithTag("synopsis-input").assertTextEquals("Remembering ".repeat(50).trim())
         android.util.Log.i("MetadataFlow", "Step 85")

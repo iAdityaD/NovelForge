@@ -11,9 +11,9 @@ import org.junit.runner.RunWith
 class WritingFlowTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
-    @Test
+    @Test(timeout = 90000)
     fun createsCustomWorkspaceFileAndAnalytics() {
-        compose.onAllNodesWithText("New workspace").onLast().performClick()
+        compose.onAllNodes(hasText("New workspace") and hasClickAction()).onLast().performClick()
         compose.onNodeWithText("Novel title").performTextInput("The Glass World")
         compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("03_Lore"))
         compose.onNodeWithText("03_Lore").performClick()
