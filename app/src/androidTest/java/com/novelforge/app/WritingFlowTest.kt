@@ -13,7 +13,10 @@ class WritingFlowTest {
 
     @Test(timeout = 90000)
     fun createsCustomWorkspaceFileAndAnalytics() {
-        compose.onAllNodes(hasText("New workspace") and hasClickAction()).onLast().performClick()
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("New workspace", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onAllNodesWithText("New workspace", useUnmergedTree = true).onLast().performClick()
         compose.onNodeWithText("Novel title").performTextInput("The Glass World")
         compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("03_Lore"))
         compose.onNodeWithText("03_Lore").performClick()

@@ -5,7 +5,6 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import java.io.File
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,11 +17,21 @@ class MetadataFlowTest {
         android.util.Log.i("MetadataFlow", "Step 18")
         compose.waitForIdle()
         val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-        val folder = File(compose.activity.getExternalFilesDir(null), "screenshots")
-        folder.mkdirs()
-        File(folder, "$name.png").outputStream().use {
+        // Shared media survives UTP uninstalling the app before the host collects reports.
+        val resolver = compose.activity.contentResolver
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+            put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/NovelForgeTests")
+            put(android.provider.MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = checkNotNull(resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+        checkNotNull(resolver.openOutputStream(uri)).use {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
         }
+        values.clear()
+        values.put(android.provider.MediaStore.Images.Media.IS_PENDING, 0)
+        resolver.update(uri, values, null, null)
         bitmap.recycle()
     }
 
@@ -43,7 +52,10 @@ class MetadataFlowTest {
         android.util.Log.i("MetadataFlow", "Step 36")
         compose.onNodeWithText("Library").performClick()
         android.util.Log.i("MetadataFlow", "Step 37")
-        compose.onAllNodes(hasText("New workspace") and hasClickAction()).onLast().performClick()
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("New workspace", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onAllNodesWithText("New workspace", useUnmergedTree = true).onLast().performClick()
         android.util.Log.i("MetadataFlow", "Step 38")
         compose.onNodeWithText("Novel title").performTextInput("The Two Worlds")
         android.util.Log.i("MetadataFlow", "Step 39")
