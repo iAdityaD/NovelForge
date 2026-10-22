@@ -220,7 +220,7 @@ fun WorkspaceScreen(
 fun defaultKindForFolder(name: String?) =
     when {
         name?.contains("Characters", true) == true -> "Character"
-        (name?.contains("Lore", true) == true || name?.contains("World", true) == true) -> "Worldbuilding"
+        (name?.contains("Lore", true) == true || name?.equals("Story World", true) == true) -> "Worldbuilding"
         name?.contains("Plot", true) == true -> "Plot thread"
         (name?.contains("Chapters", true) == true || name?.contains("Manuscript", true) == true) -> "Chapter"
         else -> "Note"

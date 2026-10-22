@@ -145,3 +145,8 @@ Every stage is committed to main as requested. Build verification and limitation
 - Deletion removes workspace data, revisions, genres, FTS content and activity, coordinates with the editing session and clears local reading references.
 - Library uses a combined status/genre filter dialog and header import action. Domain boundaries retained; no new dependencies or schema version changes.
 - Implementation checkpoint only: update tests, run full CI and inspect screenshots before delivery.
+
+## 0.4 stage B — Verification coverage
+- Added repository tests for standard/scratch creation, customized folder roles, persistent IDs across rename/move/reopen, guide backup compatibility, duplicate validation, and deletion isolation/cleanup.
+- Updated device flows for template settings, automatic overview reading, metadata/status editing, combined library filters, recreation, deletion cancel/confirm and empty workspace writing.
+- Architecture boundaries and whitespace checks pass locally. Full build, JVM, lint and emulator verification are now requested in CI.

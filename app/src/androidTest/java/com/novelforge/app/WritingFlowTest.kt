@@ -13,13 +13,10 @@ class WritingFlowTest {
 
     @Test(timeout = 90000)
     fun createsCustomWorkspaceFileAndAnalytics() {
-        compose.waitUntil(10000) {
-            compose.onAllNodesWithText("New workspace", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onAllNodesWithText("New workspace", useUnmergedTree = true).onFirst().performClick()
+        compose.onNodeWithTag("new-workspace").performClick()
         compose.onNodeWithText("Novel title").performTextInput("The Glass World")
-        compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("03_Lore"))
-        compose.onNodeWithText("03_Lore").performClick()
+        compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("Build from scratch"))
+        compose.onNodeWithText("Build from scratch").performClick()
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) {
             compose
@@ -27,7 +24,7 @@ class WritingFlowTest {
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        compose.onNodeWithText("03_Lore").assertDoesNotExist()
+        compose.onNodeWithText("Manuscript").assertDoesNotExist()
         compose.onNodeWithContentDescription("New folder").performClick()
         compose.onNodeWithText("Folder name").performTextInput("World Two")
         compose.onNodeWithText("Save").performClick()
