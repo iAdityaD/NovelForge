@@ -1,6 +1,6 @@
 # NovelForge — local Android writing workspace
 
-NovelForge 0.3 organizes each novel like a coding project: an independent workspace with a flexible folder tree, Markdown pages and linked story references. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
+NovelForge 0.4 organizes each novel like a coding project: an independent workspace with a flexible folder tree, Markdown pages and linked story references. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
 
 ## Screens
 
@@ -18,11 +18,11 @@ Actual Compose screens captured by the automated native-rendering test.
 | --- |
 | ![Explorer drawer](docs/screenshots/drawer.png) |
 
-API 34 device captures, including the keyboard-open form:
+API 34 device captures:
 
-| Synopsis | Content limits | Custom folders |
+| Details | Library filters | Overview guide |
 | --- | --- | --- |
-| ![Synopsis](docs/screenshots/synopsis.png) | ![Limits](docs/screenshots/limits.png) | ![Custom folders](docs/screenshots/custom-folders.png) |
+| ![Details](docs/screenshots/workspace-details.png) | ![Filters](docs/screenshots/library-filter.png) | ![Guide](docs/screenshots/overview-guide.png) |
 
 See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactions.
 
@@ -32,13 +32,13 @@ A domain-based modular monolith with Clean Architecture boundaries, Hilt depende
 
 ## Navigation and features
 
-- **Library:** grid/list workspaces, covers, status filters, word goals, continue writing and global full-text search.
+- **Library:** grid/list workspaces, covers, combined status/genre filter dialog, header backup import, word goals, continue writing and global full-text search.
 - **Guide:** five practical offline lessons on workspace structure, linking characters/worlds, scene planning, revision and backup.
 - **Analytics:** writing streak above the workspace dropdown. All workspaces shows portfolio totals by status; one workspace shows manuscript progress, chapter states and story-bible statistics. Both include words, estimated pages, chapters, character profiles and daily activity.
 - **Settings:** a category index leading to separate Appearance, Editor, Reading, Data & backup, Recently deleted and About screens.
-- **Workspace setup:** optional checkbox templates plus Add folder, rename and remove controls for custom starter folders. Add nested folders and files later.
+- **Workspace setup:** Standard structure or Build from scratch. Standard creates eight beginner-friendly folders, editable README guides and two optional-template chapters; scratch starts empty. Customize future starter folders in Settings → Writing → Workspace structure.
 - **Explorer:** compact flat rows, separate expand/select controls, search, expand/collapse all, active-file reveal, rename, move, sibling ordering, drag-to-folder and recoverable subtree deletion. The editor drawer includes create actions and an explicit close button.
-- **Novel details:** a full-screen form, multiple genre chips/custom genres, a bounded scrolling synopsis with a scrollbar and live word count, and unsaved-change protection. Settings → Writing → Content limits sets a global 50–10,000-word synopsis cap (default 500). Existing over-limit text can be retained or shortened; oversized new input is rejected with an explanation.
+- **Novel details:** a separate pencil action opens title, author, multiple genres and writing status. Synopsis belongs in the overview document. Overflow contains export, backup and confirmed permanent workspace deletion.
 - **Writing:** autosave, syntax coloring, proportional/monospace choice, formatting toolbar, wiki-link picker, focus mode, undo/redo, checkpoints, backlinks and word/character/reading-time metrics.
 - **Reading:** typography controls, warm paper, contents, bookmarks, remembered position and fullscreen controls.
 - **Connections:** pan/zoom/tap graph plus a textual link list. Graph display caps at 40 nodes; the list retains all references.
@@ -48,9 +48,9 @@ The explorer is a logical tree in the local database, not an external Markdown v
 
 ## Verification and installation
 
-The 0.3 build at source `2e7911d4c92910113de2cb05bedc700b582ca451` passes compilation, architecture boundaries, 19 JVM tests, five Android API 34 device tests, and lint (0 errors, 14 warnings). [CI run 39533043838](https://github.com/iAdityaD/NovelForge/actions/runs/39533043838) retains the APK, reports and device screenshots. Device coverage includes both database migrations, full-text search, synopsis limits and persistence, multiple genres, custom folders, writing/reading, file moves and analytics filters. The keyboard-open details screen was visually inspected and its header/save visibility is asserted.
+The 0.4 build at source `eef9834e796ddb90992882f5b993cdccf29628e2` passes compilation, architecture boundaries, 24 JVM tests, five Android API 34 device tests, and lint (0 errors, 14 warnings). [CI run 39831366795](https://github.com/iAdityaD/NovelForge/actions/runs/39831366795) retains the APK, reports and device screenshots. Coverage includes migrations, FTS, standard/scratch creation, customized starter roles, identity persistence, backup compatibility, deletion isolation, metadata/status editing, combined filters, writing/reading and analytics. Captured screens were visually inspected.
 
-GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer. The packaged download is `NovelForge-v0.3-Android.zip` (APK plus installation instructions). APK SHA256: `d16353d0fe924f81b72dea44b9b7edbd77cc4b5485351127101f292f44417576`.
+GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer. The packaged download is `NovelForge-v0.4-Android.zip` (APK plus installation instructions). APK SHA256: `d898053781e125200bd1b1658272579fb275dd798166521dec1c62f788b84dc2`.
 
 **Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
 

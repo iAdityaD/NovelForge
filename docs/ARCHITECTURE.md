@@ -1,4 +1,4 @@
-# NovelForge architecture (0.3)
+# NovelForge architecture (0.4)
 
 NovelForge is a local-first modular monolith: one Android application assembled from independently bounded Gradle modules. Presentation uses MVVM and immutable StateFlow state. Domain contracts and policies are plain Kotlin; data implementations use Room and Android services. Hilt supplies implementations at the application boundary.
 
@@ -24,7 +24,7 @@ NovelForge is a local-first modular monolith: one Android application assembled 
 | `feature:reader` | Reader, bookmarks, positions and reader ViewModel |
 | `feature:analytics` | Analytics UI and activity ViewModel |
 | `feature:guide` | Offline guide lessons |
-| `feature:settings` | Category settings, limits, trash and settings ViewModel |
+| `feature:settings` | Category settings, starter structure, trash and settings ViewModel |
 | `feature:backup` | Backup progress/error orchestration |
 
 ## Dependency direction
@@ -56,7 +56,7 @@ Room schema history stays in `app/schemas/com.novelforge.app.data.ForgeDb`. The 
 
 Schema 3 adds `BookGenre`, preserving the existing Book/Entry/Revision/FTS data. A legacy genre string becomes one genre value without guessing whether embedded punctuation was a delimiter. All genre writes are transactional with book metadata. New genre lists are trimmed and deduplicated without changing their displayed capitalization.
 
-Domain objects are mapped explicitly to database entities. Backup JSON is a separate versioned wire format, currently v3, with v1/v2 readers. JSON restores remap IDs and internal links transactionally. Existing over-limit synopses are preserved on migration and restore; the editor shows the over-limit state and allows retention or shortening. Global preferences remain device-local and use the existing preference keys.
+Domain objects are mapped explicitly to database entities. Backup JSON is a separate versioned wire format, currently v3, with v1/v2 readers. JSON restores remap IDs and internal links transactionally. Legacy synopsis metadata is preserved on migration and restore; the metadata form no longer edits it. New novel synopses belong in ordinary overview documents. Global preferences remain device-local and use the existing preference keys.
 
 ## Adding a feature
 
@@ -75,3 +75,11 @@ Example: character relationships belong to Story. Add relationship models and op
 The local data implementations currently share one module and one database so cross-domain changes can remain transactional. The graph lives inside the workspace feature. Preferences use a typed abstraction over existing SharedPreferences to preserve installed user settings. Navigation uses typed enum destinations plus saved IDs rather than a new navigation framework. Split these further when a concrete feature requires it, without weakening the domain boundaries.
 
 Production release signing, physical-device performance/accessibility review and the export/media roadmap remain separate work.
+
+## Beginner workspace extension (0.4)
+
+`StarterFolder` is a plain model with a stable role key, display name and enabled state. `domain:workspace` owns structure validation and guide content; `domain:story` owns optional document templates. Preferences persist the ordered structure as validated JSON. Settings edits future defaults without rewriting existing workspaces.
+
+Creation inserts the workspace, logical folders and documents in one Room transaction. It returns the overview document ID to app navigation, which opens Guide documents in the existing reader. Scratch creation inserts only the workspace. Renaming a starter role preserves its purpose; actual documents retain their generated IDs across move/rename operations. No database schema change or new dependency was needed.
+
+Whole-workspace deletion flushes and closes its active editing session, then transactionally removes the workspace and dependent database records. Reading references are cleared afterward. Existing per-document trash/restore remains separate from confirmed permanent workspace deletion.

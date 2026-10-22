@@ -1,4 +1,4 @@
-# Workspace redesign — 0.3
+# Workspace redesign — 0.4
 
 Each novel is an independent local workspace. Folders are user-controlled, not rigid categories. A file's type (chapter, character, lore, etc.) remains independent of its location, keeping analytics accurate when authors reorganize a world.
 
@@ -8,7 +8,7 @@ Each novel is an independent local workspace. Folders are user-controlled, not r
 - Analytics: a writing streak and activity strip above a workspace selector. All workspaces shows the portfolio (novels by status and combined manuscript totals). A selected workspace shows its manuscript progress, chapter states and story-bible counts. Pages are explicitly estimates at 250 manuscript words/page.
 - Settings: category index with separate Appearance, Editor, Reading, Data & backup, Trash and About pages.
 
-Opening a workspace hides the global tabs and presents a file explorer. The root contains only the folders selected in creation; folders can be added, nested, renamed, moved and trashed later. Long-press and drag onto a folder relocates an item; a Move action provides an accessible alternative. Folder deletion includes descendants and remains recoverable.
+Opening a workspace hides the global tabs and presents a file explorer. Standard creation opens the overview guide; scratch creation opens an empty explorer. The root contains the enabled starter folders; folders can be added, nested, renamed, moved and trashed later. Long-press and drag onto a folder relocates an item; a Move action provides an accessible alternative. Folder deletion includes descendants and remains recoverable.
 
 The editor uses a compact file header and breadcrumb, source Markdown with optional syntax color, a keyboard-friendly toolbar, wiki-link picker, save status and metrics. Reading mode retains only a small control strip which can be hidden. The graph links to actual files and supports selecting nodes.
 
@@ -21,13 +21,13 @@ The editor uses a compact file header and breadcrumb, source Markdown with optio
 ## Screen-by-screen walkthrough
 
 ### Library
-The landing page has a title, global search action, status filters, a Continue writing card and a workspace grid/list toggle. Project cards use lightweight geometric covers, title, genre, manuscript-word progress and last-edited date. New workspace stays available as a floating action. Empty results explain whether there are no novels or simply no novels matching the selected status.
+The landing page has a title, global search and backup-import actions, a combined status/genre filter dialog, a Continue writing card and a workspace grid/list toggle. Project cards use lightweight geometric covers, title, genre, manuscript-word progress and last-edited date. New workspace stays available as a floating action. Empty results explain whether there are no novels or simply no novels matching the selected status.
 
 ### Create workspace
-Creation is a full screen, so the keyboard does not compete with a cramped dialog. Enter title and author; select multiple genre chips or add custom genres; select a color; check or uncheck each starter folder. Add folder creates an additional checkbox entry, with rename/remove controls before creation. No folders are mandatory. Selecting Chapters creates a first chapter; selecting Metadata creates a novel-overview note. Authors can add missing folders later without recreating a novel.
+Creation is a full screen with optional author and multiple genres. Two radio cards offer Standard structure or Build from scratch. Standard uses the enabled folders in Settings → Writing → Workspace structure; scratch creates no folders or documents. The default structure is Novel Overview, Story Ideas, Characters, Story World, Plot & Timeline, Manuscript, Scene Ideas and Archive. Every folder gets an editable README guide; Manuscript also gets Chapter 1 and Chapter 2 with optional planning/revision sections. Creation opens the Novel Overview guide when that role is enabled. Planning never blocks drafting.
 
 ### Workspace explorer
-The header identifies the novel and provides details, completion status, export and backup actions. Files and Graph are local views inside the workspace; they do not replace the four global navigation tabs. The root row clears the current folder selection. Tapping the folder row selects the destination for new files and folders. Its separate arrow expands/collapses it. Search includes matching files and their ancestors; expand/collapse-all controls are available. The tree shows file type and word count beside its Markdown title.
+The header identifies the novel and has a separate pencil for details/status. Overflow offers export, backup and permanent workspace deletion with a named confirmation. Files and Graph are local views inside the workspace; they do not replace the four global navigation tabs. The root row clears the current folder selection. Tapping the folder row selects the destination for new files and folders. Its separate arrow expands/collapses it. Search includes matching files and their ancestors; expand/collapse-all controls are available. The tree shows file type and word count beside its Markdown title.
 
 A file menu offers rename, move to another folder/root, sibling ordering and recoverable trash. Dragging after a long press moves an item onto a folder. Invalid self/descendant folder moves are rejected. Trashing a folder includes its subtree; restoring it brings the subtree back. Restoring one child also restores its required ancestor folders.
 
@@ -56,11 +56,11 @@ The index only lists categories. Appearance controls light/dark theme; Editor co
 - Persisted records, not decorative cards, drive analytics and progress.
 - Native rendering, emulator interaction and database migration are tested in CI. Physical-device frame-time, screen-reader and large-font certification must not be inferred from those checks.
 
-## Novel details and content limits (0.3)
+## Novel details and structure settings (0.4)
 
-Novel details opens as a full-screen form rather than a growing dialog. The synopsis occupies a fixed-height text area with internal scrolling, a visible scrollbar when needed, and a word counter. Save remains outside the scrolling form, with keyboard insets applied. Closing changed details asks whether to discard.
+The pencil opens a full-screen form with title, author, multiple genres, color and writing-status dropdown (In progress, Completed, On hold). Save remains outside the scrolling form; changed details require discard confirmation. Synopsis has been removed from this form: writers keep it in the editable overview document. Existing stored synopsis metadata remains intact.
 
-Settings → Writing → Content limits controls the global synopsis cap, default 500 words, valid range 50–10,000. A paste exceeding the cap is rejected as a whole with an explanation. Lowering the cap does not delete existing text. Legacy/restored synopses above the cap can be retained or shortened but cannot grow until the limit is raised. Chapter goals remain non-blocking targets.
+Settings → Writing → Workspace structure provides enable checkboxes, rename/remove, Add folder and Reset default. Changes affect future standard workspaces only. Role keys preserve overview/manuscript behavior when display names change; custom folders receive a general-purpose guide.
 
 The drawer has a compact novel header, explicit close action, create-file/create-folder actions, and the same searchable flat explorer. Active-file highlighting differs from the selected destination folder. Opening the drawer reveals the active file's ancestor folders.
 

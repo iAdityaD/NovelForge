@@ -150,3 +150,12 @@ Every stage is committed to main as requested. Build verification and limitation
 - Added repository tests for standard/scratch creation, customized folder roles, persistent IDs across rename/move/reopen, guide backup compatibility, duplicate validation, and deletion isolation/cleanup.
 - Updated device flows for template settings, automatic overview reading, metadata/status editing, combined library filters, recreation, deletion cancel/confirm and empty workspace writing.
 - Architecture boundaries and whitespace checks pass locally. Full build, JVM, lint and emulator verification are now requested in CI.
+
+## 0.4 stage C — Verified delivery (2026-10-22)
+- App source: eef9834e796ddb90992882f5b993cdccf29628e2. CI: https://github.com/iAdityaD/NovelForge/actions/runs/39831366795.
+- Passed architecture boundaries, compilation, 24 JVM tests, five API 34 device tests, and lint (0 errors, 14 warnings). No failed/skipped tests.
+- Inspected actual library, creation, metadata, filter, guide, structure settings and deletion screens. Refreshed repository screenshots and architecture/walkthrough documentation.
+- Verified APK 0.4.0/versionCode 4/minSDK 26 and signing certificate. Size 17,477,026 bytes; SHA256 d898053781e125200bd1b1658272579fb275dd798166521dec1c62f788b84dc2. Certificate SHA256 3ec994ec210e991cb48cd900bf1940b848ba40a4bd8c149d2404fb6bce851cf2.
+- Packaged NovelForge-v0.4-Android.zip with APK and installation/backup instructions. Debug certificate differs from 0.3; export every workspace before uninstalling.
+- Requested 0.4 changes complete; existing workspace structures and legacy synopsis metadata remain intact. No application changes after verified source; this checkpoint updates documentation/screenshots only.
+- Future work remains production signing, physical-device performance/accessibility review, and the documented export/media roadmap.
