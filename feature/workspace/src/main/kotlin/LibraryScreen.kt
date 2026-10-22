@@ -27,14 +27,13 @@ import com.novelforge.domain.story.*
 import com.novelforge.domain.workspace.*
 
 @Composable
-fun NovelDetailsScreen(book: Book, limit: Int, onDismiss: () -> Unit, onSave: (Book) -> Unit) {
+fun NovelDetailsScreen(book: Book, onDismiss: () -> Unit, onSave: (Book) -> Unit) {
     var title by rememberSaveable(book.id) { mutableStateOf(book.title) }
     var author by rememberSaveable(book.id) { mutableStateOf(book.author) }
     var genres by rememberSaveable(book.id) { mutableStateOf(book.genres) }
     var cover by rememberSaveable(book.id) { mutableIntStateOf(book.cover) }
     var target by rememberSaveable(book.id) { mutableStateOf(book.target.toString()) }
-    var synopsis by rememberSaveable(book.id) { mutableStateOf(book.synopsis) }
-    var rejected by remember { mutableStateOf(false) }
+    var status by rememberSaveable(book.id) { mutableStateOf(book.status) }
     var discard by remember { mutableStateOf(false) }
     val dirty =
         title != book.title ||
@@ -42,12 +41,10 @@ fun NovelDetailsScreen(book: Book, limit: Int, onDismiss: () -> Unit, onSave: (B
             genres != book.genres ||
             cover != book.cover ||
             target != book.target.toString() ||
-            synopsis != book.synopsis
+            status != book.status
     fun close() {
         if (dirty) discard = true else onDismiss()
     }
-    val words = wordCount(synopsis)
-    val scroll = rememberScrollState()
     Box(Modifier.fillMaxSize()) {
         BackHandler { close() }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -97,86 +94,7 @@ fun NovelDetailsScreen(book: Book, limit: Int, onDismiss: () -> Unit, onSave: (B
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    item {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text("Synopsis", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "$words / $limit words",
-                                color =
-                                    if (words > limit) MaterialTheme.colorScheme.error
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        val accent = MaterialTheme.colorScheme.primary
-                        Box(
-                            Modifier.fillMaxWidth()
-                                .height(208.dp)
-                                .border(
-                                    1.dp,
-                                    if (rejected) MaterialTheme.colorScheme.error
-                                    else MaterialTheme.colorScheme.outline,
-                                    RoundedCornerShape(12.dp),
-                                )
-                                .padding(12.dp)
-                        ) {
-                            BasicTextField(
-                                synopsis,
-                                { next ->
-                                    if (MetadataPolicy.acceptsSynopsis(synopsis, next, limit)) {
-                                        synopsis = next
-                                        rejected = false
-                                    } else rejected = true
-                                },
-                                textStyle =
-                                    MaterialTheme.typography.bodyLarge.copy(
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                cursorBrush = SolidColor(accent),
-                                modifier =
-                                    Modifier.fillMaxSize()
-                                        .padding(end = 10.dp)
-                                        .verticalScroll(scroll)
-                                        .testTag("synopsis-input")
-                                        .semantics { contentDescription = "Synopsis text" },
-                            )
-                            Canvas(
-                                Modifier.align(Alignment.CenterEnd).width(3.dp).fillMaxHeight()
-                            ) {
-                                if (scroll.maxValue > 0) {
-                                    val fraction = size.height / (size.height + scroll.maxValue)
-                                    val thumb = (size.height * fraction).coerceAtLeast(24f)
-                                    val top = (size.height - thumb) * scroll.value / scroll.maxValue
-                                    drawRoundRect(
-                                        accent,
-                                        topLeft = Offset(0f, top),
-                                        size = Size(size.width, thumb),
-                                        cornerRadius = CornerRadius(size.width),
-                                    )
-                                }
-                            }
-                        }
-                        Text(
-                            when {
-                                rejected ->
-                                    "That edit exceeds $limit words. Increase the limit in Settings → Writing → Content limits."
-                                words > limit ->
-                                    "Existing text is preserved. Shorten it or increase the limit before adding more words."
-                                scroll.maxValue > 0 -> "Scroll inside the synopsis to read more."
-                                else ->
-                                    "Limit can be changed in Settings → Writing → Content limits."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color =
-                                if (rejected || words > limit) MaterialTheme.colorScheme.error
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 6.dp),
-                        )
-                    }
+                    item { ChoiceField("Writing status", status, bookStatuses) { status = it } }
                     item {
                         Text("Workspace color", style = MaterialTheme.typography.titleMedium)
                         Row(
@@ -203,14 +121,13 @@ fun NovelDetailsScreen(book: Book, limit: Int, onDismiss: () -> Unit, onSave: (B
                                 genres = genres,
                                 cover = cover,
                                 target = target.toInt(),
-                                synopsis = synopsis,
+                                status = status,
                             )
                         )
                     },
                     enabled =
                         title.isNotBlank() &&
-                            target.toIntOrNull()?.let { it in 1..10000000 } == true &&
-                            MetadataPolicy.acceptsSynopsis(book.synopsis, synopsis, limit),
+                            target.toIntOrNull()?.let { it in 1..10000000 } == true,
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp),
                 ) {
                     Text("Save changes")
@@ -259,8 +176,8 @@ fun EntryDialog(initialKind: String, onDismiss: () -> Unit, onSave: (String, Str
                 )
                 Text(
                     if (kind == "Chapter")
-                        "Start with a blank page. You can assign an arc from the manuscript outline."
-                    else "A thoughtful template will help you get started.",
+                        "A lightweight chapter template is ready. Planning and revision notes are optional."
+                    else "Every template field is optional. Start with the details that help you write.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

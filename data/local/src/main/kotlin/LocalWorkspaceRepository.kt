@@ -25,55 +25,42 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
     override val trash = dao.trash()
 
     override suspend fun createBook(
-        title: String,
-        author: String,
-        genres: List<String>,
-        cover: Int,
-        target: Int,
-        synopsis: String,
-        folders: Set<String>,
-    ): String {
-        require(title.isNotBlank())
-        MetadataPolicy.synopsis("", synopsis, preferences.state.value.synopsisLimit)
-        MetadataPolicy.folders(folders)
-
-        val book =
-            Book(
-                title = title.trim(),
-                author = author.trim(),
-                genres = MetadataPolicy.genres(genres),
-                cover = cover,
-                target = target,
-                synopsis = synopsis,
-            )
+        title: String, author: String, genres: List<String>, cover: Int, target: Int,
+        standard: Boolean,
+    ): CreatedWorkspace {
+        require(title.isNotBlank()) { "A novel title is required." }
+        val folders = if (standard) validateStarterFolders(preferences.state.value.starterFolders).filter { it.enabled } else emptyList()
+        val book = Book(title = title.trim(), author = author.trim(), genres = MetadataPolicy.genres(genres), cover = cover, target = target)
+        var overviewId: Long? = null
         db.withTransaction {
             dao.addBook(book)
-            val ids =
-                folders.associateWith { name ->
-                    dao.addEntry(Entry(bookId = book.id, title = name, kind = "Folder"))
+            folders.forEachIndexed { index, folder ->
+                val folderId = dao.addEntry(Entry(bookId = book.id, title = folder.name, kind = "Folder", position = index))
+                val body = folderGuide(folder, book)
+                val guideId = dao.addEntry(Entry(bookId = book.id, title = "README", kind = "Guide", folderId = folderId, body = body, words = wordCount(body)))
+                if (folder.key == "overview") overviewId = guideId
+                if (folder.key == "manuscript") (1..2).forEach { n ->
+                    val chapter = template("Chapter").replace("# Chapter title", "# Chapter $n")
+                    dao.addEntry(Entry(bookId = book.id, title = "Chapter $n", folderId = folderId, body = chapter, words = wordCount(chapter), position = n))
                 }
-            if ("01_Chapters" in folders)
-                dao.addEntry(
-                    Entry(bookId = book.id, title = "Chapter 1", folderId = ids["01_Chapters"])
-                )
-            if ("05_Metadata" in folders)
-                dao.addEntry(
-                    Entry(
-                        bookId = book.id,
-                        title = "Novel overview",
-                        kind = "Note",
-                        folderId = ids["05_Metadata"],
-                        body =
-                            "## Genre\n${book.genre}\n\n## Premise\n${book.synopsis}\n\n## Themes\n\n## Links & references\n",
-                    )
-                )
+            }
         }
-        return book.id
+        return CreatedWorkspace(book.id, overviewId)
+    }
+
+    override suspend fun deleteBook(bookId: String) {
+        val ids = db.dao().workspaceEntryIds(bookId)
+        db.withTransaction {
+            db.dao().deleteWritingDays(bookId)
+            db.dao().deleteBook(bookId)
+        }
+        preferences.forgetWorkspace(bookId, ids)
     }
 
     override suspend fun editBook(book: Book) {
         db.withTransaction {
             val previous = dao.book(book.id) ?: error("Workspace is unavailable.")
+            require(book.status in bookStatuses) { "Choose a valid writing status." }
             MetadataPolicy.synopsis(
                 previous.synopsis,
                 book.synopsis,

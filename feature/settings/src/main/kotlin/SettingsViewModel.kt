@@ -38,5 +38,9 @@ constructor(
         preferences.update(state.value.copy(synopsisLimit = value))
     }
 
+    fun setStarterFolders(folders: List<StarterFolder>) = launchWork {
+        preferences.update(state.value.copy(starterFolders = validateStarterFolders(folders)))
+    }
+
     fun restoreEntry(id: Long) = launchWork { workspace.restoreEntry(id) }
 }

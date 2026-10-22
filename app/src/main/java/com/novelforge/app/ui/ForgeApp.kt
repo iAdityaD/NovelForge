@@ -64,10 +64,10 @@ fun ForgeApp() {
         nav.rememberBook(id)
         screen = Destination.Project
     }
-    fun open(id: Long, read: Boolean = false) {
+    fun open(id: Long, read: Boolean? = null) {
         editor.openEntry(id) {
             bookId = editor.state.value.entry?.bookId ?: bookId
-            screen = if (read) Destination.Reader else Destination.Editor
+            screen = if (read == true || (read == null && editor.state.value.entry?.kind == "Guide")) Destination.Reader else Destination.Editor
         }
     }
     val export =
@@ -163,24 +163,10 @@ fun ForgeApp() {
                             { screen = Destination.Search },
                         )
                     Destination.New ->
-                        NewWorkspaceScreen({ screen = Destination.Library }) {
-                            title,
-                            author,
-                            genre,
-                            cover,
-                            target,
-                            synopsis,
-                            folders ->
-                            workspace.createBook(
-                                title,
-                                author,
-                                genre,
-                                cover,
-                                target,
-                                synopsis,
-                                folders,
-                            ) {
-                                project(it)
+                        NewWorkspaceScreen(prefs.starterFolders, { screen = Destination.Library }) { title, author, genre, cover, target, standard ->
+                            workspace.createBook(title, author, genre, cover, target, standard) { created ->
+                                project(created.bookId)
+                                created.overviewId?.let { open(it, true) }
                             }
                         }
                     Destination.Guide -> GuideScreen()
@@ -338,7 +324,7 @@ fun ForgeApp() {
         }
     }
     editBook?.let { b ->
-        NovelDetailsScreen(b, prefs.synopsisLimit, { editBook = null }) { updated ->
+        NovelDetailsScreen(b, { editBook = null }) { updated ->
             workspace.editBook(updated) { editBook = null }
         }
     }

@@ -136,3 +136,12 @@ Every stage is committed to main as requested. Build verification and limitation
 - APK: 0.3.0, versionCode 3, minSDK 26, 17,460,642 bytes. SHA256 d16353d0fe924f81b72dea44b9b7edbd77cc4b5485351127101f292f44417576. APK signature verified; certificate SHA256 9f0ae48f8c91fffee48b12277e549c308a1f7e6a6aeb16ed7076138d637481f5.
 - Delivery: NovelForge-v0.3-Android.zip contains APK and INSTALL.txt. Export every novel before uninstalling an older debug build with a different signing key; portable backups exclude revisions, trash, bookmarks and activity history.
 - No application code changes after the verified source. Remaining work is the documented future roadmap: stable production signing, physical-device performance/accessibility review, and export/media capabilities. Requested 0.3 architecture/metadata/explorer upgrade is complete.
+
+
+## 0.4 stage A — Beginner workspace and focused controls (2026-10-22)
+- Added standard/from-scratch creation, stable-key starter-folder preferences, eight editable README guides, two manuscript chapters, and optional chapter/character/novel-profile templates. Standard creation is transactional and opens the overview by document ID.
+- Settings → Writing → Workspace structure customizes folders for future novels. Existing folders and documents are not migrated or rewritten.
+- Workspace pencil opens metadata and status editing; synopsis is retained in storage but removed from this form. Overflow contains export, backup and confirmed whole-workspace deletion.
+- Deletion removes workspace data, revisions, genres, FTS content and activity, coordinates with the editing session and clears local reading references.
+- Library uses a combined status/genre filter dialog and header import action. Domain boundaries retained; no new dependencies or schema version changes.
+- Implementation checkpoint only: update tests, run full CI and inspect screenshots before delivery.

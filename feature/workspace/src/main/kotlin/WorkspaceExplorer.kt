@@ -49,6 +49,14 @@ fun WorkspaceScreen(
     var selectedFolder by rememberSaveable(book.id) { mutableStateOf<Long?>(null) }
     var folderDialog by remember { mutableStateOf(false) }
     var more by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    if (confirmDelete) AlertDialog(
+        onDismissRequest = { confirmDelete = false },
+        title = { Text("Delete entire workspace?") },
+        text = { Text("Are you sure you want to delete “${book.title}”? This permanently deletes all its folders, documents, checkpoints, trash and writing history. Export a backup first if you want to keep the novel.") },
+        confirmButton = { TextButton(onClick = { confirmDelete = false; vm.deleteBook(book.id, onBack) }) { Text("Delete workspace", color = MaterialTheme.colorScheme.error) } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep workspace") } },
+    )
     Column(Modifier.fillMaxSize()) {
         Row(
             Modifier.fillMaxWidth().padding(end = 8.dp),
@@ -68,25 +76,10 @@ fun WorkspaceScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            ActionIcon(Icons.Outlined.Edit, "Edit workspace details", onEdit)
             Box {
                 ActionIcon(Icons.Outlined.MoreHoriz, "Workspace actions", { more = true })
                 DropdownMenu(more, { more = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Edit workspace details") },
-                        onClick = {
-                            more = false
-                            onEdit()
-                        },
-                    )
-                    bookStatuses.forEach { status ->
-                        DropdownMenuItem(
-                            text = { Text("Mark $status") },
-                            onClick = {
-                                vm.setBookStatus(book, status)
-                                more = false
-                            },
-                        )
-                    }
                     DropdownMenuItem(
                         text = { Text("Export manuscript") },
                         onClick = {
@@ -100,6 +93,10 @@ fun WorkspaceScreen(
                             more = false
                             onExport(false)
                         },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete workspace", color = MaterialTheme.colorScheme.error) },
+                        onClick = { more = false; confirmDelete = true },
                     )
                 }
             }
@@ -223,9 +220,9 @@ fun WorkspaceScreen(
 fun defaultKindForFolder(name: String?) =
     when {
         name?.contains("Characters", true) == true -> "Character"
-        name?.contains("Lore", true) == true -> "Worldbuilding"
+        (name?.contains("Lore", true) == true || name?.contains("World", true) == true) -> "Worldbuilding"
         name?.contains("Plot", true) == true -> "Plot thread"
-        name?.contains("Chapters", true) == true -> "Chapter"
+        (name?.contains("Chapters", true) == true || name?.contains("Manuscript", true) == true) -> "Chapter"
         else -> "Note"
     }
 

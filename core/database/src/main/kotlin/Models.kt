@@ -171,6 +171,15 @@ interface ForgeDao {
     )
     suspend fun prune(id: Long)
 
+    @Query("SELECT rowid FROM Entry WHERE bookId=:bookId")
+    suspend fun workspaceEntryIds(bookId: String): List<Long>
+
+    @Query("DELETE FROM WritingDay WHERE bookId=:bookId")
+    suspend fun deleteWritingDays(bookId: String)
+
+    @Query("DELETE FROM Book WHERE id=:bookId")
+    suspend fun deleteBook(bookId: String)
+
     @Query("SELECT COUNT(*) FROM Book") suspend fun bookCount(): Int
 }
 

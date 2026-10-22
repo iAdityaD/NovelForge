@@ -11,6 +11,7 @@ data class AppPreferences(
     val readerSerif: Boolean = true,
     val readerWarm: Boolean = true,
     val synopsisLimit: Int = 500,
+    val starterFolders: List<StarterFolder> = defaultStarterFolders,
 )
 
 interface PreferencesRepository {
@@ -25,6 +26,8 @@ interface PreferencesRepository {
     fun rememberBook(id: String)
 
     fun rememberEntry(entry: Entry)
+
+    fun forgetWorkspace(bookId: String, entryIds: List<Long>)
 
     fun bookmark(id: Long): Boolean
 

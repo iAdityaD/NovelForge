@@ -1,6 +1,7 @@
 package com.novelforge.app.ui
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,6 +36,7 @@ fun LibraryScreen(
 ) {
     var grid by rememberSaveable { mutableStateOf(true) }
     var filter by rememberSaveable { mutableStateOf("All") }
+    var showFilters by rememberSaveable { mutableStateOf(false) }
     var genreFilter by rememberSaveable { mutableStateOf<String?>(null) }
     val availableGenres = books.flatMap { it.genres }.distinct().sorted()
     val visible =
@@ -49,43 +51,10 @@ fun LibraryScreen(
         ) {
             item {
                 ScreenHeading("Library", "Your stories. Your worlds.") {
+                    ActionIcon(Icons.Outlined.FileDownload, "Import backup", onImport)
                     ActionIcon(Icons.Outlined.Search, "Search all workspaces", onSearch)
                 }
             }
-            item {
-                Row(
-                    Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    listOf("All", "In progress", "Completed", "On hold").forEach { label ->
-                        FilterChip(
-                            selected = filter == label,
-                            onClick = { filter = label },
-                            label = { Text(label) },
-                        )
-                    }
-                }
-            }
-            if (availableGenres.isNotEmpty())
-                item {
-                    Row(
-                        Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        FilterChip(
-                            selected = genreFilter == null,
-                            onClick = { genreFilter = null },
-                            label = { Text("All genres") },
-                        )
-                        availableGenres.forEach { genre ->
-                            FilterChip(
-                                selected = genreFilter == genre,
-                                onClick = { genreFilter = genre },
-                                label = { Text(genre) },
-                            )
-                        }
-                    }
-                }
             val recent = entries.filter { it.kind != "Folder" }.maxByOrNull { it.updated }
             if (recent != null)
                 item {
@@ -132,7 +101,12 @@ fun LibraryScreen(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text("${visible.size}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = { showFilters = true }) {
+                        Icon(Icons.Outlined.FilterList, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        val count = (if (filter != "All") 1 else 0) + (if (genreFilter != null) 1 else 0)
+                        Text(if (count == 0) "Filter" else "Filter · $count")
+                    }
                     ActionIcon(
                         if (grid) Icons.Outlined.ViewList else Icons.Outlined.GridView,
                         "Toggle workspace layout",
@@ -172,26 +146,40 @@ fun LibraryScreen(
                         WorkspaceCard(book, entries.filter { it.bookId == book.id }, true)
                     }
                 }
-            item {
-                Row {
-                    TextButton(onClick = onImport) {
-                        Icon(Icons.Outlined.FileDownload, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Import backup")
-                    }
-                    if (books.isEmpty()) TextButton(onClick = onDemo) { Text("Open demo") }
-                }
-            }
+            if (books.isEmpty()) item { TextButton(onClick = onDemo) { Text("Open demo") } }
         }
         ExtendedFloatingActionButton(
             onClick = onNew,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp).testTag("new-workspace"),
             icon = { Icon(Icons.Outlined.Add, null) },
             text = { Text("New workspace") },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
         )
     }
+    if (showFilters) {
+        var status by remember { mutableStateOf(filter) }
+        var genre by remember { mutableStateOf(genreFilter) }
+        AlertDialog(
+            onDismissRequest = { showFilters = false },
+            title = { Text("Filter library") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                    ChoiceField("Status", if (status == "All") "All statuses" else status, listOf("All statuses") + bookStatuses) {
+                        status = if (it == "All statuses") "All" else it
+                    }
+                    ChoiceField("Genre", genre ?: "All genres", listOf("All genres") + availableGenres) {
+                        genre = if (it == "All genres") null else it
+                    }
+                    Text("Status and genre filters are combined.", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { status = "All"; genre = null }) { Text("Reset filters") }
+                }
+            },
+            confirmButton = { TextButton(onClick = { filter = status; genreFilter = genre; showFilters = false }) { Text("Apply filters") } },
+            dismissButton = { TextButton(onClick = { showFilters = false }) { Text("Cancel") } },
+        )
+    }
+
 }
 
 @Composable
@@ -265,208 +253,79 @@ private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Bool
 
 @Composable
 fun NewWorkspaceScreen(
+    starterFolders: List<StarterFolder>,
     onBack: () -> Unit,
-    onCreate: (String, String, List<String>, Int, Int, String, Set<String>) -> Unit,
+    onCreate: (String, String, List<String>, Int, Int, Boolean) -> Unit,
 ) {
     var title by rememberSaveable { mutableStateOf("") }
     var author by rememberSaveable { mutableStateOf("") }
     var genres by rememberSaveable { mutableStateOf(listOf("Fantasy")) }
-    var selected by rememberSaveable { mutableStateOf(workspaceTemplates.map { it.name }) }
-    var customFolders by rememberSaveable { mutableStateOf(emptyList<String>()) }
-    var addingFolder by rememberSaveable { mutableStateOf(false) }
-    var folderName by rememberSaveable { mutableStateOf("") }
-    var folderError by remember { mutableStateOf<String?>(null) }
-    var editingFolder by rememberSaveable { mutableStateOf<String?>(null) }
+    var standard by rememberSaveable { mutableStateOf(true) }
     var cover by rememberSaveable { mutableIntStateOf(0) }
+    var preview by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().imePadding()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             ActionIcon(Icons.Outlined.Close, "Cancel workspace creation", onBack)
-            Text(
-                "New workspace",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Text("New workspace", style = MaterialTheme.typography.titleLarge)
         }
         LazyColumn(
             Modifier.weight(1f).testTag("workspace-form"),
             contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             item {
-                Text(
-                    "A home for your next novel.",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    "Start with a structure. Make it your own.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text("Make room for your story.", style = MaterialTheme.typography.headlineMedium)
+                Text("All planning is optional. Start writing whenever you are ready.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            item {
-                OutlinedTextField(
-                    title,
-                    { title = it.take(200) },
-                    label = { Text("Novel title") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-            }
-            item {
-                OutlinedTextField(
-                    author,
-                    { author = it.take(120) },
-                    label = { Text("Author") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            item { OutlinedTextField(title, { title = it.take(200) }, label = { Text("Novel title") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
+            item { OutlinedTextField(author, { author = it.take(120) }, label = { Text("Author (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
             item { GenreInput(genres, { genres = it }) }
             item {
+                Text("Choose your starting point", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(10.dp))
+                StructureChoice("Standard structure", "A place for ideas, characters, your world and chapters, with short editable guides.", standard) { standard = true }
+                Spacer(Modifier.height(10.dp))
+                StructureChoice("Build from scratch", "An empty workspace. Add your own folders and documents as you go.", !standard) { standard = false }
+            }
+            if (standard) item {
+                TextButton(onClick = { preview = !preview }) {
+                    Text(if (preview) "Hide starter folders" else "Preview starter folders")
+                    Icon(if (preview) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, null)
+                }
+                if (preview) starterFolders.filter { it.enabled }.forEach { Text("• ${it.name}", modifier = Modifier.padding(vertical = 4.dp)) }
+                Text("Customize the standard structure in Settings → Writing → Workspace structure. Changes apply to new novels.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            item {
                 Text("Workspace color", style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    repeat(4) { i ->
-                        FilterChip(
-                            selected = cover == i,
-                            onClick = { cover = i },
-                            label = { Text(listOf("Iris", "Ocean", "Ember", "Moss")[i]) },
-                        )
-                    }
-                }
-            }
-            item {
-                Text(
-                    "Choose your starter folders",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Everything is optional. Add files and nested folders whenever you need them.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
-                TextButton(
-                    onClick = {
-                        editingFolder = null
-                        folderName = ""
-                        folderError = null
-                        addingFolder = true
-                    }
-                ) {
-                    Icon(Icons.Outlined.CreateNewFolder, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Add folder")
-                }
-            }
-            items(
-                workspaceTemplates + customFolders.map { WorkspaceTemplate(it, "Custom folder") }
-            ) { t ->
-                Row(
-                    Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            selected =
-                                if (t.name in selected) selected - t.name else selected + t.name
-                        }
-                        .padding(vertical = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Checkbox(
-                        checked = t.name in selected,
-                        onCheckedChange = {
-                            selected = if (it) selected + t.name else selected - t.name
-                        },
-                    )
-                    Column(Modifier.weight(1f)) {
-                        Text(t.name, style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            t.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (t.name in customFolders) {
-                        ActionIcon(
-                            Icons.Outlined.Edit,
-                            "Rename ${t.name}",
-                            {
-                                editingFolder = t.name
-                                folderName = t.name
-                                folderError = null
-                                addingFolder = true
-                            },
-                        )
-                        ActionIcon(
-                            Icons.Outlined.Close,
-                            "Remove ${t.name}",
-                            {
-                                customFolders = customFolders - t.name
-                                selected = selected - t.name
-                            },
-                        )
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("Iris", "Ocean", "Ember", "Moss").forEachIndexed { i, name ->
+                        FilterChip(selected = cover == i, onClick = { cover = i }, label = { Text(name) })
                     }
                 }
             }
         }
-        Button(
-            onClick = {
-                onCreate(title.trim(), author.trim(), genres, cover, 80000, "", selected.toSet())
-            },
-            enabled = title.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().padding(20.dp).height(52.dp),
-            shape = RoundedCornerShape(14.dp),
-        ) {
+        Button(onClick = { onCreate(title.trim(), author.trim(), genres, cover, 80000, standard) }, enabled = title.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(20.dp).height(52.dp), shape = RoundedCornerShape(14.dp)) {
             Text("Create workspace")
         }
     }
-    if (addingFolder)
-        AlertDialog(
-            onDismissRequest = { addingFolder = false },
-            title = {
-                Text(if (editingFolder == null) "Add starter folder" else "Rename starter folder")
-            },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        folderName,
-                        {
-                            folderName = it
-                            folderError = null
-                        },
-                        label = { Text("Folder name") },
-                        singleLine = true,
-                        isError = folderError != null,
-                    )
-                    folderError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        try {
-                            val name = MetadataPolicy.folder(folderName)
-                            MetadataPolicy.folders(
-                                workspaceTemplates.map { it.name } +
-                                    customFolders.filter { it != editingFolder } +
-                                    name
-                            )
-                            val old = editingFolder
-                            customFolders =
-                                if (old == null) customFolders + name
-                                else customFolders.map { if (it == old) name else it }
-                            selected = selected.filter { it != old } + name
-                            addingFolder = false
-                        } catch (e: IllegalArgumentException) {
-                            folderError = e.message
-                        }
-                    }
-                ) {
-                    Text("Save folder")
-                }
-            },
-            dismissButton = { TextButton(onClick = { addingFolder = false }) { Text("Cancel") } },
-        )
+}
+
+@Composable
+private fun StructureChoice(title: String, description: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).selectable(selected = selected, role = androidx.compose.ui.semantics.Role.RadioButton, onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .3f),
+        border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            RadioButton(selected = selected, onClick = null)
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(4.dp))
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
 }

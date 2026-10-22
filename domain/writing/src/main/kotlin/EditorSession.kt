@@ -135,6 +135,18 @@ class EditorSession(private val repository: WritingRepository, private val scope
         mutable.update { it.copy(entry = e) }
     }
 
+    suspend fun closeWorkspace(bookId: String): Boolean {
+        if (state.value.entry?.bookId != bookId) return true
+        if (!flush()) return false
+        mutex.withLock {
+            persisted = null
+            undo.clear()
+            redo.clear()
+            mutable.value = EditorState()
+        }
+        return true
+    }
+
     fun clearError() {
         mutable.update { it.copy(error = null) }
     }

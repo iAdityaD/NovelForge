@@ -2,6 +2,8 @@ package com.novelforge.domain.story
 val kinds =
     listOf(
         "Chapter",
+        "Novel Profile",
+        "Guide",
         "Arc",
         "Character",
         "Location",
@@ -17,8 +19,11 @@ val kinds =
 
 fun template(kind: String): String =
     when (kind) {
+        "Chapter" -> "# Chapter title\n\n## Optional planning notes\n\n## Main writing area\n\n## Optional revision notes\n"
+        "Novel Profile" -> "## Working title\n\n## Genre\n\n## Core premise\n\n## Short synopsis\n\n## Main characters\n\n## Current writing status\n\n## Next steps\n"
+
         "Character" ->
-            "## Role in the story\n\n## Desire & motivation\n\n## Fear & flaw\n\n## Appearance & voice\n\n## Backstory\n\n## Relationships\n\n## Character arc\n"
+            "## Name and role\n\n## Personality and background\n\n## Goals and motivations\n\n## Strengths, flaws and fears\n\n## Relationships\n\n## Character development\n"
         "Timeline event" ->
             "## When\n\n## What happens\n\n## People involved\n\n## Cause\n\n## Consequence\n"
         "Location" ->

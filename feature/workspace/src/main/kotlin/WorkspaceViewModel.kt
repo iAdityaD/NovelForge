@@ -39,11 +39,17 @@ constructor(
         genres: List<String>,
         cover: Int,
         target: Int,
-        synopsis: String,
-        folders: Set<String>,
-        done: (String) -> Unit,
+        standard: Boolean,
+        done: (CreatedWorkspace) -> Unit,
     ) = launchWork {
-        done(repository.createBook(title, author, genres, cover, target, synopsis, folders))
+        done(repository.createBook(title, author, genres, cover, target, standard))
+    }
+
+    fun deleteBook(bookId: String, done: () -> Unit) = launchWork {
+        if (session.closeWorkspace(bookId)) {
+            repository.deleteBook(bookId)
+            done()
+        }
     }
 
     fun editBook(book: Book, done: () -> Unit = {}) = launchWork {

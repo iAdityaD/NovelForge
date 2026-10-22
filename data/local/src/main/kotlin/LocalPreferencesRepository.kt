@@ -29,12 +29,23 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
                 prefs.getBoolean("serif", true),
                 prefs.getBoolean("warm", true),
                 prefs.getInt("synopsisLimit", 500),
+                readStarterFolders(),
             )
         )
+    private fun readStarterFolders(): List<StarterFolder> = runCatching {
+        val raw = prefs.getString("starterFolders", null) ?: return defaultStarterFolders
+        val array = org.json.JSONArray(raw)
+        validateStarterFolders((0 until array.length()).map { i ->
+            val item = array.getJSONObject(i)
+            StarterFolder(item.getString("key"), item.getString("name"), item.optBoolean("enabled", true))
+        })
+    }.getOrDefault(defaultStarterFolders)
+
     override val state = current.asStateFlow()
 
     override fun update(value: AppPreferences) {
         require(value.synopsisLimit in 50..10000)
+        validateStarterFolders(value.starterFolders)
         current.value = value
         prefs
             .edit()
@@ -45,6 +56,11 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
             .putBoolean("serif", value.readerSerif)
             .putBoolean("warm", value.readerWarm)
             .putInt("synopsisLimit", value.synopsisLimit)
+            .putString("starterFolders", org.json.JSONArray().apply {
+                value.starterFolders.forEach { folder -> put(org.json.JSONObject().apply {
+                    put("key", folder.key); put("name", folder.name); put("enabled", folder.enabled)
+                }) }
+            }.toString())
             .apply()
     }
 
@@ -58,6 +74,13 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
 
     override fun rememberEntry(entry: Entry) {
         prefs.edit().putLong("lastEntry", entry.id).putString("lastBook", entry.bookId).apply()
+    }
+
+    override fun forgetWorkspace(bookId: String, entryIds: List<Long>) {
+        prefs.edit().apply {
+            if (lastBook() == bookId) { remove("lastBook"); remove("lastEntry") }
+            entryIds.forEach { id -> remove("bookmark-$id"); remove("read-$id"); remove("offset-$id") }
+        }.apply()
     }
 
     override fun bookmark(id: Long) = prefs.getBoolean("bookmark-$id", false)

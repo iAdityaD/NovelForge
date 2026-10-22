@@ -14,9 +14,10 @@ interface WorkspaceRepository {
         genres: List<String>,
         cover: Int,
         target: Int,
-        synopsis: String,
-        folders: Set<String>,
-    ): String
+        standard: Boolean,
+    ): CreatedWorkspace
+
+    suspend fun deleteBook(bookId: String)
 
     suspend fun editBook(book: Book)
 
