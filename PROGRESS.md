@@ -172,3 +172,12 @@ Every stage is committed to main as requested. Build verification and limitation
 - New chapters start as blank prose, preventing instructional template text from entering manuscript counts/export. Existing text is never rewritten.
 - Added Theme and Prop planning types, v3→v4 installed-database verification and actual backup/restore/export regression coverage.
 - Full CI validation pending; release scope remains the first workspace/manuscript increment.
+
+
+## v0.5 verified delivery — 2026-10-23
+- Source: `5c7119897a260126ec3433b8b4cc5a41b419a11f`; CI `39921422025`, both jobs successful.
+- 27 JVM tests, 6 API 34 device tests; lint 0 errors / 14 warnings. APK signature verified; version 0.5.0 (5), min SDK 26.
+- Delivered first workspace increment: Overview / Plan / Write / Arrange / Read, shared explorer, independent chapter placement, non-destructive unplacing, stable overview ID, Room and portable backup v4.
+- Packaged APK and installation/data-preservation instructions as NovelForge-v0.5-Android.zip.
+- Visually checked native overview and device Arrange captures. Immediate post-creation device screenshot still catches IME closing; physical-device keyboard-transition verification remains pending. Do not treat semantic visibility assertion as proof of keyboard occlusion clearance.
+- Remaining roadmap: nested scenes/parts, typed relationships, shared worlds/series, richer export, full snapshot backups, stable signing; see docs/WORKSPACE_UPGRADE_PLAN.md. Do not call the full roadmap complete.

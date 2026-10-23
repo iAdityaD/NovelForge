@@ -1,6 +1,6 @@
 # NovelForge — local Android writing workspace
 
-NovelForge 0.4 organizes each novel like a coding project: an independent workspace with a flexible folder tree, Markdown pages and linked story references. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
+NovelForge 0.5 combines a flexible folder workspace with Overview, Plan, Write, Arrange and Read views. Markdown documents and linked story references remain local; manuscript order is independent from folder organization. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
 
 ## Screens
 
@@ -24,6 +24,12 @@ API 34 device captures:
 | --- | --- | --- |
 | ![Details](docs/screenshots/workspace-details.png) | ![Filters](docs/screenshots/library-filter.png) | ![Guide](docs/screenshots/overview-guide.png) |
 
+The 0.5 workspace views (API 34 device captures):
+
+| Plan | Write | Arrange | Read |
+| --- | --- | --- | --- |
+| ![Plan](docs/screenshots/workspace-plan.png) | ![Write](docs/screenshots/workspace-write.png) | ![Arrange](docs/screenshots/workspace-arrange.png) | ![Read](docs/screenshots/workspace-read.png) |
+
 See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactions.
 
 ## Architecture
@@ -36,7 +42,9 @@ A domain-based modular monolith with Clean Architecture boundaries, Hilt depende
 - **Guide:** five practical offline lessons on workspace structure, linking characters/worlds, scene planning, revision and backup.
 - **Analytics:** writing streak above the workspace dropdown. All workspaces shows portfolio totals by status; one workspace shows manuscript progress, chapter states and story-bible statistics. Both include words, estimated pages, chapters, character profiles and daily activity.
 - **Settings:** a category index leading to separate Appearance, Editor, Reading, Data & backup, Recently deleted and About screens.
-- **Workspace setup:** Standard structure or Build from scratch. Standard creates eight beginner-friendly folders, editable README guides and two optional-template chapters; scratch starts empty. Customize future starter folders in Settings → Writing → Workspace structure.
+- **Workspace setup:** Standard structure or Build from scratch. Standard creates eight beginner-friendly folders, editable README guides and two blank starter chapters; scratch starts empty. Customize future starter folders in Settings → Writing → Workspace structure.
+- **Workspace:** five focused views for the novel overview, story collections, drafts, manuscript arrangement and reading. The same file explorer is available throughout.
+- **Manuscript:** reorder chapters independently of folders; unplace a chapter without deleting its document; reading, Markdown export and manuscript statistics follow inclusion.
 - **Explorer:** compact flat rows, separate expand/select controls, search, expand/collapse all, active-file reveal, rename, move, sibling ordering, drag-to-folder and recoverable subtree deletion. The editor drawer includes create actions and an explicit close button.
 - **Novel details:** a separate pencil action opens title, author, multiple genres and writing status. Synopsis belongs in the overview document. Overflow contains export, backup and confirmed permanent workspace deletion.
 - **Writing:** autosave, syntax coloring, proportional/monospace choice, formatting toolbar, wiki-link picker, focus mode, undo/redo, checkpoints, backlinks and word/character/reading-time metrics.
@@ -48,9 +56,9 @@ The explorer is a logical tree in the local database, not an external Markdown v
 
 ## Verification and installation
 
-The 0.4 build at source `eef9834e796ddb90992882f5b993cdccf29628e2` passes compilation, architecture boundaries, 24 JVM tests, five Android API 34 device tests, and lint (0 errors, 14 warnings). [CI run 39831366795](https://github.com/iAdityaD/NovelForge/actions/runs/39831366795) retains the APK, reports and device screenshots. Coverage includes migrations, FTS, standard/scratch creation, customized starter roles, identity persistence, backup compatibility, deletion isolation, metadata/status editing, combined filters, writing/reading and analytics. Captured screens were visually inspected.
+The 0.5 build at source `5c7119897a260126ec3433b8b4cc5a41b419a11f` passes compilation, architecture boundaries, 27 JVM tests, six Android API 34 device tests, and lint (0 errors, 14 warnings). [CI run 39921422025](https://github.com/iAdityaD/NovelForge/actions/runs/39921422025) retains the APK, reports and screenshots. Tests include migration from schema v3, stable overview identity, independent manuscript ordering, unplacing/re-inclusion, backup remapping, standard/scratch creation, and existing editing flows.
 
-GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer. The packaged download is `NovelForge-v0.4-Android.zip` (APK plus installation instructions). APK SHA256: `d898053781e125200bd1b1658272579fb275dd798166521dec1c62f788b84dc2`.
+GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer. The packaged download is `NovelForge-v0.5-Android.zip` (APK plus installation instructions). APK SHA256: `524418b5d0b03b745208a91496d4c11e529aa2a810ca4418caf3e81446ea9252`.
 
 **Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
 
@@ -73,13 +81,15 @@ Project backups contain current active pages, metadata, and story structure. Res
 
 No destructive database migrations are enabled. Schema exports live under `app/schemas`; future schema changes need explicit migrations and restore testing.
 
-Room schema v3 migrates installed v1/v2 databases without destructive fallback, preserving entry IDs, revisions, arc references and full-text search, and organizing existing pages into default folders. Backup v3 includes multiple genres, folder hierarchy and project status; v1/v2 backups remain importable. Schema v3 adds normalized BookGenre storage, preserving legacy genre strings as one value. Over-limit restored synopses remain intact. Backup imports do not restore writing streak history.
+Room schema v4 migrates installed v1/v2/v3 databases without destructive fallback, preserving entry IDs, revisions, arc references and full-text search, and organizing existing pages into default folders. Backup v4 adds manuscript placement/inclusion and overview references to multiple genres, folder hierarchy and project status; v1/v2/v3 backups remain importable. Schema v3 added normalized BookGenre storage, preserving legacy genre strings as one value. Schema v4 adds independent manuscript placement and a stable overview document ID. Over-limit restored synopses remain intact. Backup imports do not restore writing streak history.
 
 ## Limits and next work
 
 This is a functional development build. Physical-device frame-time, large-font and screen-reader certification remain pending. The screenplay template does not implement professional screenplay pagination. Reader rendering supports a Markdown subset rather than full CommonMark.
 
-Future work includes imported cover/media attachments, general Markdown-vault import, EPUB/PDF/DOCX export, reader pagination/highlights/TTS, revision diffs, richer link aliases, split-pane tablet navigation, scheduled external backups and release signing. Backups use Android's document picker; automatic cloud sync is not implemented.
+This is the first increment of the [full workspace upgrade plan](docs/WORKSPACE_UPGRADE_PLAN.md). Arrangement currently operates on chapters; nested scenes/parts, structured relationship editing and shared series are upcoming stages.
+
+Future work includes complete snapshot backups, imported cover/media attachments, general Markdown-vault import, EPUB/PDF/DOCX export, reader pagination/highlights/TTS, revision diffs, richer link aliases, split-pane tablet navigation, scheduled external backups and release signing. Backups use Android's document picker; automatic cloud sync is not implemented.
 
 ## Resume work
 
