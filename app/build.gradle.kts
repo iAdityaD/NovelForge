@@ -92,6 +92,7 @@ dependencies {
  implementation(project(":feature:settings"))
  implementation(project(":feature:backup"))
  testImplementation(project(":core:database"))
+ testImplementation(project(":domain:backup"))
  androidTestImplementation(project(":core:database"))
  implementation("com.google.dagger:hilt-android:2.55"); ksp("com.google.dagger:hilt-compiler:2.55")
  implementation("androidx.hilt:hilt-navigation-compose:1.2.0")

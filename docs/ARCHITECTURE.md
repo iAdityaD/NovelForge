@@ -1,4 +1,4 @@
-# NovelForge architecture (0.4)
+# NovelForge architecture (0.5)
 
 NovelForge is a local-first modular monolith: one Android application assembled from independently bounded Gradle modules. Presentation uses MVVM and immutable StateFlow state. Domain contracts and policies are plain Kotlin; data implementations use Room and Android services. Hilt supplies implementations at the application boundary.
 
@@ -76,10 +76,18 @@ The local data implementations currently share one module and one database so cr
 
 Production release signing, physical-device performance/accessibility review and the export/media roadmap remain separate work.
 
-## Beginner workspace extension (0.4)
+## Beginner workspace extension (0.5)
 
 `StarterFolder` is a plain model with a stable role key, display name and enabled state. `domain:workspace` owns structure validation and guide content; `domain:story` owns optional document templates. Preferences persist the ordered structure as validated JSON. Settings edits future defaults without rewriting existing workspaces.
 
 Creation inserts the workspace, logical folders and documents in one Room transaction. It returns the overview document ID to app navigation, which opens Guide documents in the existing reader. Scratch creation inserts only the workspace. Renaming a starter role preserves its purpose; actual documents retain their generated IDs across move/rename operations. No database schema change or new dependency was needed.
 
 Whole-workspace deletion flushes and closes its active editing session, then transactionally removes the workspace and dependent database records. Reading references are cleared afterward. Existing per-document trash/restore remains separate from confirmed permanent workspace deletion.
+
+## Workspace and manuscript foundation (0.5)
+
+`domain:manuscript` owns placement contracts and canonical chapter ordering. Room schema 4 adds `ManuscriptPlacement` and the stable `Book.overviewId` reference. Migration preserves existing chapter IDs, content and order; folder position is no longer consulted once a chapter has a placement. New document insertion creates chapter placements transactionally.
+
+WorkspaceStudio presents Overview, Plan, Write, Arrange and Read over shared documents. The app owns a shared modal explorer for workspace/editor/reader; closed drawers omit their contents from accessibility semantics. Plan filters canonical document types; Arrange moves or unplaces chapters without deleting their text. Reader contents and Markdown export use included chapters in manuscript order. Library and Analytics exclude unplaced chapters from manuscript totals while retaining all documents.
+
+Portable backup v4 adds placement/inclusion and the overview reference; restores remap both to newly generated IDs. Older backup readers remain supported. Full snapshot backups, scene nesting, series and additional exports remain later roadmap stages.

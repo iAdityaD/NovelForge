@@ -63,8 +63,14 @@ fun WorkspaceStudio(
             when (tab) {
                 0 -> {
                     item {
-                        Text("Your story, at a glance", style = MaterialTheme.typography.headlineMedium)
-                        if (book.genre.isNotBlank()) Text(book.genre, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            BookCover(book, Modifier.width(80.dp).height(112.dp), compact = true)
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Your story, at a glance", style = MaterialTheme.typography.titleLarge)
+                                Text(book.title.replace('\n', ' '), style = MaterialTheme.typography.titleMedium)
+                                if (book.genre.isNotBlank()) Text(book.genre, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     }
                     if (book.synopsis.isNotBlank()) item { Text(book.synopsis, maxLines = 5, overflow = TextOverflow.Ellipsis) }
                     item {
