@@ -91,3 +91,12 @@ Whole-workspace deletion flushes and closes its active editing session, then tra
 WorkspaceStudio presents Overview, Plan, Write, Arrange and Read over shared documents. The app owns a shared modal explorer for workspace/editor/reader; closed drawers omit their contents from accessibility semantics. Plan filters canonical document types; Arrange moves or unplaces chapters without deleting their text. Reader contents and Markdown export use included chapters in manuscript order. Library and Analytics exclude unplaced chapters from manuscript totals while retaining all documents.
 
 Portable backup v4 adds placement/inclusion and the overview reference; restores remap both to newly generated IDs. Older backup readers remain supported. Full snapshot backups, scene nesting, series and additional exports remain later roadmap stages.
+
+
+### Resource categories (0.5.1)
+
+A Plan category is an ordinary logical folder, identified by its stable entry ID. Standard and scratch workspaces use the same operation; their difference is the folders already present, not a hard-coded UI taxonomy. The folder picker uses full paths to distinguish nested names. Existing uncategorized documents are never automatically relocated.
+
+`WorkspaceRepository.createResource` validates the destination, optional new folder, title and external URL, then creates the folder/document atomically in Room. `WorkspaceViewModel` owns in-flight state; `ResourceDialog` only collects input. The existing editor, linking, search and portable backup support Resource and External source kinds without a schema change. External content remains an explicitly supplied URL and notes, not a remote scraper or cached article.
+
+The app shell consumes Scaffold insets before nested workspace navigation. Overview owns the synopsis display/edit entry point; the existing metadata policy and preferences remain the authority for word limits.

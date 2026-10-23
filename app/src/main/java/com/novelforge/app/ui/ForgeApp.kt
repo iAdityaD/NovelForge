@@ -343,7 +343,7 @@ fun ForgeApp() {
         }
     }
     showEntry?.let { kind ->
-        EntryDialog(kind, { showEntry = null }) { title, type ->
+        EntryDialog(kind, { showEntry = null }, manuscriptOnly = screen == Destination.Project && kind == "Chapter") { title, type ->
             workspace.createEntry(bookId, title, type, null, entryFolder) {
                 showEntry = null
                 open(it)

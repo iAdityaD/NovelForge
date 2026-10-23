@@ -73,3 +73,12 @@ Opening a novel now lands on Overview. The workspace bottom bar contains Overvie
 Overview provides Continue writing, the designated novel overview document, recent documents and manuscript word progress. Plan groups canonical documents by type and exposes the existing link graph. Write lists drafting documents. Arrange provides independent chapter ordering with accessible earlier/later actions and an unplaced tray; Unplace preserves the document. Read lists the included manuscript and opens the existing reader with contents and previous/next navigation in that order.
 
 New chapters start with blank prose; the title is stored separately and planning remains optional. Existing chapters are not rewritten. This first increment uses chapter-level ordering: parts/scenes, drag arrangement, structured relationships, shared series and the final generated-screen details remain upcoming work.
+
+
+### 0.5.1 resource-first Plan
+
+- Scratch: Plan is empty until the writer uses +, gives a resource title and names their first category. Standard: the same form offers folders already created from the user's starter template.
+- Plan has no fixed collection dropdown. Its single + opens existing-category selection, new-category creation, and optional external URL/notes. Categories mirror folder paths; creation cannot silently save a resource at the root. Existing root references remain under Uncategorized and can be moved with Files.
+- Write lists the manuscript and offers Chapter/Screenplay creation; linking remains available in the editor. Plan references are excluded from manuscript reading/export.
+- Overview replaces Recent documents with a readable synopsis and edit pencil. The editor is height-bounded and follows the configurable word limit.
+- The workspace bar consumes the bottom inset once, preserving Android's system navigation area without a second app gap.

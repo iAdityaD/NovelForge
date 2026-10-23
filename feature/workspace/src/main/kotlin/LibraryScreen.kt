@@ -148,7 +148,7 @@ fun NovelDetailsScreen(book: Book, onDismiss: () -> Unit, onSave: (Book) -> Unit
 }
 
 @Composable
-fun EntryDialog(initialKind: String, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
+fun EntryDialog(initialKind: String, onDismiss: () -> Unit, manuscriptOnly: Boolean = false, onSave: (String, String) -> Unit) {
     var title by remember { mutableStateOf("") }
     var kind by remember { mutableStateOf(initialKind) }
     AlertDialog(
@@ -160,7 +160,7 @@ fun EntryDialog(initialKind: String, onDismiss: () -> Unit, onSave: (String, Str
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    (if (initialKind == "Chapter") listOf("Chapter", "Screenplay") else kinds).forEach {
+                    (if (manuscriptOnly) listOf("Chapter", "Screenplay") else kinds).forEach {
                         FilterChip(
                             selected = kind == it,
                             onClick = { kind = it },
