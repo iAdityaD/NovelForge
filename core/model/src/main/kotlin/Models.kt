@@ -12,6 +12,7 @@ data class Book(
     val target: Int = 80000,
     val status: String = "In progress",
     val updated: Long = System.currentTimeMillis(),
+    val overviewId: Long? = null,
 ) {
     val genre: String
         get() = genres.joinToString(" · ")

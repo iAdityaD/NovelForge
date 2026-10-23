@@ -74,6 +74,9 @@ private fun legacyFolder(kind: String) =
 
 val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE Book ADD COLUMN overviewId INTEGER")
+        // Recover the original overview guide by its generated profile marker, even in a renamed folder.
+        db.execSQL("UPDATE Book SET overviewId=(SELECT MIN(rowid) FROM Entry WHERE Entry.bookId=Book.id AND deleted=0 AND (kind='Novel Profile' OR (kind='Guide' AND body LIKE '%## Novel profile%')))")
         db.execSQL("CREATE TABLE IF NOT EXISTS ManuscriptPlacement (documentId INTEGER NOT NULL, bookId TEXT NOT NULL, position INTEGER NOT NULL, included INTEGER NOT NULL, PRIMARY KEY(documentId), FOREIGN KEY(documentId) REFERENCES Entry(rowid) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(bookId) REFERENCES Book(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_ManuscriptPlacement_bookId ON ManuscriptPlacement(bookId)")
         db.execSQL("INSERT INTO ManuscriptPlacement(documentId,bookId,position,included) SELECT rowid,bookId,position,1 FROM Entry WHERE kind='Chapter'")

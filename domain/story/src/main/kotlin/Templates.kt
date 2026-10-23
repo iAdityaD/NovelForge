@@ -11,6 +11,8 @@ val kinds =
         "Worldbuilding",
         "Plot thread",
         "Research",
+        "Theme",
+        "Prop",
         "Screenplay",
         "Timeline event",
         "Note",
@@ -19,11 +21,13 @@ val kinds =
 
 fun template(kind: String): String =
     when (kind) {
-        "Chapter" -> "# Chapter title\n\n## Optional planning notes\n\n## Main writing area\n\n## Optional revision notes\n"
+        "Chapter" -> ""
         "Novel Profile" -> "## Working title\n\n## Genre\n\n## Core premise\n\n## Short synopsis\n\n## Main characters\n\n## Current writing status\n\n## Next steps\n"
 
         "Character" ->
             "## Name and role\n\n## Personality and background\n\n## Goals and motivations\n\n## Strengths, flaws and fears\n\n## Relationships\n\n## Character development\n"
+        "Theme" -> "## Central idea\n\n## Questions to explore\n\n## Moments that express it\n"
+        "Prop" -> "## Description\n\n## Who owns it\n\n## Story significance\n"
         "Timeline event" ->
             "## When\n\n## What happens\n\n## People involved\n\n## Cause\n\n## Consequence\n"
         "Location" ->

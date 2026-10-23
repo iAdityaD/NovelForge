@@ -166,3 +166,9 @@ Every stage is committed to main as requested. Build verification and limitation
 - Reading contents and Markdown export consume manuscript order; portable backup v4 preserves placement/inclusion and reads v1–v3.
 - Updated navigation/device coverage and added persistence/placement regressions. Architecture and whitespace checks pass; CI and migration validation pending.
 - This is the first incremental upgrade, not the complete roadmap. Scene nesting, shared series, advanced exports, full-snapshot backups and production signing remain future stages.
+
+## 0.5 stage B — Stable overview and migration/restore coverage
+- Added stable overview document reference to Book and migration recovery for existing generated profiles, including renamed folders. Portable restore remaps the overview ID.
+- New chapters start as blank prose, preventing instructional template text from entering manuscript counts/export. Existing text is never rewritten.
+- Added Theme and Prop planning types, v3→v4 installed-database verification and actual backup/restore/export regression coverage.
+- Full CI validation pending; release scope remains the first workspace/manuscript increment.

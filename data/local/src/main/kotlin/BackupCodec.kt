@@ -25,6 +25,7 @@ object BackupCodec {
                         put("cover", book.cover)
                         put("target", book.target)
                         put("status", book.status)
+                        put("overviewId", book.overviewId?.takeIf { id -> entries.any { it.id == id } } ?: JSONObject.NULL)
                     },
                 )
                 put(
@@ -75,6 +76,7 @@ object BackupCodec {
         val book =
             Book(
                 title = "$title (restored)",
+                overviewId = if (b.isNull("overviewId")) null else b.getLong("overviewId"),
                 author = b.optString("author"),
                 genres =
                     MetadataPolicy.genres(
@@ -131,6 +133,7 @@ object BackupCodec {
                 parent = folders.getValue(parent).folderId
             }
         }
+        require(book.overviewId == null || entries.any { it.id == book.overviewId && it.kind != "Folder" }) { "Invalid overview reference." }
         return book to entries
     }
 

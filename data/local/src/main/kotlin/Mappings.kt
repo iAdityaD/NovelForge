@@ -22,9 +22,10 @@ fun BookEntity.toModel() =
         target,
         status,
         updated,
+        overviewId,
     )
 
-fun Book.toEntity() = BookEntity(id, title, author, genre, synopsis, cover, target, status, updated)
+fun Book.toEntity() = BookEntity(id, title, author, genre, synopsis, cover, target, status, updated, overviewId)
 
 fun EntryEntity.toModel() =
     Entry(

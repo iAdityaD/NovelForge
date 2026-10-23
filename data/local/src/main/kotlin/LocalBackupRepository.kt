@@ -65,6 +65,7 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 entries.forEach {
                     ids[it.id] = dao.addEntry(it.copy(id = 0, parentId = null, folderId = null))
                 }
+                dao.updateBook(book.copy(overviewId = ids[book.overviewId]))
                 entries.forEach { e ->
                     val body = remapLinks(e.body, ids)
                     if (e.kind == "Chapter") {

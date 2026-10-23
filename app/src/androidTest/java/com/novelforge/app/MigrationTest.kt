@@ -74,4 +74,23 @@ class MigrationTest {
         }
         db.close()
     }
+    @Test
+    fun v3ChaptersAndOverviewKeepStableIdentity() = kotlinx.coroutines.runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        helper.createDatabase("migration-v3", 3).apply {
+            execSQL("INSERT INTO Book(id,title,author,genre,synopsis,cover,target,status,updated) VALUES ('v3','Existing','','Fantasy','Kept',0,80000,'In progress',0)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (17,'v3','Later','Words','Chapter','Draft',NULL,4,1,0,0,NULL)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (18,'v3','Earlier','More words','Chapter','Draft',NULL,2,2,0,0,NULL)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (19,'v3','Renamed reference','## Novel profile','Guide','Draft',NULL,0,2,0,0,NULL)")
+            close()
+        }
+        val db = androidx.room.Room.databaseBuilder(context, ForgeDb::class.java, "migration-v3").addMigrations(MIGRATION_3_4).build()
+        try {
+            Assert.assertEquals(listOf(18L,17L), db.dao().manuscriptPlacements("v3").map { it.documentId })
+            Assert.assertEquals(19L, db.dao().book("v3")!!.overviewId)
+            Assert.assertEquals("Words", db.dao().entry(17)!!.body)
+            Assert.assertEquals("Kept", db.dao().book("v3")!!.synopsis)
+        } finally { db.close() }
+    }
+
 }

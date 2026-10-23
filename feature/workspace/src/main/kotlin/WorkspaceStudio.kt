@@ -36,10 +36,9 @@ fun WorkspaceStudio(
     var category by rememberSaveable(book.id) { mutableStateOf("Character") }
     var query by rememberSaveable(book.id) { mutableStateOf("") }
     var graph by rememberSaveable(book.id) { mutableStateOf(false) }
-    val categories = listOf("Character", "Location", "Worldbuilding", "Plot thread", "Timeline event", "Research", "Backstory", "Note")
+    val categories = listOf("Character", "Location", "Theme", "Prop", "Worldbuilding", "Plot thread", "Timeline event", "Research", "Backstory", "Note")
     val latest = entries.filter { it.kind == "Chapter" }.maxByOrNull { it.updated }
-    val overview = entries.firstOrNull { it.kind == "Novel Profile" }
-        ?: entries.filter { it.kind == "Guide" }.minByOrNull { it.id }
+    val overview = entries.firstOrNull { it.id == book.overviewId }
     LaunchedEffect(book.id, graph) { if (graph) vm.loadConnections(book.id) }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically) {

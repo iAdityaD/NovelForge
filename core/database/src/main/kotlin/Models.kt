@@ -16,6 +16,7 @@ data class BookEntity(
     val target: Int = 80000,
     @ColumnInfo(defaultValue = "'In progress'") val status: String = "In progress",
     val updated: Long = System.currentTimeMillis(),
+    val overviewId: Long? = null,
 )
 
 @Entity(

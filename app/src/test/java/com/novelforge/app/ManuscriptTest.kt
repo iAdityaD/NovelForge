@@ -61,4 +61,32 @@ class ManuscriptTest {
         val legacy = org.json.JSONObject(encoded).put("version", 3).toString()
         assertTrue(BackupCodec.manuscript(legacy).isEmpty())
     }
+    @Test fun portableRestoreRemapsOverviewAndManuscriptWithoutLosingExcludedChapters() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("preferences", 0).edit().clear().commit()
+        val db = Room.inMemoryDatabaseBuilder(context, ForgeDb::class.java).build()
+        val file = java.io.File(context.cacheDir, "manuscript-backup.json")
+        val markdown = java.io.File(context.cacheDir, "manuscript.md")
+        try {
+            val workspace = LocalWorkspaceRepository(db, LocalPreferencesRepository(context))
+            val original = workspace.createBook("Original", "", emptyList(), 0, 80000, true)
+            val chapters = db.dao().entries(original.bookId).filter { it.kind == "Chapter" }
+            db.dao().updateEntry(chapters[0].copy(body = "FIRST_CONTENT"))
+            db.dao().updateEntry(chapters[1].copy(body = "EXCLUDED_CONTENT"))
+            LocalManuscriptRepository(db).include(chapters[1].id, false)
+            val backup = LocalBackupRepository(context, db)
+            backup.export(android.net.Uri.fromFile(file).toString(), original.bookId, false)
+            val restored = backup.restore(android.net.Uri.fromFile(file).toString())
+            val restoredBook = db.dao().book(restored)!!
+            assertNotEquals(original.overviewId, restoredBook.overviewId)
+            assertEquals(restored, db.dao().entry(restoredBook.overviewId!!)!!.bookId)
+            assertEquals(2, db.dao().manuscriptPlacements(restored).size)
+            assertEquals(1, db.dao().manuscriptPlacements(restored).count { !it.included })
+            backup.export(android.net.Uri.fromFile(markdown).toString(), restored, true)
+            assertTrue(markdown.readText().contains("FIRST_CONTENT"))
+            assertFalse(markdown.readText().contains("EXCLUDED_CONTENT"))
+            assertTrue(db.dao().entries(restored).any { it.body == "EXCLUDED_CONTENT" })
+        } finally { db.close(); file.delete(); markdown.delete() }
+    }
+
 }

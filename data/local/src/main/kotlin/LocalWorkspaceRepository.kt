@@ -44,6 +44,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
                     dao.addEntry(Entry(bookId = book.id, title = "Chapter $n", folderId = folderId, body = chapter, words = wordCount(chapter), position = n))
                 }
             }
+            dao.updateBook(book.copy(overviewId = overviewId))
         }
         return CreatedWorkspace(book.id, overviewId)
     }
@@ -108,6 +109,9 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
                     words = wordCount(body),
                 )
             )
+        if (kind == "Novel Profile") dao.book(bookId)?.let { book ->
+            if (book.overviewId == null || dao.entry(book.overviewId)?.deleted != false) dao.updateBook(book.copy(overviewId = id))
+        }
         dao.touch(bookId, System.currentTimeMillis())
         return id
     }
