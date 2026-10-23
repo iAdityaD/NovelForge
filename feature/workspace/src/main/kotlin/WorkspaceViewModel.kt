@@ -69,6 +69,17 @@ constructor(
         done: (Long) -> Unit,
     ) = launchWork { done(repository.createEntry(bookId, title, kind, parentId, folderId)) }
 
+    private val _creatingResource = MutableStateFlow(false)
+    val creatingResource: StateFlow<Boolean> = _creatingResource.asStateFlow()
+    fun createResource(bookId: String, title: String, folderId: Long?, newCategory: String?, sourceUrl: String?, notes: String, done: (Long) -> Unit) {
+        if (_creatingResource.value) return
+        _creatingResource.value = true
+        launchWork {
+            try { done(repository.createResource(bookId, title, folderId, newCategory, sourceUrl, notes)) }
+            finally { _creatingResource.value = false }
+        }
+    }
+
     fun loadDemo(done: (String) -> Unit) = launchWork { done(repository.loadDemo()) }
 
     fun loadConnections(id: String) = launchWork {

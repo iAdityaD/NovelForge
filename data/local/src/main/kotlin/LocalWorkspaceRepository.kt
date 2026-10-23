@@ -116,6 +116,28 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         return id
     }
 
+    override suspend fun createResource(bookId: String, title: String, folderId: Long?, newCategory: String?, sourceUrl: String?, notes: String): Long = db.withTransaction {
+        require(title.isNotBlank() && title.trim().length <= 200) { "Use a resource title of 1–200 characters." }
+        require((folderId != null) != (newCategory != null)) { "Choose an existing category or create a new one." }
+        require(dao.book(bookId) != null) { "Workspace is unavailable." }
+        val url = sourceUrl?.trim()?.also { value ->
+            val uri = runCatching { java.net.URI(value) }.getOrNull()
+            require(uri != null && uri.scheme?.lowercase() in listOf("http", "https") && !uri.host.isNullOrBlank() && uri.userInfo == null) { "Enter a valid http or https website address." }
+        }
+        val category = if (newCategory != null) {
+            val name = MetadataPolicy.folder(newCategory)
+            require(dao.entries(bookId).none { it.kind == "Folder" && it.folderId == null && it.title.equals(name, true) }) { "This category already exists. Select it from the list." }
+            dao.addEntry(Entry(bookId = bookId, title = name, kind = "Folder"))
+        } else {
+            require(dao.entry(folderId!!)?.let { it.bookId == bookId && it.kind == "Folder" && !it.deleted } == true) { "The selected category is unavailable." }
+            folderId
+        }
+        val body = if (url == null) notes else "## Source\n\n$url\n\n## Notes\n\n$notes"
+        val id = dao.addEntry(Entry(bookId = bookId, title = title.trim(), kind = if (url == null) "Resource" else "External source", folderId = category, body = body, words = wordCount(body)))
+        dao.touch(bookId, System.currentTimeMillis())
+        id
+    }
+
     override suspend fun createFolder(bookId: String, title: String, parent: Long?) {
         val validName = MetadataPolicy.folder(title)
         require(

@@ -242,7 +242,7 @@ fun ForgeApp() {
                 }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             AnimatedContent(
                 targetState = screen,
                 transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(100)) },
@@ -292,7 +292,7 @@ fun ForgeApp() {
                                 { screen = Destination.Library },
                                 { open(it) }, { open(it, true) }, { editBook = b },
                                 { folder, kind -> entryFolder = folder; showEntry = kind },
-                                { backup(b.id, it) }, { scope.launch { drawer.open() } },
+                                { backup(b.id, it) }, { scope.launch { drawer.open() } }, prefs.synopsisLimit,
                             )
                         }
                     Destination.Editor ->

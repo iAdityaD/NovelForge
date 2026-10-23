@@ -181,3 +181,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - Packaged APK and installation/data-preservation instructions as NovelForge-v0.5-Android.zip.
 - Visually checked native overview and device Arrange captures. Immediate post-creation device screenshot still catches IME closing; physical-device keyboard-transition verification remains pending. Do not treat semantic visibility assertion as proof of keyboard occlusion clearance.
 - Remaining roadmap: nested scenes/parts, typed relationships, shared worlds/series, richer export, full snapshot backups, stable signing; see docs/WORKSPACE_UPGRADE_PLAN.md. Do not call the full roadmap complete.
+
+
+## 0.5.1 — Folder-backed resources and workspace corrections
+- Plan now lists resources grouped by actual folders. Removed the fixed kind dropdown; the single + opens category selection/creation. Scratch starts without categories, standard uses existing structure. Legacy root files remain visible as Uncategorized.
+- Resource creation is one database transaction: category validation, optional folder, document and parent ID. New Resource / External source document kinds remain compatible with the existing backup codec, editor and stable wiki links. External sources retain URL and notes, without downloading articles.
+- Overview replaces Recent documents with a read-only synopsis and dedicated bounded editor respecting Settings content limits. Write creation only offers manuscript types.
+- Consume Scaffold insets before the nested workspace navigation bar to avoid duplicate bottom-system padding.
+- Added repository regression and device coverage. CI pending. No schema migration or unrelated rewrite required.

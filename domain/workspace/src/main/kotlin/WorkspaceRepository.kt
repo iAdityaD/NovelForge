@@ -29,6 +29,9 @@ interface WorkspaceRepository {
         folderId: Long?,
     ): Long
 
+    /** A resource always belongs to an existing or atomically created category folder. */
+    suspend fun createResource(bookId: String, title: String, folderId: Long?, newCategory: String?, sourceUrl: String?, notes: String): Long
+
     suspend fun createFolder(bookId: String, title: String, parent: Long?)
 
     suspend fun renameEntry(id: Long, title: String)

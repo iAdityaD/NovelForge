@@ -28,16 +28,20 @@ fun WorkspaceStudio(
     vm: WorkspaceViewModel, book: Book, entries: List<EntrySummary>, tab: Int,
     onTab: (Int) -> Unit, onBack: () -> Unit, onOpen: (Long) -> Unit,
     onRead: (Long) -> Unit, onEdit: () -> Unit, onAdd: (Long?, String) -> Unit,
-    onExport: (Boolean) -> Unit, onExplorer: () -> Unit,
+    onExport: (Boolean) -> Unit, onExplorer: () -> Unit, synopsisLimit: Int = 500,
 ) {
     val ui by vm.state.collectAsStateWithLifecycle()
+    val creatingResource by vm.creatingResource.collectAsStateWithLifecycle()
     val chapters = remember(entries, ui.placements) { manuscriptChapters(entries, ui.placements) }
     var menu by remember { mutableStateOf(false) }
     var delete by remember { mutableStateOf(false) }
-    var category by rememberSaveable(book.id) { mutableStateOf("Character") }
+    var addResource by rememberSaveable(book.id) { mutableStateOf(false) }
+    var editSynopsis by rememberSaveable(book.id) { mutableStateOf(false) }
     var query by rememberSaveable(book.id) { mutableStateOf("") }
     var graph by rememberSaveable(book.id) { mutableStateOf(false) }
-    val categories = listOf("Character", "Location", "Theme", "Prop", "Worldbuilding", "Plot thread", "Timeline event", "Research", "Backstory", "Note")
+    val folders = entries.filter { it.kind == "Folder" }.sortedBy { resourceFolderPath(it, entries.filter { e -> e.kind == "Folder" }) }
+    val manuscriptFolder = entries.firstOrNull { it.kind == "Chapter" && it.folderId != null }?.folderId
+        ?: folders.firstOrNull { it.title.equals("Manuscript", true) }?.id
     val latest = entries.filter { it.kind == "Chapter" }.maxByOrNull { it.updated }
     val overview = entries.firstOrNull { it.id == book.overviewId }
     LaunchedEffect(book.id, graph) { if (graph) vm.loadConnections(book.id) }
@@ -73,9 +77,9 @@ fun WorkspaceStudio(
                             }
                         }
                     }
-                    if (book.synopsis.isNotBlank()) item { Text(book.synopsis, maxLines = 5, overflow = TextOverflow.Ellipsis) }
+
                     item {
-                        FilledTonalButton(onClick = { if (latest != null) onOpen(latest.id) else onAdd(null, "Chapter") }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                        FilledTonalButton(onClick = { if (latest != null) onOpen(latest.id) else onAdd(manuscriptFolder, "Chapter") }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                             Icon(Icons.Outlined.EditNote, null); Spacer(Modifier.width(10.dp)); Text(if (latest == null) "Start writing" else "Continue writing")
                         }
                         latest?.let { Text(it.title, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -85,8 +89,13 @@ fun WorkspaceStudio(
                             Text(if (overview == null) "Create novel overview" else "Open novel overview")
                         }
                     }
-                    item { Text("Recent documents", style = MaterialTheme.typography.titleMedium) }
-                    items(entries.filter { it.kind != "Folder" }.sortedByDescending { it.updated }.take(5), key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
+                    item {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Synopsis", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                            ActionIcon(Icons.Outlined.Edit, "Edit synopsis", { editSynopsis = true })
+                        }
+                        Text(book.synopsis.ifBlank { "Capture the central idea of your story in a short summary." }, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     item {
                         val words = chapters.sumOf { it.words }
                         Text("${"%,d".format(words)} manuscript words", style = MaterialTheme.typography.titleMedium)
@@ -99,9 +108,9 @@ fun WorkspaceStudio(
                 1 -> {
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Story bible", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                            Text("Resources", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
                             ActionIcon(Icons.Outlined.Hub, "Show connections", { graph = !graph })
-                            ActionIcon(Icons.Outlined.Add, "New story document", { onAdd(null, category) })
+                            ActionIcon(Icons.Outlined.Add, "New resource", { addResource = true })
                         }
                     }
                     if (graph) {
@@ -115,23 +124,34 @@ fun WorkspaceStudio(
                             }
                         }
                     } else {
-                        item { ChoiceField("Collection", category, categories) { category = it } }
-                        item { OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search story documents") }, singleLine = true, leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
-                        val documents = entries.filter { it.kind == category && it.title.contains(query, true) }
-                        if (documents.isEmpty()) item { EmptyState("Room for an idea", "Planning is optional. Add a reference when your story needs one.", action = "Create $category", onAction = { onAdd(null, category) }) }
-                        items(documents, key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
+                        item { Text("Organize references in your own categories, then link them while writing.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        item { OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search resources") }, singleLine = true, leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
+                        val resources = entries.filter { it.kind !in listOf("Folder", "Chapter", "Screenplay", "Guide", "Novel Profile") }
+                        if (resources.isEmpty() && folders.isEmpty()) item { Text("Start with your first category using +. Nothing is created until you choose it.") }
+                        folders.forEach { folder ->
+                            val documents = resources.filter { it.folderId == folder.id && (it.title.contains(query, true) || folder.title.contains(query, true)) }
+                            if (documents.isNotEmpty() || (query.isBlank() && entries.none { it.folderId == folder.id && it.kind in listOf("Chapter", "Screenplay", "Novel Profile") })) {
+                                item(key = "category-${folder.id}") { Text(resourceFolderPath(folder, folders), style = MaterialTheme.typography.titleMedium) }
+                                if (documents.isEmpty()) item { Text("No resources yet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                items(documents, key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
+                            }
+                        }
+                        val uncategorized = resources.filter { it.folderId == null && it.title.contains(query, true) }
+                        if (uncategorized.isNotEmpty()) item { Text("Uncategorized", style = MaterialTheme.typography.titleMedium); Text("Existing files are preserved. Move them into a category using Files.", style = MaterialTheme.typography.bodySmall) }
+                        items(uncategorized, key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
+
                     }
                 }
                 2 -> {
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Drafts", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
-                            TextButton(onClick = { onAdd(null, "Chapter") }) { Icon(Icons.Outlined.Add, null); Text("Chapter") }
+                            Text("Manuscript", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                            TextButton(onClick = { onAdd(manuscriptFolder, "Chapter") }) { Icon(Icons.Outlined.Add, null); Text("Chapter") }
                         }
-                        Text("Write now. Arrange your manuscript whenever you’re ready.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Write your story here. Use the link picker to reference resources.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     val drafts = entries.filter { it.kind in listOf("Chapter", "Screenplay") }.sortedByDescending { it.updated }
-                    if (drafts.isEmpty()) item { EmptyState("Your first line starts here", "You don’t need an outline to begin.", action = "Start writing", onAction = { onAdd(null, "Chapter") }) }
+                    if (drafts.isEmpty()) item { EmptyState("Your first line starts here", "You don’t need an outline to begin.", action = "Start writing", onAction = { onAdd(manuscriptFolder, "Chapter") }) }
                     items(drafts, key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
                 }
                 3 -> {
@@ -160,7 +180,7 @@ fun WorkspaceStudio(
                         }
                     }
                     item { Text("Unplacing a chapter keeps its document and links. Find it in Write or Files.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    item { OutlinedButton(onClick = { onAdd(null, "Chapter") }, modifier = Modifier.fillMaxWidth()) { Text("Add chapter") } }
+                    item { OutlinedButton(onClick = { onAdd(manuscriptFolder, "Chapter") }, modifier = Modifier.fillMaxWidth()) { Text("Add chapter") } }
                 }
                 4 -> {
                     item { Text("Reading room", style = MaterialTheme.typography.headlineMedium); Text("Your manuscript, in reading order.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -175,6 +195,12 @@ fun WorkspaceStudio(
                 NavigationBarItem(selected = tab == i, onClick = { onTab(i) }, icon = { Icon(icon, null) }, label = { Text(label, maxLines = 1, fontSize = 11.sp) }, modifier = Modifier.testTag("workspace-tab-$i"))
             }
         }
+    }
+    if (addResource) ResourceDialog(folders, creatingResource, { addResource = false }) { title, folder, category, url, notes ->
+        vm.createResource(book.id, title, folder, category, url, notes) { id -> addResource = false; onOpen(id) }
+    }
+    if (editSynopsis) SynopsisDialog(book, synopsisLimit, { editSynopsis = false }) { text ->
+        vm.editBook(book.copy(synopsis = text)) { editSynopsis = false }
     }
     if (delete) AlertDialog(onDismissRequest = { delete = false }, title = { Text("Delete entire workspace?") },
         text = { Text("Delete “${book.title}” and all its documents, checkpoints, trash and writing history permanently? Export a backup first if you want to keep it.") },
