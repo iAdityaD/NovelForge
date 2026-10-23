@@ -33,6 +33,7 @@ fun LibraryScreen(
     onDemo: () -> Unit,
     onContinue: (Long) -> Unit,
     onSearch: () -> Unit,
+    excludedChapters: Set<Long> = emptySet(),
 ) {
     var grid by rememberSaveable { mutableStateOf(true) }
     var filter by rememberSaveable { mutableStateOf("All") }
@@ -134,7 +135,7 @@ fun LibraryScreen(
                                     .clickable { onBook(book.id) }
                                     .padding(bottom = 12.dp)
                             ) {
-                                WorkspaceCard(book, entries.filter { it.bookId == book.id }, false)
+                                WorkspaceCard(book, entries.filter { it.bookId == book.id && it.id !in excludedChapters }, false)
                             }
                         }
                         if (row.size == 1) Spacer(Modifier.weight(1f))
@@ -143,7 +144,7 @@ fun LibraryScreen(
             else
                 items(visible, key = { it.id }) { book ->
                     SurfaceCard(Modifier.fillMaxWidth().clickable { onBook(book.id) }) {
-                        WorkspaceCard(book, entries.filter { it.bookId == book.id }, true)
+                        WorkspaceCard(book, entries.filter { it.bookId == book.id && it.id !in excludedChapters }, true)
                     }
                 }
             if (books.isEmpty()) item { TextButton(onClick = onDemo) { Text("Open demo") } }

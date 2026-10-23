@@ -21,13 +21,13 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<WritingDay>) {
+fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<WritingDay>, excludedChapters: Set<Long> = emptySet()) {
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     var dropdown by remember { mutableStateOf(false) }
     val book = books.find { it.id == selected }
     val chosen = if (book == null) entries else entries.filter { it.bookId == book.id }
     val activity = if (book == null) days else days.filter { it.bookId == book.id }
-    val chapters = chosen.filter { it.kind == "Chapter" }
+    val chapters = chosen.filter { it.kind == "Chapter" && it.id !in excludedChapters }
     val words = chapters.sumOf { it.words }
     val today = LocalDate.now()
     LazyColumn(

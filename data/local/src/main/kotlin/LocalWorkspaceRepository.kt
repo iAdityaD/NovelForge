@@ -110,7 +110,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
                 )
             )
         if (kind == "Novel Profile") dao.book(bookId)?.let { book ->
-            if (book.overviewId == null || dao.entry(book.overviewId)?.deleted != false) dao.updateBook(book.copy(overviewId = id))
+            if (book.overviewId?.let { dao.entry(it) }?.deleted != false) dao.updateBook(book.copy(overviewId = id))
         }
         dao.touch(bookId, System.currentTimeMillis())
         return id

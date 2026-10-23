@@ -29,6 +29,7 @@ class WritingFlowTest {
         compose.onNodeWithContentDescription("New folder").performClick()
         compose.onNodeWithText("Folder name").performTextInput("World Two")
         compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithText("World Two").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("World Two").performClick()
         compose.onNodeWithContentDescription("New file").performClick()
         compose.onNodeWithText("Note title").performTextInput("Magic system")

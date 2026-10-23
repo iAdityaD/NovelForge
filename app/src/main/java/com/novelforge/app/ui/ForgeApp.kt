@@ -39,6 +39,7 @@ fun ForgeApp() {
     val prefs by settings.state.collectAsStateWithLifecycle()
     val books = workspaceUi.books
     val entries = workspaceUi.entries
+    val excludedChapters = workspaceUi.placements.filter { !it.included }.map { it.documentId }.toSet()
     val days by analytics.days.collectAsStateWithLifecycle()
     val busy by backups.busy.collectAsStateWithLifecycle()
     val workspaceError by workspace.error.collectAsStateWithLifecycle()
@@ -121,7 +122,7 @@ fun ForgeApp() {
                                 drawerState = drawer,
                                 gesturesEnabled = screen in listOf(Destination.Project, Destination.Editor, Destination.Reader),
                                 drawerContent = {
-                                    ModalDrawerSheet(
+                                    if (drawer.isOpen || drawer.targetValue == DrawerValue.Open) ModalDrawerSheet(
                                         Modifier.fillMaxWidth(.9f).widthIn(max = 360.dp),
                                         drawerContainerColor = MaterialTheme.colorScheme.background,
                                     ) {
@@ -248,6 +249,7 @@ fun ForgeApp() {
                             { workspace.loadDemo { project(it) } },
                             { open(it) },
                             { screen = Destination.Search },
+                            excludedChapters,
                         )
                     Destination.New ->
                         NewWorkspaceScreen(prefs.starterFolders, { screen = Destination.Library }) { title, author, genre, cover, target, standard ->
@@ -257,7 +259,7 @@ fun ForgeApp() {
                             }
                         }
                     Destination.Guide -> GuideScreen()
-                    Destination.Analytics -> AnalyticsScreen(books, entries, days)
+                    Destination.Analytics -> AnalyticsScreen(books, entries, days, excludedChapters)
                     Destination.Settings ->
                         SettingsNavigation(
                             settings,
