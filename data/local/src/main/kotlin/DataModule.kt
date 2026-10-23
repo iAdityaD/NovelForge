@@ -10,6 +10,7 @@ import com.novelforge.domain.preferences.*
 import com.novelforge.domain.story.*
 import com.novelforge.domain.workspace.*
 import com.novelforge.domain.writing.*
+import com.novelforge.domain.manuscript.ManuscriptRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,8 +32,10 @@ object DataModule {
     @Singleton
     fun database(@ApplicationContext context: Context): ForgeDb =
         Room.databaseBuilder(context, ForgeDb::class.java, "novelforge.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
+
+    @Provides fun manuscript(value: LocalManuscriptRepository): ManuscriptRepository = value
 
     @Provides fun workspace(value: LocalWorkspaceRepository): WorkspaceRepository = value
 

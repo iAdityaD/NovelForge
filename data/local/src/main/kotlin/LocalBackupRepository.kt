@@ -26,9 +26,12 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
         withContext(Dispatchers.IO) {
             val book = requireNotNull(dao.book(bookId))
             val entries = dao.entries(bookId)
+            val positions = db.dao().manuscriptPlacements(bookId).associate { it.documentId to (it.position to it.included) }
+            val ordered = entries.filter { it.kind == "Chapter" && positions[it.id]?.second != false }
+                .sortedWith(compareBy<Entry> { positions[it.id]?.first ?: it.position }.thenBy { it.id })
             val text =
-                if (markdown) BackupCodec.markdown(book, entries)
-                else BackupCodec.encode(book, entries)
+                if (markdown) BackupCodec.markdown(book, ordered)
+                else BackupCodec.encode(book, entries, positions)
             require(text.toByteArray().size <= BackupCodec.MAX_BYTES) {
                 "Project exceeds the 16 MB backup limit."
             }
@@ -55,6 +58,7 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                     out.toByteArray().toString(Charsets.UTF_8)
                 }
             val (book, entries) = BackupCodec.decode(text)
+            val placements = BackupCodec.manuscript(text)
             db.withTransaction {
                 dao.addBook(book)
                 val ids = mutableMapOf<Long, Long>()
@@ -63,6 +67,10 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 }
                 entries.forEach { e ->
                     val body = remapLinks(e.body, ids)
+                    if (e.kind == "Chapter") {
+                        val placement = placements[e.id]
+                        db.dao().place(ManuscriptPlacementEntity(ids.getValue(e.id), book.id, placement?.first ?: e.position, placement?.second ?: true))
+                    }
                     dao.updateEntry(
                         e.copy(
                             id = ids.getValue(e.id),

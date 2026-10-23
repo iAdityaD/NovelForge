@@ -20,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.novelforge.core.model.*
 import com.novelforge.domain.preferences.*
+import com.novelforge.domain.manuscript.*
 import com.novelforge.presentation.*
 import kotlinx.coroutines.launch
 
@@ -47,6 +48,7 @@ fun ForgeApp() {
     val error = workspaceError ?: editorError ?: backupError ?: settingsError ?: editorUi.error
     var screen by rememberSaveable { mutableStateOf(Destination.Library) }
     var bookId by rememberSaveable { mutableStateOf(nav.lastBook()) }
+    var workspaceTab by rememberSaveable { mutableIntStateOf(0) }
     var editBook by remember { mutableStateOf<Book?>(null) }
     var showEntry by remember { mutableStateOf<String?>(null) }
     var entryFolder by remember { mutableStateOf<Long?>(null) }
@@ -60,6 +62,7 @@ fun ForgeApp() {
     val selected = books.find { it.id == bookId }
     val bookEntries = entries.filter { it.bookId == bookId }
     fun project(id: String) {
+        if (bookId != id) workspaceTab = 0
         bookId = id
         nav.rememberBook(id)
         screen = Destination.Project
@@ -105,14 +108,98 @@ fun ForgeApp() {
         )
             screen = Destination.Project
     }
-    BackHandler(screen != Destination.Library) {
-        if (screen in listOf(Destination.Editor, Destination.Reader))
+    BackHandler(screen != Destination.Library || drawer.isOpen) {
+        if (drawer.isOpen) scope.launch { drawer.close() }
+        else if (screen in listOf(Destination.Editor, Destination.Reader))
             editor.leave { screen = Destination.Project }
         else screen = Destination.Library
     }
     val roots =
         listOf(Destination.Library, Destination.Guide, Destination.Analytics, Destination.Settings)
     if (editBook == null) {
+                            ModalNavigationDrawer(
+                                drawerState = drawer,
+                                gesturesEnabled = screen in listOf(Destination.Project, Destination.Editor, Destination.Reader),
+                                drawerContent = {
+                                    ModalDrawerSheet(
+                                        Modifier.fillMaxWidth(.9f).widthIn(max = 360.dp),
+                                        drawerContainerColor = MaterialTheme.colorScheme.background,
+                                    ) {
+                                        Row(
+                                            Modifier.fillMaxWidth()
+                                                .padding(start = 16.dp, end = 4.dp),
+                                            verticalAlignment =
+                                                androidx.compose.ui.Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                selected?.title?.replace('\n', ' ') ?: "Workspace",
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                maxLines = 1,
+                                                overflow =
+                                                    androidx.compose.ui.text.style.TextOverflow
+                                                        .Ellipsis,
+                                            )
+                                            ActionIcon(
+                                                Icons.Outlined.Close,
+                                                "Close file explorer",
+                                                { scope.launch { drawer.close() } },
+                                            )
+                                        }
+                                        Row(
+                                            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                            verticalAlignment =
+                                                androidx.compose.ui.Alignment.CenterVertically,
+                                        ) {
+                                            TextButton(
+                                                onClick = {
+                                                    scope.launch { drawer.close() }
+                                                    editor.leave { screen = Destination.Project }
+                                                },
+                                                modifier = Modifier.weight(1f),
+                                            ) {
+                                                Text("Open workspace")
+                                            }
+                                            ActionIcon(
+                                                Icons.Outlined.NoteAdd,
+                                                "New file",
+                                                {
+                                                    entryFolder = drawerFolder
+                                                    showEntry =
+                                                        defaultKindForFolder(
+                                                            bookEntries
+                                                                .find { it.id == drawerFolder }
+                                                                ?.title
+                                                        )
+                                                    scope.launch { drawer.close() }
+                                                },
+                                            )
+                                            ActionIcon(
+                                                Icons.Outlined.CreateNewFolder,
+                                                "New folder",
+                                                { newDrawerFolder = true },
+                                            )
+                                        }
+                                        HorizontalDivider()
+                                        selected?.let { b ->
+                                            ExplorerTree(
+                                                workspace,
+                                                b,
+                                                bookEntries,
+                                                { id ->
+                                                    scope.launch { drawer.close() }
+                                                    open(id)
+                                                },
+                                                { drawerFolder = it },
+                                                drawerFolder,
+                                                Modifier.weight(1f),
+                                                activeFileId = editorUi.entry?.id,
+                                            )
+                                        }
+                                    }
+                                },
+                            ) {
+
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
@@ -166,7 +253,7 @@ fun ForgeApp() {
                         NewWorkspaceScreen(prefs.starterFolders, { screen = Destination.Library }) { title, author, genre, cover, target, standard ->
                             workspace.createBook(title, author, genre, cover, target, standard) { created ->
                                 project(created.bookId)
-                                created.overviewId?.let { open(it, true) }
+                                workspaceTab = 0
                             }
                         }
                     Destination.Guide -> GuideScreen()
@@ -187,103 +274,17 @@ fun ForgeApp() {
                         }
                     Destination.Project ->
                         selected?.let { b ->
-                            WorkspaceScreen(
-                                workspace,
-                                b,
-                                bookEntries,
+                            WorkspaceStudio(
+                                workspace, b, bookEntries, workspaceTab,
+                                { workspaceTab = it },
                                 { screen = Destination.Library },
-                                { open(it) },
-                                { editBook = b },
-                                { folder, kind ->
-                                    entryFolder = folder
-                                    showEntry = kind
-                                },
-                                { backup(b.id, it) },
+                                { open(it) }, { open(it, true) }, { editBook = b },
+                                { folder, kind -> entryFolder = folder; showEntry = kind },
+                                { backup(b.id, it) }, { scope.launch { drawer.open() } },
                             )
                         }
                     Destination.Editor ->
                         editorUi.entry?.let { e ->
-                            ModalNavigationDrawer(
-                                drawerState = drawer,
-                                drawerContent = {
-                                    ModalDrawerSheet(
-                                        Modifier.fillMaxWidth(.9f).widthIn(max = 360.dp),
-                                        drawerContainerColor = MaterialTheme.colorScheme.background,
-                                    ) {
-                                        Row(
-                                            Modifier.fillMaxWidth()
-                                                .padding(start = 16.dp, end = 4.dp),
-                                            verticalAlignment =
-                                                androidx.compose.ui.Alignment.CenterVertically,
-                                        ) {
-                                            Text(
-                                                selected?.title?.replace('\n', ' ') ?: "Workspace",
-                                                modifier = Modifier.weight(1f),
-                                                style = MaterialTheme.typography.titleMedium,
-                                                maxLines = 1,
-                                                overflow =
-                                                    androidx.compose.ui.text.style.TextOverflow
-                                                        .Ellipsis,
-                                            )
-                                            ActionIcon(
-                                                Icons.Outlined.Close,
-                                                "Close file explorer",
-                                                { scope.launch { drawer.close() } },
-                                            )
-                                        }
-                                        Row(
-                                            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                                            verticalAlignment =
-                                                androidx.compose.ui.Alignment.CenterVertically,
-                                        ) {
-                                            TextButton(
-                                                onClick = {
-                                                    scope.launch { drawer.close() }
-                                                    editor.leave { screen = Destination.Project }
-                                                },
-                                                modifier = Modifier.weight(1f),
-                                            ) {
-                                                Text("Open workspace")
-                                            }
-                                            ActionIcon(
-                                                Icons.Outlined.NoteAdd,
-                                                "New file in selected folder",
-                                                {
-                                                    entryFolder = drawerFolder
-                                                    showEntry =
-                                                        defaultKindForFolder(
-                                                            bookEntries
-                                                                .find { it.id == drawerFolder }
-                                                                ?.title
-                                                        )
-                                                    scope.launch { drawer.close() }
-                                                },
-                                            )
-                                            ActionIcon(
-                                                Icons.Outlined.CreateNewFolder,
-                                                "New folder in selected folder",
-                                                { newDrawerFolder = true },
-                                            )
-                                        }
-                                        HorizontalDivider()
-                                        selected?.let { b ->
-                                            ExplorerTree(
-                                                workspace,
-                                                b,
-                                                bookEntries,
-                                                { id ->
-                                                    scope.launch { drawer.close() }
-                                                    open(id)
-                                                },
-                                                { drawerFolder = it },
-                                                drawerFolder,
-                                                Modifier.weight(1f),
-                                                activeFileId = e.id,
-                                            )
-                                        }
-                                    }
-                                },
-                            ) {
                                 EditorScreen(
                                     editor,
                                     prefs,
@@ -298,7 +299,6 @@ fun ForgeApp() {
                                     },
                                     { scope.launch { drawer.open() } },
                                 )
-                            }
                         }
                     Destination.Reader ->
                         editorUi.entry?.let { e ->
@@ -306,10 +306,11 @@ fun ForgeApp() {
                                 reader,
                                 e,
                                 selected,
-                                bookEntries,
+                                manuscriptChapters(bookEntries, workspaceUi.placements),
                                 { screen = Destination.Project },
                                 { screen = Destination.Editor },
                                 { open(it, true) },
+                                { scope.launch { drawer.open() } },
                             )
                         }
                 }
@@ -317,6 +318,7 @@ fun ForgeApp() {
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
+    } // Shared workspace drawer
     if (newDrawerFolder)
         NameDialog("New folder", "Folder name", onDismiss = { newDrawerFolder = false }) { name ->
             workspace.createFolder(bookId, name, drawerFolder)

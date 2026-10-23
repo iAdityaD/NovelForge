@@ -20,10 +20,11 @@ class WritingFlowTest {
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) {
             compose
-                .onAllNodesWithContentDescription("New folder")
+                .onAllNodesWithText("Files")
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
+        compose.onNodeWithText("Files").performClick()
         compose.onNodeWithText("Manuscript").assertDoesNotExist()
         compose.onNodeWithContentDescription("New folder").performClick()
         compose.onNodeWithText("Folder name").performTextInput("World Two")
@@ -44,11 +45,12 @@ class WritingFlowTest {
         compose.onNodeWithContentDescription("Read this page").performClick()
         compose.onNodeWithText("Magic has a cost.").assertExists()
         compose.onNodeWithContentDescription("Back to workspace").performClick()
-        compose.onNodeWithContentDescription("Expand World Two").performClick()
+        compose.onNodeWithText("Files").performClick()
         compose.onNodeWithText("Magic system.md").assertExists()
         compose.onNodeWithContentDescription("Actions for Magic system").performClick()
         compose.onNodeWithText("Move").performClick()
         compose.onNode(hasText("Workspace root") and hasAnyAncestor(isDialog())).performClick()
+        compose.onNodeWithContentDescription("Close file explorer").performClick()
         compose.onNodeWithContentDescription("Back to library").performClick()
         compose.onNodeWithText("Analytics").performClick()
         compose.onNodeWithText("Your writing portfolio").assertExists()

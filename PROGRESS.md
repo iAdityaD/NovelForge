@@ -159,3 +159,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Packaged NovelForge-v0.4-Android.zip with APK and installation/backup instructions. Debug certificate differs from 0.3; export every workspace before uninstalling.
 - Requested 0.4 changes complete; existing workspace structures and legacy synopsis metadata remain intact. No application changes after verified source; this checkpoint updates documentation/screenshots only.
 - Future work remains production signing, physical-device performance/accessibility review, and the documented export/media roadmap.
+
+## 0.5 stage A — Workspace shell and manuscript order
+- Added Overview, Plan, Write, Arrange and Read views; lifted the explorer into a shared drawer available in workspace, editor and reader.
+- Added plain Kotlin domain:manuscript, Room v4 additive placement storage and v3→v4 migration. Chapter manuscript order/inclusion is independent of folder position; unplaced chapters retain bodies and links.
+- Reading contents and Markdown export consume manuscript order; portable backup v4 preserves placement/inclusion and reads v1–v3.
+- Updated navigation/device coverage and added persistence/placement regressions. Architecture and whitespace checks pass; CI and migration validation pending.
+- This is the first incremental upgrade, not the complete roadmap. Scene nesting, shared series, advanced exports, full-snapshot backups and production signing remain future stages.

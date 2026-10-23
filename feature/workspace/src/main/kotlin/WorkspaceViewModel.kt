@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.novelforge.core.model.*
 import com.novelforge.core.presentation.FeatureViewModel
 import com.novelforge.domain.story.*
+import com.novelforge.domain.manuscript.*
 import com.novelforge.domain.workspace.*
 import com.novelforge.domain.writing.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,6 +16,7 @@ data class WorkspaceUiState(
     val books: List<Book> = emptyList(),
     val entries: List<EntrySummary> = emptyList(),
     val trash: List<Entry> = emptyList(),
+    val placements: List<ManuscriptPlacement> = emptyList(),
     val connections: List<Pair<Long, Long>> = emptyList(),
 )
 
@@ -25,11 +27,12 @@ constructor(
     private val repository: WorkspaceRepository,
     private val story: StoryRepository,
     private val session: EditorSession,
+    private val manuscript: ManuscriptRepository,
 ) : FeatureViewModel() {
     private val links = MutableStateFlow<List<Pair<Long, Long>>>(emptyList())
     val state =
-        combine(repository.books, repository.summaries, repository.trash, links) { b, e, t, l ->
-                WorkspaceUiState(b, e, t, l)
+        combine(repository.books, repository.summaries, repository.trash, links, manuscript.placements) { b, e, t, l, p ->
+                WorkspaceUiState(b, e, t, p, l)
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WorkspaceUiState())
 
@@ -93,6 +96,10 @@ constructor(
     }
 
     fun restoreEntry(id: Long) = mutate { repository.restoreEntry(id) }
+
+    fun moveChapter(id: Long, delta: Int) = mutate { manuscript.move(id, delta) }
+
+    fun includeChapter(id: Long, included: Boolean) = mutate { manuscript.include(id, included) }
 
     fun moveEntry(id: Long, delta: Int) = mutate { repository.moveEntry(id, delta) }
 

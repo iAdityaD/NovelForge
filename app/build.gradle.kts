@@ -13,8 +13,8 @@ android {
         applicationId = "com.novelforge.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
@@ -79,6 +79,7 @@ dependencies {
  implementation(project(":data:local"))
  implementation(project(":domain:preferences"))
  implementation(project(":domain:workspace"))
+ implementation(project(":domain:manuscript"))
  implementation(project(":domain:writing"))
  implementation(project(":domain:story"))
  implementation(project(":domain:analytics"))

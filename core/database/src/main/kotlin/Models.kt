@@ -99,8 +99,23 @@ data class BookRecord(
     @Relation(parentColumn = "id", entityColumn = "bookId") val genres: List<BookGenreEntity>,
 )
 
+@Entity(tableName = "ManuscriptPlacement", indices = [Index("bookId")], foreignKeys = [
+    ForeignKey(entity = EntryEntity::class, parentColumns = ["rowid"], childColumns = ["documentId"], onDelete = ForeignKey.CASCADE),
+    ForeignKey(entity = BookEntity::class, parentColumns = ["id"], childColumns = ["bookId"], onDelete = ForeignKey.CASCADE),
+])
+data class ManuscriptPlacementEntity(@PrimaryKey val documentId: Long, val bookId: String, val position: Int, val included: Boolean = true)
+
 @Dao
 interface ForgeDao {
+    @Query("SELECT * FROM ManuscriptPlacement ORDER BY position, documentId")
+    fun manuscriptPlacements(): Flow<List<ManuscriptPlacementEntity>>
+
+    @Query("SELECT * FROM ManuscriptPlacement WHERE bookId=:bookId ORDER BY position, documentId")
+    suspend fun manuscriptPlacements(bookId: String): List<ManuscriptPlacementEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun place(value: ManuscriptPlacementEntity)
+
     @Transaction
     @Query("SELECT * FROM Book ORDER BY updated DESC")
     fun bookRecords(): Flow<List<BookRecord>>
@@ -144,6 +159,16 @@ interface ForgeDao {
     @Update suspend fun updateBook(book: BookEntity)
 
     @Insert suspend fun addEntry(entry: EntryEntity): Long
+
+    @Transaction
+    suspend fun addDocument(entry: EntryEntity): Long {
+        val id = addEntry(entry)
+        if (entry.kind == "Chapter") {
+            val order = maxOf(manuscriptPlacements(entry.bookId).maxOfOrNull { it.position } ?: -1, entry.position - 1) + 1
+            place(ManuscriptPlacementEntity(id, entry.bookId, order))
+        }
+        return id
+    }
 
     @Update suspend fun updateEntry(entry: EntryEntity)
 
@@ -192,8 +217,9 @@ interface ForgeDao {
             RevisionEntity::class,
             WritingDayEntity::class,
             BookGenreEntity::class,
+            ManuscriptPlacementEntity::class,
         ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class ForgeDb : RoomDatabase() {

@@ -3,6 +3,7 @@ android { namespace="com.novelforge.data.local"; compileSdk=35; defaultConfig { 
 dependencies {
  implementation(project(":core:model")); implementation(project(":core:database"))
  implementation(project(":domain:workspace"))
+ implementation(project(":domain:manuscript"))
  implementation(project(":domain:writing"))
  implementation(project(":domain:story"))
  implementation(project(":domain:analytics"))

@@ -36,6 +36,7 @@ fun ReaderScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onOpen: (Long) -> Unit,
+    onExplorer: () -> Unit = {},
 ) {
     val preferences by vm.state.collectAsStateWithLifecycle()
     var appearance by remember { mutableStateOf(false) }
@@ -66,8 +67,9 @@ fun ReaderScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     ActionIcon(Icons.AutoMirrored.Outlined.ArrowBack, "Back to workspace", onBack)
+                    ActionIcon(Icons.Outlined.FolderOpen, "File explorer", onExplorer)
                     Text(
-                        "READING ROOM",
+                        "",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -12,6 +12,7 @@ dependencies {
  implementation(project(":core:designsystem"))
  implementation(project(":core:presentation"))
  implementation(project(":domain:workspace"))
+ implementation(project(":domain:manuscript"))
  implementation(project(":domain:writing"))
  implementation(project(":domain:story"))
  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")

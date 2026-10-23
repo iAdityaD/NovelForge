@@ -39,8 +39,10 @@ class StudioUiTest {
         compose.onNodeWithContentDescription("Cancel workspace creation").performClick()
         compose.onNodeWithText("Open demo").performScrollTo().performClick()
         compose.waitUntil(20000) {
-            compose.onAllNodesWithText("01_Chapters").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithText("Your story, at a glance").fetchSemanticsNodes().isNotEmpty()
         }
+        shot("10-overview")
+        compose.onNodeWithText("Files").performClick()
         compose.onNodeWithContentDescription("Expand 01_Chapters").performClick()
         shot("02-workspace")
         compose.onNodeWithText("A map of the missing.md").performClick()

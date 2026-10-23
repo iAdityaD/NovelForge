@@ -41,7 +41,7 @@ internal class Records(private val dao: ForgeDao) {
         saveGenres(book)
     }
 
-    suspend fun addEntry(entry: Entry) = dao.addEntry(entry.toEntity())
+    suspend fun addEntry(entry: Entry) = dao.addDocument(entry.toEntity())
 
     suspend fun updateEntry(entry: Entry) = dao.updateEntry(entry.toEntity())
 
