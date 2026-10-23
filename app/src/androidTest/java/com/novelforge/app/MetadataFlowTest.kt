@@ -60,6 +60,7 @@ class MetadataFlowTest {
         screenshot("creation-modes")
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithText("Your story, at a glance").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("workspace-tab-0").assertIsDisplayed()
         screenshot("workspace-overview")
         compose.onNodeWithText("Open novel overview").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Back to workspace").fetchSemanticsNodes().isNotEmpty() }

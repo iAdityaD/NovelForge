@@ -15,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,6 +61,14 @@ fun ForgeApp() {
     var markdown by rememberSaveable { mutableStateOf(false) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus = LocalFocusManager.current
+    LaunchedEffect(screen, editBook) {
+        if (screen !in listOf(Destination.Editor, Destination.New) && editBook == null) {
+            focus.clearFocus()
+            keyboard?.hide()
+        }
+    }
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val selected = books.find { it.id == bookId }
     val bookEntries = entries.filter { it.bookId == bookId }

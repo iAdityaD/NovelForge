@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.novelforge.core.model.*
 import com.novelforge.domain.manuscript.*
@@ -106,6 +107,13 @@ fun WorkspaceStudio(
                     if (graph) {
                         item { InteractiveConnections(entries.filter { it.kind != "Folder" }, ui.connections, onOpen) }
                         item { Text("Use the editor’s link picker to connect story documents.", style = MaterialTheme.typography.bodySmall) }
+                        items(ui.connections) { (from, to) ->
+                            Column {
+                                TextButton(onClick = { onOpen(from) }) { Text(entries.find { it.id == from }?.title ?: "Missing source") }
+                                Text("references", style = MaterialTheme.typography.labelSmall)
+                                TextButton(onClick = { onOpen(to) }) { Text(entries.find { it.id == to }?.title ?: "Missing reference") }
+                            }
+                        }
                     } else {
                         item { ChoiceField("Collection", category, categories) { category = it } }
                         item { OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search story documents") }, singleLine = true, leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
@@ -164,7 +172,7 @@ fun WorkspaceStudio(
         }
         NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
             listOf("Overview" to Icons.Outlined.Home, "Plan" to Icons.Outlined.ListAlt, "Write" to Icons.Outlined.EditNote, "Arrange" to Icons.Outlined.AccountTree, "Read" to Icons.Outlined.AutoStories).forEachIndexed { i, (label, icon) ->
-                NavigationBarItem(selected = tab == i, onClick = { onTab(i) }, icon = { Icon(icon, null) }, label = { Text(label, maxLines = 1) }, modifier = Modifier.testTag("workspace-tab-$i"))
+                NavigationBarItem(selected = tab == i, onClick = { onTab(i) }, icon = { Icon(icon, null) }, label = { Text(label, maxLines = 1, fontSize = 11.sp) }, modifier = Modifier.testTag("workspace-tab-$i"))
             }
         }
     }
