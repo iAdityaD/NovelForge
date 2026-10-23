@@ -1,6 +1,6 @@
 # NovelForge — local Android writing workspace
 
-NovelForge 0.5 combines a flexible folder workspace with Overview, Plan, Write, Arrange and Read views. Markdown documents and linked story references remain local; manuscript order is independent from folder organization. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
+NovelForge 0.5.1 combines a flexible folder workspace with Overview, Plan, Write, Arrange and Read views. Markdown documents and linked story references remain local; manuscript order is independent from folder organization. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
 
 ## Screens
 
@@ -43,6 +43,8 @@ A domain-based modular monolith with Clean Architecture boundaries, Hilt depende
 - **Analytics:** writing streak above the workspace dropdown. All workspaces shows portfolio totals by status; one workspace shows manuscript progress, chapter states and story-bible statistics. Both include words, estimated pages, chapters, character profiles and daily activity.
 - **Settings:** a category index leading to separate Appearance, Editor, Reading, Data & backup, Recently deleted and About screens.
 - **Workspace setup:** Standard structure or Build from scratch. Standard creates eight beginner-friendly folders, editable README guides and two blank starter chapters; scratch starts empty. Customize future starter folders in Settings → Writing → Workspace structure.
+- **Resources:** Plan groups references by real workspace folders. Its single + creates a resource in an existing or new category. Scratch has no preset taxonomy. External sources retain a URL and notes locally. Existing root files remain accessible as Uncategorized.
+- **Synopsis:** Overview displays the story summary with a dedicated edit action and configurable word limit; Recent documents has been removed.
 - **Workspace:** five focused views for the novel overview, story collections, drafts, manuscript arrangement and reading. The same file explorer is available throughout.
 - **Manuscript:** reorder chapters independently of folders; unplace a chapter without deleting its document; reading, Markdown export and manuscript statistics follow inclusion.
 - **Explorer:** compact flat rows, separate expand/select controls, search, expand/collapse all, active-file reveal, rename, move, sibling ordering, drag-to-folder and recoverable subtree deletion. The editor drawer includes create actions and an explicit close button.
@@ -56,9 +58,9 @@ The explorer is a logical tree in the local database, not an external Markdown v
 
 ## Verification and installation
 
-The 0.5 build at source `5c7119897a260126ec3433b8b4cc5a41b419a11f` passes compilation, architecture boundaries, 27 JVM tests, six Android API 34 device tests, and lint (0 errors, 14 warnings). [CI run 39921422025](https://github.com/iAdityaD/NovelForge/actions/runs/39921422025) retains the APK, reports and screenshots. Tests include migration from schema v3, stable overview identity, independent manuscript ordering, unplacing/re-inclusion, backup remapping, standard/scratch creation, and existing editing flows.
+The 0.5.1 build at source `87f20877e4d8d996fd538f7307e52200d7585bd6` passes compilation, architecture boundaries, 28 JVM tests, six API 34 Android device tests and lint. [CI run 39926424532](https://github.com/iAdityaD/NovelForge/actions/runs/39926424532) retains the APK, reports and screenshots. New tests cover scratch resource categories, atomic rejection, category rename/delete/restore, external source backup compatibility and synopsis editing.
 
-GitHub Actions publishes the debug APK as the `NovelForge-debug` artifact. Download and unzip it, then open the APK on Android 8.0 or newer. The packaged download is `NovelForge-v0.5-Android.zip` (APK plus installation instructions). APK SHA256: `524418b5d0b03b745208a91496d4c11e529aa2a810ca4418caf3e81446ea9252`.
+Download the `NovelForge-debug` artifact from GitHub Actions and extract its APK, or use the packaged `NovelForge-v0.5.1-Android.zip` with installation instructions. Android 8.0 or newer is required. APK SHA256: `5f1799de6c8c6e5d4704bfe5e3c322aef66853d052d52286840da2ff5eb98698`.
 
 **Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
 

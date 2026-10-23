@@ -189,3 +189,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Overview replaces Recent documents with a read-only synopsis and dedicated bounded editor respecting Settings content limits. Write creation only offers manuscript types.
 - Consume Scaffold insets before the nested workspace navigation bar to avoid duplicate bottom-system padding.
 - Added repository regression and device coverage. CI pending. No schema migration or unrelated rewrite required.
+
+
+## 0.5.1 verified delivery
+- Source `87f20877e4d8d996fd538f7307e52200d7585bd6`; CI `39926424532`: build and device jobs successful. 28 JVM tests / 6 API 34 tests, no failures or skips. Compilation, architecture checks and lint passed.
+- APK signature verified, versionCode 6 / versionName 0.5.1 / minSDK 26. Packaged NovelForge-v0.5.1-Android.zip.
+- Inspected Plan and Arrange device captures for resource layout and consumed bottom insets. Physical-device review remains outside emulator verification.
+- No automatic relocation of old files, schema rewrite, or downloaded web content. Categories are logical folders; source links and notes use canonical documents. Future full-roadmap stages remain in WORKSPACE_UPGRADE_PLAN.md.
