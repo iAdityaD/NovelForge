@@ -1,6 +1,6 @@
 # NovelForge full workspace upgrade plan
 
-Status: proposed implementation roadmap; UI direction approved by the owner. This document does not mark new features as implemented.
+Status: historical roadmap. The owner retained Kotlin/Compose and adopted the configurable writing-workspace redesign on 2026-10-24. See PRODUCT_REDESIGN.md for authoritative product rules; conflicting rules here (recent documents, fixed collections, unplaced tray, synopsis ownership) are superseded. This document does not mark features as implemented.
 Baseline: verified 0.4 source eef9834e796ddb90992882f5b993cdccf29628e2; documentation checkpoint a4711a7841bae019f4887c958fdaa6fcc3ae86c7.
 
 ## Product outcome

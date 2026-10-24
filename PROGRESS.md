@@ -210,3 +210,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - Verified APK signature/version 0.5.2 (7), minSDK 26; inspected Arrange capture. Packaged NovelForge-v0.5.2-Android.zip.
 - Arrange now selects existing chapters; no chapter creation route. Remove from manuscript preserves documents. New draft membership is explicit, existing data untouched.
 - Requirements/design live in docs/ARRANGE_REQUIREMENTS.md. No schema change; repository batch addition owns transactional validation.
+
+
+## Configurable writing workspace — design/audit checkpoint (2026-10-24)
+- Owner explicitly retained Kotlin/Compose/Room/Hilt and requested the new general-purpose product/content model. React Native/Expo and iOS migration are out of scope.
+- Source audit and authoritative redesign: docs/PRODUCT_REDESIGN.md. Reconciles earlier rules: preserve Files versus manuscript independence, no Recents, no fixed taxonomy, one synopsis authority, canonical source documents.
+- Verified current gaps: Chapter-only compilation versus Screenplay writing; folder-backed categories; fixed kind/metadata assumptions; incomplete snapshots; volatile pending draft; large workspace UI coordinator.
+- This checkpoint changes requirements/documentation only. v0.5.2 remains the last tested APK; no app rewrite or new schema has been delivered here.
+- Next implementation gate: full-snapshot restoration and migration-safe type registry, then declarative project creation and capability-driven views. See the redesign's ordered gates and acceptance matrix.
