@@ -76,7 +76,7 @@ fun ReaderScreen(
                     )
                     ActionIcon(
                         if (bookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
-                        if (bookmarked) "Remove bookmark" else "Bookmark chapter",
+                        if (bookmarked) "Remove bookmark" else "Bookmark document",
                         {
                             bookmarked = !bookmarked
                             vm.bookmark(e.id, bookmarked)
@@ -92,7 +92,7 @@ fun ReaderScreen(
                         "Reading appearance",
                         { appearance = true },
                     )
-                    ActionIcon(Icons.Outlined.Edit, "Edit this chapter", onEdit)
+                    ActionIcon(Icons.Outlined.Edit, "Edit this document", onEdit)
                 }
             LazyColumn(
                 state = state,
@@ -107,7 +107,7 @@ fun ReaderScreen(
                         verticalArrangement = Arrangement.spacedBy(17.dp),
                     ) {
                         Eyebrow(
-                            if (index >= 0) "CHAPTER ${(index+1).toString().padStart(2,'0')}"
+                            if (index >= 0) "${e.kind.uppercase()} ${(index+1).toString().padStart(2,'0')}"
                             else e.kind
                         )
                         Text(
@@ -156,7 +156,7 @@ fun ReaderScreen(
                         )
                         if (index >= 0 && index < chapters.lastIndex)
                             FilledTonalButton(onClick = { onOpen(chapters[index + 1].id) }) {
-                                Text("Next chapter")
+                                Text("Next document")
                                 Spacer(Modifier.width(9.dp))
                                 Icon(
                                     Icons.AutoMirrored.Outlined.ArrowForward,
@@ -174,7 +174,7 @@ fun ReaderScreen(
                 ) {
                     ActionIcon(
                         Icons.Outlined.ChevronLeft,
-                        "Previous chapter",
+                        "Previous document",
                         { onOpen(chapters[index - 1].id) },
                         index > 0,
                     )
@@ -192,7 +192,7 @@ fun ReaderScreen(
                     )
                     ActionIcon(
                         Icons.Outlined.ChevronRight,
-                        "Next chapter",
+                        "Next document",
                         { onOpen(chapters[index + 1].id) },
                         index >= 0 && index < chapters.lastIndex,
                     )
