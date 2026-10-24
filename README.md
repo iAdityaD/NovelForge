@@ -1,98 +1,55 @@
 # NovelForge — local Android writing workspace
 
-NovelForge 0.5.3 combines a flexible folder workspace with Overview, Plan, Write, Arrange and Read views. Markdown documents and linked story references remain local; manuscript order is independent from folder organization. Built with Kotlin, Jetpack Compose and Room. The redesigned interface uses compact sans-serif typography, charcoal/violet and light themes, geometric covers and short transitions.
+NovelForge 0.6.0 is a local-first writing app built with Kotlin, Jetpack Compose, Room, Hilt and Coroutines/Flow. Organize research in **Plan** and write/reorder a nested manuscript in **Write**. The workspace has three tabs: **Overview, Plan, Write**. Separate Arrange and Read screens are no longer part of active navigation.
 
-## Screens
+## Current workflow
 
-Actual Compose screens captured by the automated native-rendering test.
+- **Library:** grid/list projects, search, combined status/genre filters, backup import and creation.
+- **Create:** title required; author, multiple genres and color optional. Start blank or use an optional Novel, Short story, Screenplay, Nonfiction or Essay recipe. Generated folders remain editable. Customize Novel starter folders in Settings.
+- **Overview:** project identity, editable synopsis, resume writing and manuscript totals. Project metadata uses a separate pencil action. Export, backup and confirmed workspace deletion remain in the menu.
+- **Plan:** nested folders and documents for ideas, notes, research and sources. Names and type labels are freeform. Add a category inside the resource form; optional URLs are stored with notes, not downloaded.
+- **Write:** one canonical manuscript tree for writing and organization. Every manuscript document participates automatically. Long-press and drag a row above/below another to reorder; edge dragging scrolls. Move up/down and Move to folder remain available.
+- **Files:** the whole logical workspace, compact collapsible rows, file search, custom type/status filters, rename/move/trash and scroll position indicators. Filters preserve ancestor folders.
+- **Editor:** Markdown, syntax colors, typography, focus mode, stable internal links, backlinks, undo/redo, checkpoints, custom type labels/statuses, word counts and truthful autosave state.
+- **Guide:** searchable offline articles matching the current workflow, including resources, writing, nested order, linking and recovery.
+- **Analytics:** streak and project selector, all-project portfolio totals or selected-project metrics, manuscript words/pages/documents, resources and activity.
+- **Settings:** focused category subpages for Appearance, Editor, Writing, Data & backup, Recently deleted and About. Writing includes default folders and the synopsis word limit. No reader settings are exposed while Read is deferred.
 
-| Library | Workspace | Analytics |
-| --- | --- | --- |
-| ![Library](docs/screenshots/bookshelf.png) | ![Workspace](docs/screenshots/workspace.png) | ![Analytics](docs/screenshots/analytics.png) |
+The UI uses charcoal/violet and light themes, compact rows and scrollable forms. Templates are optional starting content, not enforced taxonomies. A document's stored Plan/manuscript role is independent of its editable title and type label.
 
-| Create workspace | Editor | Settings |
-| --- | --- | --- |
-| ![Creation](docs/screenshots/creation.png) | ![Editor](docs/screenshots/editor.png) | ![Settings](docs/screenshots/settings.png) |
+## Data model and architecture
 
-| Editor explorer |
-| --- |
-| ![Explorer drawer](docs/screenshots/drawer.png) |
+The existing Android stack is retained. A domain-based modular monolith separates pure Kotlin models/contracts, application services, Room repositories, feature ViewModels and Compose UI. No SQL belongs in UI components. See [architecture](docs/ARCHITECTURE.md) and [the current product specification](docs/PRODUCT_REDESIGN.md).
 
-API 34 device captures:
+Room schema **5** adds the explicit document area while retaining IDs, content, references, folders and revisions. Legacy mixed folders can appear as ancestors in both Plan and Write; migration does not silently reorganize or delete their text. Prior manuscript exclusion records remain for historical compatibility, but no longer hide documents from the current manuscript. Nested folder/sibling order is now shared by Write, export and manuscript statistics.
 
-| Details | Library filters | Overview guide |
-| --- | --- | --- |
-| ![Details](docs/screenshots/workspace-details.png) | ![Filters](docs/screenshots/library-filter.png) | ![Guide](docs/screenshots/overview-guide.png) |
+`WorkspaceRepository.createNode` creates generic documents/folders and optional resource categories transactionally. `placeBefore` validates project/area ownership and cycles, then changes parent/sibling order atomically. `orderedManuscript` is the iterative depth-first projection used for canonical manuscript order. Type labels and document statuses remain portable freeform values; this is not yet a schema-based custom metadata/type registry.
 
-The 0.5 workspace views (API 34 device captures):
+## Storage, backup and recovery
 
-| Plan | Write | Arrange | Read |
-| --- | --- | --- | --- |
-| ![Plan](docs/screenshots/workspace-plan.png) | ![Write](docs/screenshots/workspace-write.png) | ![Arrange](docs/screenshots/workspace-arrange.png) | ![Read](docs/screenshots/workspace-read.png) |
+Everything works without an account or network connection. The app has no internet permission. The explorer is a logical SQLite tree, not a live external Markdown vault.
 
-See [the UI/UX walkthrough](docs/REDESIGN.md) for each screen and its interactions.
+Recovery backup **v6** preserves project metadata, documents, custom labels/statuses, Plan/manuscript roles, folder order, trash, checkpoints and writing history. Restore validates bounded input and creates a separate project in one transaction, remapping IDs and internal links. Legacy v1–v5 backups remain supported. Markdown export contains the complete current manuscript in nested order, excluding Plan resources.
 
-## Architecture
+Project backups do **not** include app preferences, historical reader bookmarks/positions or pending unsaved drafts. Limits: 16 MB and 10,000 documents per backup. Export before uninstalling or changing devices. Android cloud backup is disabled.
 
-A domain-based modular monolith with Clean Architecture boundaries, Hilt dependency injection and feature-specific MVVM/StateFlow. Plain Kotlin domains define contracts and rules; local repositories implement persistence; UI modules consume domain interfaces. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for module ownership, dependency direction and the steps for adding a feature.
+Autosave runs after a short pause and flushes on navigation/backgrounding. Saved locally follows successful persistence. Save failures block normal editor departure. A forced process kill during the unsaved debounce window can still lose the latest fragment; durable draft journaling remains future work.
 
-## Navigation and features
+## Build and installation
 
-- **Library:** grid/list workspaces, covers, combined status/genre filter dialog, header backup import, word goals, continue writing and global full-text search.
-- **Guide:** five practical offline lessons on workspace structure, linking characters/worlds, scene planning, revision and backup.
-- **Analytics:** writing streak above the workspace dropdown. All workspaces shows portfolio totals by status; one workspace shows manuscript progress, chapter states and story-bible statistics. Both include words, estimated pages, chapters, character profiles and daily activity.
-- **Settings:** a category index leading to separate Appearance, Editor, Reading, Data & backup, Recently deleted and About screens.
-- **Workspace setup:** Standard structure or Build from scratch. Standard creates eight beginner-friendly folders, editable README guides and two blank starter chapters; scratch starts empty. Customize future starter folders in Settings → Writing → Workspace structure.
-- **Resources:** Plan groups references by real workspace folders. Its single + creates a resource in an existing or new category. Scratch has no preset taxonomy. External sources retain a URL and notes locally. Existing root files remain accessible as Uncategorized.
-- **Synopsis:** Overview displays the story summary with a dedicated edit action and configurable word limit; Recent documents has been removed.
-- **Workspace:** five focused views for the novel overview, story collections, drafts, manuscript arrangement and reading. The same file explorer is available throughout.
-- **Manuscript:** Add chapter selects existing drafts through a searchable multi-select picker. Reorder independently of folders; Remove from manuscript keeps the source document. Documents, chapters and screenplays use the same manuscript projection. New drafts wait to be selected; existing/template membership is preserved. Reading, Markdown export and manuscript statistics follow inclusion. See [Arrange requirements and design](docs/ARRANGE_REQUIREMENTS.md).
-- **Explorer:** compact flat rows, separate expand/select controls, search, expand/collapse all, active-file reveal, rename, move, sibling ordering, drag-to-folder and recoverable subtree deletion. The editor drawer includes create actions and an explicit close button.
-- **Novel details:** a separate pencil action opens title, author, multiple genres and writing status. Synopsis belongs in the overview document. Overflow contains export, backup and confirmed permanent workspace deletion.
-- **Writing:** autosave, syntax coloring, proportional/monospace choice, formatting toolbar, wiki-link picker, focus mode, undo/redo, checkpoints, backlinks and word/character/reading-time metrics.
-- **Reading:** typography controls, warm paper, contents, bookmarks, remembered position and fullscreen controls.
-- **Connections:** pan/zoom/tap graph plus a textual link list. Graph display caps at 40 nodes; the list retains all references.
-- **Local-first data:** Room/SQLite, FTS search, portable JSON backups and Markdown manuscript export. No account, network permission or remote analytics service.
-
-The explorer is a logical tree in the local database, not an external Markdown vault. Pages are estimated at 250 manuscript words. Writing history starts with 0.2; old streaks are not invented. Word additions measure positive net changes between saves.
-
-## Verification and installation
-
-The 0.5.3 build at source `2081176386301243568c71b1b5701fc781ad9da7` passes compilation, architecture checks, 33 JVM tests, six API 34 Android tests and lint. [CI run 40068046883](https://github.com/iAdityaD/NovelForge/actions/runs/40068046883) retains the APK, reports and screenshots. New coverage includes fresh-database recovery of trash, checkpoint links and writing activity; invalid-history rejection; long titles and disabled goals; and mixed document/screenplay compilation and restoration.
-
-Download the `NovelForge-debug` artifact and extract the APK, or use `NovelForge-v0.5.3-Android.zip` with installation instructions. Android 8.0 or newer is required. APK SHA256: `bd3eec3040c5aee4c2bd4e6d9b087cc1dbc43cb1e80158904a34de8f68015869`.
-
-**Before replacing an older development build, export each workspace backup outside app storage.** CI debug signing keys can differ between builds. If Android rejects the update because of its signature, only uninstall after securing your backups; install the new APK and restore them. Uninstalling deletes app-local data. Production distribution still requires a stable private signing key.
-
-## Run
-
-Open this repository in Android Studio, use JDK 17, install Android SDK 35, and run the `app` configuration. Android 8.0 (API 26) or newer is required.
+Use JDK 17 and Android SDK 35. Android 8.0/API 26 or newer is required.
 
 ```sh
-./gradlew assembleDebug
-./gradlew testDebugUnitTest lintDebug
+python3 scripts/check_architecture.py
+./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
 ```
 
-The development APK is `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions builds and retains this APK after each successful push to main. Debug builds are for evaluation, not store distribution. Configure your own signing key for release builds.
+GitHub Actions also runs API 34 emulator journeys and migration checks. Successful builds provide the `NovelForge-debug` APK artifact, test reports and actual device screenshots. Version 0.6.0 source `0c3fb6ccfa2a6c39bb30f8bee7aca3c64e7f50a7` passed 37 JVM tests, seven API 34 Android tests, lint and architecture checks in [CI run 40114860066](https://github.com/iAdityaD/NovelForge/actions/runs/40114860066). APK SHA256: `e70d9a903dabb8f53b0514769797bee09782250eae6d48c5b4f9de5a168143b4`. See [PROGRESS.md](PROGRESS.md) for checkpoints and remaining work.
 
-## Data and safety
+**Before replacing an older development build, export every project outside app storage.** CI debug signatures may differ. If Android rejects an update signature, do not uninstall until backups are secured. Uninstalling deletes local data. Production distribution requires an owner-controlled stable signing key.
 
-Room is the source of truth. Library and outline screens load summary projections; full text is loaded when opening a page. Edits are saved after a 400 ms pause, flushed before navigation, and flushed when the activity stops. A sudden process kill during the unsaved debounce window can still lose that latest fragment; the UI displays `Saving…` until persistence completes. Explicit save failures block editor navigation.
+## Remaining scope
 
-Recovery backup v5 contains active and trashed documents, metadata, folder structure, manuscript placement, revision checkpoints and writing history. Export reads these in one database transaction and validates the result before opening the destination. Restore creates a new project in one transaction, remapping document/folder IDs and links in current content and checkpoints. Imports are bounded to 16 MB / 10,000 entries and validate history references, counts and dates before writes. Backups do **not** include bookmarks, reading positions, appearance/settings preferences or pending unsaved drafts. This is a project-recovery format, not a full application snapshot. Export outside app storage before uninstalling or changing devices. Android cloud backup is disabled deliberately.
+This is a development build, not physical-device performance/accessibility certification. Full custom field schemas and reusable user-authored project recipes, durable draft recovery, full-app snapshots, structural undo, media/cover import and production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
 
-No destructive database migrations are enabled. Schema exports live under `app/schemas`; future schema changes need explicit migrations and restore testing.
-
-Room schema v4 migrates installed v1/v2/v3 databases without destructive fallback, preserving entry IDs, revisions, arc references and full-text search, and organizing existing pages into default folders. Backup v4 adds manuscript placement/inclusion and overview references to multiple genres, folder hierarchy and project status; v1/v2/v3 backups remain importable. Schema v3 added normalized BookGenre storage, preserving legacy genre strings as one value. Schema v4 adds independent manuscript placement and a stable overview document ID. Over-limit restored synopses remain intact. Backup v5 restores recorded writing days; older formats do not contain them.
-
-## Limits and next work
-
-This is a functional development build. Physical-device frame-time, large-font and screen-reader certification remain pending. The screenplay template does not implement professional screenplay pagination. Reader rendering supports a Markdown subset rather than full CommonMark.
-
-The authoritative direction is the [configurable writing-workspace redesign](docs/PRODUCT_REDESIGN.md). Version 0.5.3 adds recovery and shared compilation foundations; custom type registries, templates, metadata forms and the full visual redesign are not yet delivered. Arrangement currently operates on chapters; nested scenes/parts, structured relationship editing and shared series are upcoming stages.
-
-Future work includes complete application snapshots and recoverable pending drafts, imported cover/media attachments, general Markdown-vault import, EPUB/PDF/DOCX export, reader pagination/highlights/TTS, revision diffs, richer link aliases, split-pane tablet navigation, scheduled external backups and release signing. Backups use Android's document picker; automatic cloud sync is not implemented.
-
-## Resume work
-
-Read `PROGRESS.md` and `docs/REDESIGN.md` first. Preserve existing data and user edits; commit each completed stage as requested by the owner.
+Read `PROGRESS.md` and the latest owner amendments in `docs/PRODUCT_REDESIGN.md` before continuing. Older screenshots and design documents may show retired Arrange/Read workflows.

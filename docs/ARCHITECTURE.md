@@ -109,3 +109,15 @@ Project recovery backup v5 reads all project documents (including trash), revisi
 `core:model/ContentCapabilities.kt` is the explicit compatibility boundary for legacy Document/Chapter/Screenplay eligibility. It is deliberately not represented as a completed custom-type registry. `domain:manuscript` provides the source projection and `compileManuscript` adapter used by export. Reader, library and analytics follow the same inclusion rules. Missing historical placements imply inclusion only for legacy Chapters, avoiding accidental inclusion of old screenplays.
 
 Database entities/schema remain v4; only DAO queries and runtime operations changed. New customizable type/metadata tables must follow the migration gates in PRODUCT_REDESIGN.md.
+
+## Current workflow amendment (0.6.0; supersedes earlier placement/navigation sections)
+
+The owner merged writing and arrangement. Active project tabs are Overview, Plan and Write. The old Reader module remains isolated and dormant; the application no longer routes to it. Earlier sections describe historical releases.
+
+Room schema 5 adds `Entry.area` (`plan` or `manuscript`) independently of display names and type labels. The compatibility migration maps recorded legacy writing kinds, retains all IDs/text/links, and leaves mixed folder structures intact. Ancestor-aware projections show relevant branches without copying content. Generic type labels and statuses are freeform; a validated field-schema registry is not implied.
+
+`WorkspaceArea` composes the generic creation form and `ExplorerTree`; Write enables drag ordering in that shared component. `createNode` owns role validation, category creation, optional URL checks and parent ownership in one transaction. `placeBefore` changes parent/sibling positions transactionally and rejects cycles/cross-project targets. `EditorSession` coordinates pending edits before tree changes. Editor saves preserve the current persisted parent, area and order.
+
+`core:model/WorkspaceTree.kt` provides area filtering and iterative depth-first manuscript compilation. Write and export follow the canonical folder tree. Every manuscript-role document participates; former placement exclusions are retained only as historical records. Current UI never infers role from a user-created type label or folder name.
+
+Backup v6 preserves area, freeform labels/statuses and previous recovery history; imports v1–v5 retain legacy role inference. Legacy placement records are still remapped even if a document's type was renamed. Preferences keep existing keys; a separately persisted reader font preference remains dormant while Read is disabled. Full-app backups and pending-draft journaling remain outstanding.

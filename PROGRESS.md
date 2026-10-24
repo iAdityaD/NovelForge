@@ -252,3 +252,11 @@ Initial stage e840a17 passed build + six device tests. First role build compiled
 
 ### Final owner navigation change
 Removed the redundant Arrange tab. Workspace now has Overview, Plan, Write. Write includes drag arrangement, nested folders, search and type/status filters. Updated Guide and device journey; pending final CI.
+
+## Verified v0.6.0 release checkpoint
+
+Source `0c3fb6ccfa2a6c39bb30f8bee7aca3c64e7f50a7`; CI run `40114860066` passed build/lint/boundaries and 37 JVM tests plus seven API 34 device tests (zero failures/skips). Device coverage includes native drag ordering, metadata/filters/deletion, scratch resource creation and v1–v5 migration preservation. Final active project tabs: Overview, Plan, Write.
+
+APK version 0.6.0 (9), min API 26 / target 35; signature verified. SHA256 `e70d9a903dabb8f53b0514769797bee09782250eae6d48c5b4f9de5a168143b4`. Artifacts: APK `12567674545`, verification reports `12567694682`, device reports `12568296226`. Local delivery ZIP contains APK and installation/backup instructions.
+
+Actual rendered Write/Guide/Settings screens reviewed. No physical-device performance or full accessibility certification claimed. Remaining wider architecture roadmap: schema-based custom metadata/type registry, user-saved reusable recipes, durable pending-draft journal, complete app snapshots, persisted structural undo and stable owner-controlled signing. Current freeform labels/statuses and editable folders are implemented; do not confuse these with a completed custom field schema system.
