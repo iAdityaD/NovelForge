@@ -218,3 +218,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - Verified current gaps: Chapter-only compilation versus Screenplay writing; folder-backed categories; fixed kind/metadata assumptions; incomplete snapshots; volatile pending draft; large workspace UI coordinator.
 - This checkpoint changes requirements/documentation only. v0.5.2 remains the last tested APK; no app rewrite or new schema has been delivered here.
 - Next implementation gate: full-snapshot restoration and migration-safe type registry, then declarative project creation and capability-driven views. See the redesign's ordered gates and acceptance matrix.
+
+
+## Redesign implementation B1 — project recovery history
+- Recovery backup v5 adds deleted documents, revision checkpoints, timestamps and writing activity to the existing metadata, hierarchy, stable-ID references and manuscript placements. Version 1–4 import remains supported; legacy portable encoder stays v4 when history is omitted.
+- Export reads the project and history in one Room transaction. Restore validates recovery references/counts/dates before writing and remaps document/revision links inside one transaction into a new project.
+- Backup operations flush the editor and reject concurrent requests. Data settings describe the actual scope.
+- This is a project-recovery increment, not a complete application snapshot: preferences, bookmarks, reading positions and pending drafts still need explicit preservation before the content-model migration gate is complete.
+- Added fresh-database recovery and invalid-history rollback coverage; CI pending.

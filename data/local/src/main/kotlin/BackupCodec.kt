@@ -7,14 +7,16 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** Versioned portable JSON. Restore always creates a new project; IDs are remapped. */
+data class RecoveryHistory(val revisions: List<Revision> = emptyList(), val days: List<WritingDay> = emptyList())
+
 object BackupCodec {
     const val MAX_BYTES = 16 * 1024 * 1024
 
-    fun encode(book: Book, entries: List<Entry>, manuscript: Map<Long, Pair<Int, Boolean>> = emptyMap()): String =
+    fun encode(book: Book, entries: List<Entry>, manuscript: Map<Long, Pair<Int, Boolean>> = emptyMap(), recovery: RecoveryHistory? = null): String =
         JSONObject()
             .apply {
                 put("format", "novelforge")
-                put("version", 4)
+                put("version", if (recovery == null) 4 else 5)
                 put(
                     "book",
                     JSONObject().apply {
@@ -35,6 +37,7 @@ object BackupCodec {
                             put(
                                 JSONObject().apply {
                                     put("id", e.id)
+                                    if (recovery != null) { put("deleted", e.deleted); put("updated", e.updated) }
                                     put("title", e.title)
                                     put("body", e.body)
                                     put("kind", e.kind)
@@ -61,13 +64,28 @@ object BackupCodec {
                         }
                     },
                 )
+                if (recovery != null) {
+                    put("recovery", JSONObject().apply {
+                        put("revisions", JSONArray().apply {
+                            recovery.revisions.forEach { revision -> put(JSONObject().apply {
+                                put("entryId", revision.entryId); put("title", revision.title)
+                                put("body", revision.body); put("created", revision.created)
+                            }) }
+                        })
+                        put("days", JSONArray().apply {
+                            recovery.days.forEach { day -> put(JSONObject().apply {
+                                put("day", day.day); put("words", day.words); put("edits", day.edits)
+                            }) }
+                        })
+                    })
+                }
             }
             .toString(2)
 
     fun decode(text: String): Pair<Book, List<Entry>> {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds 16 MB." }
         val root = JSONObject(text)
-        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..4) {
+        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..5) {
             "Unsupported backup format."
         }
         val b = root.getJSONObject("book")
@@ -105,6 +123,8 @@ object BackupCodec {
                 Entry(
                     id = e.getLong("id"),
                     bookId = book.id,
+                    deleted = if (root.getInt("version") >= 5) e.getBoolean("deleted") else false,
+                    updated = if (root.getInt("version") >= 5) e.getLong("updated") else System.currentTimeMillis(),
                     title = e.getString("title"),
                     body = body,
                     kind = kind,
@@ -135,6 +155,32 @@ object BackupCodec {
         }
         require(book.overviewId == null || entries.any { it.id == book.overviewId && it.kind != "Folder" }) { "Invalid overview reference." }
         return book to entries
+    }
+
+    fun recovery(text: String, book: Book, entries: List<Entry>): RecoveryHistory {
+        val root = JSONObject(text)
+        if (root.getInt("version") < 5) return RecoveryHistory()
+        val history = root.getJSONObject("recovery")
+        val revisions = history.getJSONArray("revisions")
+        val days = history.getJSONArray("days")
+        require(revisions.length() <= 200000 && days.length() <= 50000) { "Recovery history is too large." }
+        val entryIds = entries.map { it.id }.toSet()
+        val restoredRevisions = (0 until revisions.length()).map { index ->
+            val r = revisions.getJSONObject(index)
+            val id = r.getLong("entryId")
+            val body = r.getString("body")
+            require(id in entryIds && body.length <= 2000000 && r.getLong("created") >= 0) { "Invalid revision checkpoint." }
+            Revision(entryId = id, title = r.getString("title"), body = body, created = r.getLong("created"))
+        }
+        require(restoredRevisions.groupingBy { it.entryId }.eachCount().values.all { it <= 20 }) { "Too many checkpoints for a document." }
+        val restoredDays = (0 until days.length()).map { index ->
+            val d = days.getJSONObject(index)
+            val date = d.getString("day")
+            require(java.time.LocalDate.parse(date).toString() == date && d.getInt("words") >= 0 && d.getInt("edits") >= 0) { "Invalid writing history." }
+            WritingDay(book.id, date, d.getInt("words"), d.getInt("edits"))
+        }
+        require(restoredDays.map { it.day }.distinct().size == restoredDays.size) { "Duplicate writing history dates." }
+        return RecoveryHistory(restoredRevisions, restoredDays)
     }
 
     fun manuscript(text: String): Map<Long, Pair<Int, Boolean>> {

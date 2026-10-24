@@ -153,6 +153,17 @@ interface ForgeDao {
     @Query("SELECT * FROM Entry WHERE bookId = :bookId AND deleted = 0 ORDER BY position, rowid")
     suspend fun entries(bookId: String): List<EntryEntity>
 
+    @Query("SELECT * FROM Entry WHERE bookId = :bookId ORDER BY position, rowid")
+    suspend fun allEntries(bookId: String): List<EntryEntity>
+
+    @Query("SELECT Revision.* FROM Revision INNER JOIN Entry ON Revision.entryId=Entry.rowid WHERE Entry.bookId=:bookId ORDER BY Revision.created, Revision.id")
+    suspend fun workspaceRevisions(bookId: String): List<RevisionEntity>
+
+    @Query("SELECT * FROM WritingDay WHERE bookId=:bookId ORDER BY day")
+    suspend fun workspaceDays(bookId: String): List<WritingDayEntity>
+
+    @Insert suspend fun addWritingDays(days: List<WritingDayEntity>)
+
     @Query("SELECT * FROM Book WHERE id = :id") suspend fun book(id: String): BookEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun addBook(book: BookEntity)

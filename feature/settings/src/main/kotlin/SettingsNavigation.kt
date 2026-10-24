@@ -201,9 +201,9 @@ fun SettingsNavigation(
         }
         if (page == "Data & backup") {
             item {
-                Text("Portable workspace backup", style = MaterialTheme.typography.titleLarge)
+                Text("Project recovery backup", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "Choose a novel, then save its files and hierarchy outside the app.",
+                    "Choose a project to back up.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -252,7 +252,7 @@ fun SettingsNavigation(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Choose local storage or an available cloud provider in Android’s file picker. Automatic sync is not enabled. Backups include active files, folders and novel details; activity, checkpoints, trash and reading positions remain on this device.",
+                        "Includes documents, trash, revision checkpoints, manuscript order and writing history. App settings, bookmarks and reading positions are not included.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(8.dp))
@@ -286,7 +286,7 @@ fun SettingsNavigation(
             item {
                 SurfaceCard {
                     Text("NovelForge", style = MaterialTheme.typography.headlineMedium)
-                    Text("0.5.2 · Writing workspace", color = MaterialTheme.colorScheme.primary)
+                    Text("0.5.3 · Writing workspace", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Your stories stay in a local SQLite database. No internet permission, analytics service, or account. The explorer organizes files inside your workspace; it does not browse arbitrary Android folders.",

@@ -18,9 +18,10 @@ constructor(private val repository: BackupRepository, private val session: Edito
     val busy = active.asStateFlow()
 
     fun export(destination: String, id: String, markdown: Boolean, done: () -> Unit) = launchWork {
-        if (!session.flush()) return@launchWork
+        if (active.value) return@launchWork
         active.value = true
         try {
+            if (!session.flush()) return@launchWork
             repository.export(destination, id, markdown)
             done()
         } finally {
@@ -29,8 +30,10 @@ constructor(private val repository: BackupRepository, private val session: Edito
     }
 
     fun importBackup(source: String, done: (String) -> Unit) = launchWork {
+        if (active.value) return@launchWork
         active.value = true
         try {
+            if (!session.flush()) return@launchWork
             done(repository.restore(source))
         } finally {
             active.value = false

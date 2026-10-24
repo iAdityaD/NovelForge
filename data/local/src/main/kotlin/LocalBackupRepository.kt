@@ -24,14 +24,19 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
 
     override suspend fun export(destination: String, bookId: String, markdown: Boolean) =
         withContext(Dispatchers.IO) {
-            val book = requireNotNull(dao.book(bookId))
-            val entries = dao.entries(bookId)
-            val positions = db.dao().manuscriptPlacements(bookId).associate { it.documentId to (it.position to it.included) }
-            val ordered = entries.filter { it.kind == "Chapter" && positions[it.id]?.second != false }
-                .sortedWith(compareBy<Entry> { positions[it.id]?.first ?: it.position }.thenBy { it.id })
-            val text =
+            val text = db.withTransaction {
+                val book = requireNotNull(dao.book(bookId))
+                val entries = db.dao().allEntries(bookId).map { it.toModel() }
+                require(entries.size <= 10000) { "Project exceeds the 10,000-document backup limit." }
+                val positions = db.dao().manuscriptPlacements(bookId).associate { it.documentId to (it.position to it.included) }
+                val ordered = entries.filter { !it.deleted && it.kind == "Chapter" && positions[it.id]?.second != false }
+                    .sortedWith(compareBy<Entry> { positions[it.id]?.first ?: it.position }.thenBy { it.id })
                 if (markdown) BackupCodec.markdown(book, ordered)
-                else BackupCodec.encode(book, entries, positions)
+                else BackupCodec.encode(book, entries, positions, RecoveryHistory(
+                    db.dao().workspaceRevisions(bookId).map { it.toModel() },
+                    db.dao().workspaceDays(bookId).map { it.toModel() },
+                ))
+            }
             require(text.toByteArray().size <= BackupCodec.MAX_BYTES) {
                 "Project exceeds the 16 MB backup limit."
             }
@@ -59,6 +64,7 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 }
             val (book, entries) = BackupCodec.decode(text)
             val placements = BackupCodec.manuscript(text)
+            val history = BackupCodec.recovery(text, book, entries)
             db.withTransaction {
                 dao.addBook(book)
                 val ids = mutableMapOf<Long, Long>()
@@ -82,6 +88,10 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                         )
                     )
                 }
+                history.revisions.forEach { revision ->
+                    dao.addRevision(revision.copy(entryId = ids.getValue(revision.entryId), body = remapLinks(revision.body, ids)))
+                }
+                db.dao().addWritingDays(history.days.map { it.toEntity() })
             }
             book.id
         }
