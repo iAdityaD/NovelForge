@@ -9,10 +9,10 @@ internal val guideArticles = listOf(
         "Make it yours" to "Optional details include author, multiple genres and color. Use the workspace pencil to change these and the project status. Edit the synopsis separately on Overview. A word goal of zero disables the goal.",
         "Keep the structure flexible" to "Templates create ordinary folders and files. Rename, move, reorder or delete them as your work evolves. Settings → Writing → Workspace structure customizes the Novel starter folders for future projects. Existing projects stay unchanged."
     )),
-    GuideArticle("views", "Getting started", "Plan, Write and Arrange", listOf(
+    GuideArticle("views", "Getting started", "Plan and Write", listOf(
         "Plan" to "Collect research, notes, sources, ideas and anything else that supports the writing. Create your own categories as folders, including nested folders. Type labels are optional and can be named freely.",
         "Write" to "Create the manuscript as nested folders and documents. Folders can represent parts, acts, chapters or your own grouping. Documents hold the actual writing. Names and type labels do not determine whether something is manuscript content.",
-        "Arrange" to "Organize the same manuscript tree shown in Write. Every manuscript document belongs here automatically. There is no separate add-to-manuscript list and no copy of your text.",
+        "Organize while writing" to "Write also arranges the manuscript. Every document belongs here automatically. Use drag handles or the actions menu to reorder it. There is no separate inclusion list or copy of your text.",
         "Files and search" to "Files gives access to the full workspace. Search locates file names; Filter files narrows the view by the types and statuses already in your project. Read mode is deferred for now."
     )),
     GuideArticle("resources", "Planning", "Create resources and research", listOf(
@@ -37,9 +37,9 @@ internal val guideArticles = listOf(
         "Undo and checkpoints" to "Undo and redo belong to the editing session. Checkpoints are persistent saved versions. Neither replaces an exported backup."
     )),
     GuideArticle("arrange", "Manuscript", "Arrange a nested manuscript", listOf(
-        "Drag into order" to "Open Arrange. Long-press a row by its drag handle, then drag over another row. Drop in the upper half to place it before that item, or the lower half to place it after. Holding near the list edge scrolls the outline.",
+        "Drag into order" to "Open Write. Long-press a row by its drag handle, then drag over another row. Drop in the upper half to place it before that item, or the lower half to place it after. Holding near the list edge scrolls the outline.",
         "Move between folders" to "Dropping beside an item adopts that item's parent folder. Use the actions menu → Move to choose a folder directly. Move up and Move down are alternatives to dragging. Folder moves cannot create loops.",
-        "One manuscript" to "Write, Arrange, manuscript counts and export use the same nested structure. All manuscript documents are included. Planning resources stay separate, even when referenced from the text.",
+        "One manuscript" to "Write, manuscript counts and export use the same nested structure. All manuscript documents are included. Planning resources stay separate, even when referenced from the text.",
         "Delete safely" to "Trash moves a file or a folder and its contents to Recently deleted. Restore it in Settings. Deleting an entire workspace is permanent and requires confirmation."
     )),
     GuideArticle("safety", "Data and recovery", "Back up and restore your work", listOf(

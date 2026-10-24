@@ -249,3 +249,6 @@ Latest owner direction supersedes the independent manuscript-selection model: Pl
 Implemented: persisted area roles (Room 5 / migration 4→5), portable backup v6 with roles/custom labels, generic node creation including optional inline categories/source URL, nested shared manuscript projection, drag before/after with edge scrolling and accessible move actions, type/status filters, four workspace tabs, searchable current Guide, synopsis limit settings, independent stored editor/reader font values (reader controls now hidden), optional creation details and declarative starter recipes. Existing IDs/text/folders are preserved; old placement records remain for historical backup compatibility but no longer exclude writing in current views/export.
 
 Initial stage e840a17 passed build + six device tests. First role build compiled and ran 37 JVM tests; two failures were obsolete backup-version expectation and asynchronous navigation assertion, corrected next. Further device regressions and migration checks pending; do not call this release verified yet.
+
+### Final owner navigation change
+Removed the redundant Arrange tab. Workspace now has Overview, Plan, Write. Write includes drag arrangement, nested folders, search and type/status filters. Updated Guide and device journey; pending final CI.

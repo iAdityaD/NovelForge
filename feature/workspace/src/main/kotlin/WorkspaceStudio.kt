@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.novelforge.core.model.*
 import com.novelforge.presentation.WorkspaceViewModel
 
-/** Plan and manuscript are roles; Write and Arrange operate on the same canonical tree. */
+/** Plan and manuscript are roles; Write owns editing and manuscript arrangement. */
 @Composable
 fun WorkspaceStudio(
     vm: WorkspaceViewModel, book: Book, entries: List<EntrySummary>, tab: Int,
@@ -29,7 +29,7 @@ fun WorkspaceStudio(
     var startDocument by rememberSaveable(book.id) { mutableStateOf(false) }
     val manuscript = remember(entries) { orderedManuscript(entries) }
     val latest = manuscript.maxByOrNull { it.updated }
-    val currentTab = tab.coerceIn(0, 3)
+    val currentTab = tab.coerceIn(0, 2)
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             ActionIcon(Icons.AutoMirrored.Outlined.ArrowBack, "Back to library", onBack)
@@ -84,10 +84,10 @@ fun WorkspaceStudio(
                 } }
             }
         } else {
-            WorkspaceArea(vm, book, entries, if (currentTab == 1) PLAN_AREA else MANUSCRIPT_AREA, currentTab == 3, onOpen, Modifier.weight(1f))
+            WorkspaceArea(vm, book, entries, if (currentTab == 1) PLAN_AREA else MANUSCRIPT_AREA, currentTab == 2, onOpen, Modifier.weight(1f))
         }
         NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-            listOf("Overview" to Icons.Outlined.Home, "Plan" to Icons.Outlined.ListAlt, "Write" to Icons.Outlined.EditNote, "Arrange" to Icons.Outlined.AccountTree).forEachIndexed { i, (label, icon) ->
+            listOf("Overview" to Icons.Outlined.Home, "Plan" to Icons.Outlined.ListAlt, "Write" to Icons.Outlined.EditNote).forEachIndexed { i, (label, icon) ->
                 NavigationBarItem(selected = currentTab == i, onClick = { onTab(i) }, icon = { Icon(icon, null) }, label = { Text(label, maxLines = 1) }, modifier = Modifier.testTag("workspace-tab-$i"))
             }
         }

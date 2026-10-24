@@ -23,7 +23,7 @@ internal fun WorkspaceArea(vm: WorkspaceViewModel, book: Book, entries: List<Ent
     val destination = selected?.takeIf { id -> visible.any { it.id == id && it.kind == "Folder" } }
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (area == PLAN_AREA) "Resources" else if (arrange) "Arrange manuscript" else "Manuscript", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+            Text(if (area == PLAN_AREA) "Resources" else "Manuscript", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
             Box {
                 ActionIcon(Icons.Outlined.Add, if (area == PLAN_AREA) "Add planning item" else "Add manuscript item", { add = true })
                 DropdownMenu(add, { add = false }) {

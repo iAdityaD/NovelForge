@@ -2,7 +2,11 @@
 
 Status: implementation specification with a newer owner workflow amendment below; broader customization/reliability work remains incomplete.
 
-## Owner amendment — 2026-10-24 (takes precedence)
+## Final navigation amendment — 2026-10-24 (takes precedence)
+
+The owner removed Arrange as a separate tab. Workspace navigation is **Overview, Plan, Write**. Write combines the editable manuscript outline and all drag/move/order controls. Read remains deferred. References to a separate Arrange tab below are superseded.
+
+## Owner amendment — 2026-10-24
 
 - Plan holds research, notes, sources, ideas and freely named resource categories as nested folders/documents.
 - Write is the nested manuscript. Arrange is a second view of this same hierarchy and sibling order, including every manuscript document. The earlier independent placement and inclusion rules below are superseded.

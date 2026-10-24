@@ -90,8 +90,7 @@ class MetadataFlowTest {
         screenshot("workspace-plan")
         compose.onNodeWithTag("workspace-tab-2").performClick()
         screenshot("workspace-write")
-        compose.onNodeWithTag("workspace-tab-3").performClick()
-        screenshot("workspace-arrange")
+        screenshot("workspace-write-outline")
         compose.onNodeWithContentDescription("Expand Manuscript").performClick()
         val firstBounds = compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot
         val secondBounds = compose.onNodeWithText("Chapter 2.md").fetchSemanticsNode().boundsInRoot
@@ -110,7 +109,8 @@ class MetadataFlowTest {
         compose.onNodeWithContentDescription("Actions for Chapter 2").performClick()
         compose.onNodeWithText("Move down").performClick()
         compose.onNodeWithText("Remove from manuscript").assertDoesNotExist()
-        compose.onNodeWithTag("workspace-tab-4").assertDoesNotExist()
+        compose.onNodeWithTag("workspace-tab-3").assertDoesNotExist()
+        compose.onNodeWithText("Read", substring = false).assertDoesNotExist()
         compose.onNodeWithText("Chapter 1.md").assertExists()
         compose.onNodeWithText("Chapter 2.md").assertExists()
         compose.onNodeWithContentDescription("Back to library").performClick()
