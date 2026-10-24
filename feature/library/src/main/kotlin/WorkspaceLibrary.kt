@@ -255,6 +255,7 @@ private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Bool
 @Composable
 fun NewWorkspaceScreen(
     starterFolders: List<StarterFolder>,
+    savedTemplates: List<SavedTemplate>,
     onBack: () -> Unit,
     onCreate: (String, String, List<String>, Int, Int, Boolean, String) -> Unit,
 ) {
@@ -264,7 +265,8 @@ fun NewWorkspaceScreen(
     var standard by rememberSaveable { mutableStateOf(true) }
     var templateId by rememberSaveable { mutableStateOf("novel") }
     var details by rememberSaveable { mutableStateOf(false) }
-    val recipe = projectRecipe(templateId, starterFolders)
+    val custom = savedTemplates.firstOrNull { it.id == templateId }
+    val recipe = if (custom == null) projectRecipe(templateId, starterFolders) else null
     var cover by rememberSaveable { mutableIntStateOf(0) }
     var preview by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().imePadding()) {
@@ -286,14 +288,23 @@ fun NewWorkspaceScreen(
                 StructureChoice("Build from scratch", "No preset folders or documents.", !standard) { standard = false }
             }
             if (standard) item {
-                ChoiceField("Template", recipe.name, projectRecipes.map { it.name }) { selected ->
-                    templateId = projectRecipes.first { it.name == selected }.id
+                var templateMenu by remember { mutableStateOf(false) }
+                Box {
+                    OutlinedButton(onClick = { templateMenu = true }, modifier = Modifier.fillMaxWidth()) { Text(custom?.name ?: recipe!!.name, Modifier.weight(1f)); Icon(Icons.Outlined.ExpandMore, null) }
+                    DropdownMenu(templateMenu, { templateMenu = false }, modifier = Modifier.heightIn(max = 320.dp)) {
+                        projectRecipes.forEach { item -> DropdownMenuItem(text = { Text(item.name) }, onClick = { templateId = item.id; templateMenu = false }) }
+                        savedTemplates.forEach { item -> DropdownMenuItem(text = { Text(item.name + " · My template") }, onClick = { templateId = item.id; templateMenu = false }) }
+                    }
                 }
                 TextButton(onClick = { preview = !preview }) {
                     Text(if (preview) "Hide starter folders" else "Preview starter folders")
                     Icon(if (preview) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, null)
                 }
-                if (preview) recipe.folders.filter { it.enabled }.forEach { Text("• ${it.name}", modifier = Modifier.padding(vertical = 4.dp)) }
+                if (preview) {
+                    val names = custom?.nodes?.map { it.title } ?: recipe!!.folders.filter { it.enabled }.map { it.name }
+                    names.take(50).forEach { Text("• $it", modifier = Modifier.padding(vertical = 4.dp)) }
+                    if (names.size > 50) Text("${names.size - 50} more items", style = MaterialTheme.typography.bodySmall)
+                }
 
             }
             item { TextButton(onClick = { details = !details }) { Text(if (details) "Hide optional details" else "Optional details"); Icon(if (details) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, null) } }

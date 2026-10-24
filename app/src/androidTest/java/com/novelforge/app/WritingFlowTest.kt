@@ -84,5 +84,25 @@ class WritingFlowTest {
         compose.onNodeWithText("The Glass World").performClick()
         compose.onNodeWithText("MANUSCRIPT GOAL").assertExists()
         compose.onNodeWithText("Your writing portfolio").assertDoesNotExist()
+        compose.onNodeWithText("Settings").performClick()
+        compose.onNodeWithText("Writing").performScrollTo().performClick()
+        compose.onNodeWithText("My templates").performClick()
+        compose.onNodeWithText("Save project structure").performClick()
+        compose.onNodeWithText("Template name").performTextInput("Reusable layout")
+        compose.onNodeWithText("Save template").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithText("Reusable layout").fetchSemanticsNodes().isNotEmpty() }
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithText("Reusable layout").assertExists()
+        compose.onNodeWithText("Library").performClick()
+        compose.onNodeWithTag("new-workspace").performClick()
+        compose.onNodeWithText("Project title").performTextInput("From my layout")
+        compose.onNodeWithText("Novel", substring = false).performScrollTo().performClick()
+        compose.onNodeWithText("Reusable layout · My template").performClick()
+        compose.onNodeWithText("Create workspace").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithText("Files").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Files").performClick()
+        compose.onNodeWithText("My own category").assertExists()
+        compose.onNodeWithText("World Two").assertExists()
+        compose.onNodeWithText("Magic system.md").assertDoesNotExist()
     }
 }

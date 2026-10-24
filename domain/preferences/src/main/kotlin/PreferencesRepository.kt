@@ -13,6 +13,7 @@ data class AppPreferences(
     val synopsisLimit: Int = 500,
     val starterFolders: List<StarterFolder> = defaultStarterFolders,
     val readerFontSize: Float = fontSize,
+    val savedTemplates: List<SavedTemplate> = emptyList(),
 )
 
 interface PreferencesRepository {

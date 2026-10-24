@@ -262,7 +262,7 @@ fun ForgeApp() {
                             excludedChapters,
                         )
                     Destination.New ->
-                        NewWorkspaceScreen(prefs.starterFolders, { screen = Destination.Library }) { title, author, genre, cover, target, standard, templateId ->
+                        NewWorkspaceScreen(prefs.starterFolders, prefs.savedTemplates, { screen = Destination.Library }) { title, author, genre, cover, target, standard, templateId ->
                             workspace.createBook(title, author, genre, cover, target, standard, templateId) { created ->
                                 project(created.bookId)
                                 workspaceTab = 0

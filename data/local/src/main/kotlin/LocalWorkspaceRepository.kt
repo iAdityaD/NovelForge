@@ -30,8 +30,9 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
     ): CreatedWorkspace {
         require(title.isNotBlank() && title.trim().length <= 200) { "Use a project title of 1–200 characters." }
         require(target in 0..10000000) { "Use a word goal from 0 to 10,000,000." }
-        val recipe = projectRecipe(templateId, preferences.state.value.starterFolders)
-        val folders = if (standard) recipe.folders.filter { it.enabled } else emptyList()
+        val custom = preferences.state.value.savedTemplates.firstOrNull { it.id == templateId }?.let(::validateSavedTemplate)
+        val recipe = if (custom == null) projectRecipe(templateId, preferences.state.value.starterFolders) else null
+        val folders = if (standard) recipe?.folders.orEmpty().filter { it.enabled } else emptyList()
         val book = Book(title = title.trim(), author = author.trim(), genres = MetadataPolicy.genres(genres), cover = cover, target = target)
         var overviewId: Long? = null
         db.withTransaction {
@@ -41,11 +42,19 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
                 val body = folderGuide(folder, book)
                 val guideId = dao.addEntry(Entry(bookId = book.id, title = "README", kind = "Guide", folderId = folderId, body = body, words = wordCount(body)))
                 if (folder.key == "overview") overviewId = guideId
-                if (folder.key == "manuscript") recipe.draftTitles.forEachIndexed { n, draftTitle ->
+                if (folder.key == "manuscript") recipe!!.draftTitles.forEachIndexed { n, draftTitle ->
                     val body = template(recipe.draftKind).replace("# Chapter title", "# $draftTitle")
                     val id = dao.addEntry(Entry(bookId = book.id, title = draftTitle, kind = recipe.draftKind,
                         folderId = folderId, body = body, words = wordCount(body), position = n + 1))
                     db.dao().place(ManuscriptPlacementEntity(id, book.id, n, true))
+                }
+            }
+            if (standard && custom != null) {
+                val ids = mutableMapOf<String, Long>()
+                custom.nodes.forEach { node -> ids[node.key] = dao.addEntry(Entry(bookId = book.id, title = node.title, kind = node.kind, area = node.area, position = node.position)) }
+                custom.nodes.forEach { node ->
+                    val entry = requireNotNull(dao.entry(ids.getValue(node.key)))
+                    dao.updateEntry(entry.copy(folderId = node.parentKey?.let(ids::getValue)))
                 }
             }
             dao.updateBook(book.copy(overviewId = overviewId))

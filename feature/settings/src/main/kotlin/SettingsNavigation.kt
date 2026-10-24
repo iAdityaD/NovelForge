@@ -36,7 +36,7 @@ fun SettingsNavigation(
     val trash by vm.trash.collectAsStateWithLifecycle()
     fun back() {
         page = when (page) {
-            "Workspace structure", "Writing limits" -> "Writing"
+            "Workspace structure", "Writing limits", "My templates" -> "Writing"
             else -> ""
         }
     }
@@ -55,7 +55,7 @@ fun SettingsNavigation(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ActionIcon(
                         Icons.AutoMirrored.Outlined.ArrowBack,
-                        if (page == "Workspace structure" || page == "Writing limits") "Back to writing settings"
+                        if (page == "Workspace structure" || page == "Writing limits" || page == "My templates") "Back to writing settings"
                         else "Back to settings",
                         { back() },
                     )
@@ -120,7 +120,9 @@ fun SettingsNavigation(
                     "Synopsis word limit",
                     { page = "Writing limits" },
                 )
+                SettingsAction(Icons.Outlined.FolderCopy, "My templates", "Reusable project structures", { page = "My templates" })
             }
+        if (page == "My templates") item { ProjectTemplateSettings(vm, books, preferences.savedTemplates) }
         if (page == "Writing limits")
             item { SynopsisLimitSetting(preferences.synopsisLimit) { vm.setSynopsisLimit(it) } }
         if (page == "Workspace structure")

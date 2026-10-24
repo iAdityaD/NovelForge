@@ -31,6 +31,7 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
                 prefs.getInt("synopsisLimit", 500),
                 readStarterFolders(),
                 prefs.getFloat("readerFontSize", prefs.getFloat("fontSize", 19f)),
+                readTemplates(),
             )
         )
     private fun readStarterFolders(): List<StarterFolder> = runCatching {
@@ -42,6 +43,18 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
         })
     }.getOrDefault(defaultStarterFolders)
 
+    private fun readTemplates(): List<SavedTemplate> = runCatching {
+        val array = org.json.JSONArray(prefs.getString("savedTemplates", "[]"))
+        (0 until array.length()).map { i ->
+            val item = array.getJSONObject(i)
+            val nodes = item.getJSONArray("nodes")
+            validateSavedTemplate(SavedTemplate(item.getString("id"), item.getString("name"), (0 until nodes.length()).map { n ->
+                val node = nodes.getJSONObject(n)
+                TemplateNode(node.getString("key"), if (node.isNull("parent")) null else node.getString("parent"), node.getString("title"), node.getString("kind"), node.getString("area"), node.getInt("position"))
+            }, item.getInt("version")))
+        }
+    }.getOrDefault(emptyList())
+
     override val state = current.asStateFlow()
 
     override fun update(value: AppPreferences) {
@@ -49,6 +62,9 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
         require(value.fontSize.isFinite() && value.fontSize in 14f..30f)
         require(value.readerFontSize.isFinite() && value.readerFontSize in 14f..30f)
         validateStarterFolders(value.starterFolders)
+        require(value.savedTemplates.size <= 50)
+        require(value.savedTemplates.map { it.id }.distinct().size == value.savedTemplates.size)
+        value.savedTemplates.forEach(::validateSavedTemplate)
         current.value = value
         prefs
             .edit()
@@ -60,6 +76,14 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
             .putBoolean("serif", value.readerSerif)
             .putBoolean("warm", value.readerWarm)
             .putInt("synopsisLimit", value.synopsisLimit)
+            .putString("savedTemplates", org.json.JSONArray().apply {
+                value.savedTemplates.forEach { template -> put(org.json.JSONObject().apply {
+                    put("id", template.id); put("name", template.name); put("version", template.version)
+                    put("nodes", org.json.JSONArray().apply { template.nodes.forEach { node -> put(org.json.JSONObject().apply {
+                        put("key", node.key); put("parent", node.parentKey ?: org.json.JSONObject.NULL); put("title", node.title); put("kind", node.kind); put("area", node.area); put("position", node.position)
+                    }) } })
+                }) }
+            }.toString())
             .putString("starterFolders", org.json.JSONArray().apply {
                 value.starterFolders.forEach { folder -> put(org.json.JSONObject().apply {
                     put("key", folder.key); put("name", folder.name); put("enabled", folder.enabled)

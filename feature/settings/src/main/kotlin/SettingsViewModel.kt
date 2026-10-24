@@ -44,5 +44,17 @@ constructor(
         preferences.update(state.value.copy(starterFolders = validateStarterFolders(folders)))
     }
 
+    fun saveTemplate(bookId: String, name: String, includeDocuments: Boolean, done: () -> Unit) = launchWork {
+        val entries = workspace.summaries.first().filter { it.bookId == bookId }
+        require(workspace.books.first().any { it.id == bookId }) { "Project is unavailable." }
+        val template = templateFromStructure("custom-" + java.util.UUID.randomUUID(), name, entries, includeDocuments)
+        preferences.update(state.value.copy(savedTemplates = state.value.savedTemplates + template))
+        done()
+    }
+
+    fun removeTemplate(id: String) = launchWork {
+        preferences.update(state.value.copy(savedTemplates = state.value.savedTemplates.filterNot { it.id == id }))
+    }
+
     fun restoreEntry(id: Long) = launchWork { workspace.restoreEntry(id) }
 }
