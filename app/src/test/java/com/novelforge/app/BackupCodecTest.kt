@@ -8,6 +8,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BackupCodecTest {
+    @Test fun maximumLengthTitleRemainsExportableAfterRestore() {
+        val original = Book(title = "x".repeat(200))
+        val restored = BackupCodec.decode(BackupCodec.encode(original, emptyList())).first
+        assertEquals(original.title, restored.title)
+        assertEquals(original.title, BackupCodec.decode(BackupCodec.encode(restored, emptyList())).first.title)
+    }
+
     @Test
     fun backupRoundTripPreservesStoryStructureAndUnicode() {
         val book =

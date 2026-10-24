@@ -40,6 +40,12 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
             require(text.toByteArray().size <= BackupCodec.MAX_BYTES) {
                 "Project exceeds the 16 MB backup limit."
             }
+            if (!markdown) {
+                // Reject an unrestorable export before opening/truncating the destination.
+                val (verifiedBook, verifiedEntries) = BackupCodec.decode(text)
+                BackupCodec.manuscript(text)
+                BackupCodec.recovery(text, verifiedBook, verifiedEntries)
+            }
             requireNotNull(app.contentResolver.openOutputStream(Uri.parse(destination), "wt"))
                 .bufferedWriter(Charsets.UTF_8)
                 .use { it.write(text) }

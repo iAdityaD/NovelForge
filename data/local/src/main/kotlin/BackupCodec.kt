@@ -93,7 +93,7 @@ object BackupCodec {
         require(title.isNotBlank() && title.length <= 200)
         val book =
             Book(
-                title = "$title (restored)",
+                title = if (title.length <= 189) "$title (restored)" else title,
                 overviewId = if (b.isNull("overviewId")) null else b.getLong("overviewId"),
                 author = b.optString("author"),
                 genres =

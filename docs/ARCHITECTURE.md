@@ -100,3 +100,12 @@ A Plan category is an ordinary logical folder, identified by its stable entry ID
 `WorkspaceRepository.createResource` validates the destination, optional new folder, title and external URL, then creates the folder/document atomically in Room. `WorkspaceViewModel` owns in-flight state; `ResourceDialog` only collects input. The existing editor, linking, search and portable backup support Resource and External source kinds without a schema change. External content remains an explicitly supplied URL and notes, not a remote scraper or cached article.
 
 The app shell consumes Scaffold insets before nested workspace navigation. Overview owns the synopsis display/edit entry point; the existing metadata policy and preferences remain the authority for word limits.
+
+
+### Redesign foundation: recovery and compilation (0.5.3)
+
+Project recovery backup v5 reads all project documents (including trash), revision checkpoints, writing activity and placement in one Room read transaction. Parsing validates history references/counts/dates before a transaction creates a restored copy. Document IDs, folder links, inline references and revision-body links are remapped together. The app does not overwrite the source project. This is not a whole-app snapshot: shared preferences, bookmarks, reader positions and volatile drafts remain outside this format.
+
+`core:model/ContentCapabilities.kt` is the explicit compatibility boundary for legacy Document/Chapter/Screenplay eligibility. It is deliberately not represented as a completed custom-type registry. `domain:manuscript` provides the source projection and `compileManuscript` adapter used by export. Reader, library and analytics follow the same inclusion rules. Missing historical placements imply inclusion only for legacy Chapters, avoiding accidental inclusion of old screenplays.
+
+Database entities/schema remain v4; only DAO queries and runtime operations changed. New customizable type/metadata tables must follow the migration gates in PRODUCT_REDESIGN.md.
