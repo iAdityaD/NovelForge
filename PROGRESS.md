@@ -196,3 +196,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - APK signature verified, versionCode 6 / versionName 0.5.1 / minSDK 26. Packaged NovelForge-v0.5.1-Android.zip.
 - Inspected Plan and Arrange device captures for resource layout and consumed bottom insets. Physical-device review remains outside emulator verification.
 - No automatic relocation of old files, schema rewrite, or downloaded web content. Categories are logical folders; source links and notes use canonical documents. Future full-roadmap stages remain in WORKSPACE_UPGRADE_PLAN.md.
+
+
+## 0.5.2 — Arrange separates composition from drafting
+- Requirements/design: docs/ARRANGE_REQUIREMENTS.md. Arrange selects existing chapters; Write creates them.
+- Searchable multi-select chapter picker with stable IDs, folder paths, Added states, empty/search states. Atomic batch inclusion validates the workspace and document type before writes; repeated additions preserve order.
+- Replaced Unplace with Remove from manuscript; removed the unplaced tray and instructional paragraphs. New drafts are excluded until selected; existing/template/restored membership is preserved.
+- Added batch rejection/idempotency/reopen regression and updated device flow. Verification pending.

@@ -7,6 +7,7 @@ data class ManuscriptPlacement(val documentId: Long, val bookId: String, val pos
 
 interface ManuscriptRepository {
     val placements: Flow<List<ManuscriptPlacement>>
+    suspend fun add(bookId: String, documentIds: List<Long>)
     suspend fun move(documentId: Long, delta: Int)
     suspend fun include(documentId: Long, included: Boolean)
 }

@@ -31,6 +31,8 @@ fun WorkspaceStudio(
     onExport: (Boolean) -> Unit, onExplorer: () -> Unit, synopsisLimit: Int = 500,
 ) {
     val ui by vm.state.collectAsStateWithLifecycle()
+    val addingChapters by vm.addingChapters.collectAsStateWithLifecycle()
+    var pickChapters by rememberSaveable(book.id) { mutableStateOf(false) }
     val creatingResource by vm.creatingResource.collectAsStateWithLifecycle()
     val chapters = remember(entries, ui.placements) { manuscriptChapters(entries, ui.placements) }
     var menu by remember { mutableStateOf(false) }
@@ -124,7 +126,6 @@ fun WorkspaceStudio(
                             }
                         }
                     } else {
-                        item { Text("Organize references in your own categories, then link them while writing.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         item { OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search resources") }, singleLine = true, leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
                         val resources = entries.filter { it.kind !in listOf("Folder", "Chapter", "Screenplay", "Guide", "Novel Profile") }
                         if (resources.isEmpty() && folders.isEmpty()) item { Text("Start with your first category using +. Nothing is created until you choose it.") }
@@ -148,7 +149,6 @@ fun WorkspaceStudio(
                             Text("Manuscript", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
                             TextButton(onClick = { onAdd(manuscriptFolder, "Chapter") }) { Icon(Icons.Outlined.Add, null); Text("Chapter") }
                         }
-                        Text("Write your story here. Use the link picker to reference resources.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     val drafts = entries.filter { it.kind in listOf("Chapter", "Screenplay") }.sortedByDescending { it.updated }
                     if (drafts.isEmpty()) item { EmptyState("Your first line starts here", "You don’t need an outline to begin.", action = "Start writing", onAction = { onAdd(manuscriptFolder, "Chapter") }) }
@@ -156,34 +156,29 @@ fun WorkspaceStudio(
                 }
                 3 -> {
                     item {
-                        Text("Manuscript", style = MaterialTheme.typography.headlineMedium)
-                        Text("Reading and export follow this order. Your folders stay independent.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Manuscript", style = MaterialTheme.typography.headlineMedium)
+                                Text("${chapters.size} chapters", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            TextButton(onClick = { pickChapters = true }) { Icon(Icons.Outlined.Add, null); Text("Add chapter") }
+                        }
                     }
-                    if (chapters.isEmpty()) item { Text("No chapters included yet. Create a chapter or include one below.") }
+                    if (chapters.isEmpty()) item { Text("No chapters added", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     itemsIndexed(chapters, key = { _, e -> e.id }) { index, doc ->
                         Column {
                             StudioDocument(doc, { onOpen(doc.id) }, "${index + 1} · ${doc.words} words")
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                 ActionIcon(Icons.Outlined.ArrowUpward, "Move ${doc.title} earlier", { vm.moveChapter(doc.id, -1) }, index > 0)
                                 ActionIcon(Icons.Outlined.ArrowDownward, "Move ${doc.title} later", { vm.moveChapter(doc.id, 1) }, index < chapters.lastIndex)
-                                TextButton(onClick = { vm.includeChapter(doc.id, false) }) { Text("Unplace") }
+                                TextButton(onClick = { vm.includeChapter(doc.id, false) }) { Text("Remove from manuscript") }
                             }
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         }
                     }
-                    val unplaced = entries.filter { it.kind == "Chapter" && chapters.none { c -> c.id == it.id } }
-                    item { Text("Unplaced drafts · ${unplaced.size}", style = MaterialTheme.typography.titleMedium) }
-                    items(unplaced, key = { it.id }) { doc ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) { StudioDocument(doc, { onOpen(doc.id) }) }
-                            TextButton(onClick = { vm.includeChapter(doc.id, true) }) { Text("Include") }
-                        }
-                    }
-                    item { Text("Unplacing a chapter keeps its document and links. Find it in Write or Files.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    item { OutlinedButton(onClick = { onAdd(manuscriptFolder, "Chapter") }, modifier = Modifier.fillMaxWidth()) { Text("Add chapter") } }
                 }
                 4 -> {
-                    item { Text("Reading room", style = MaterialTheme.typography.headlineMedium); Text("Your manuscript, in reading order.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    item { Text("Reading room", style = MaterialTheme.typography.headlineMedium) }
                     if (chapters.isNotEmpty()) item { FilledTonalButton(onClick = { onRead(chapters.first().id) }, modifier = Modifier.fillMaxWidth()) { Text("Read from the beginning") } }
                     else item { EmptyState("A book waiting to happen", "Include chapters in Arrange to preview your manuscript.", action = "Arrange manuscript", onAction = { onTab(3) }) }
                     itemsIndexed(chapters, key = { _, e -> e.id }) { index, doc -> StudioDocument(doc, { onRead(doc.id) }, "Chapter ${index + 1} · ${doc.words} words") }
@@ -196,6 +191,9 @@ fun WorkspaceStudio(
             }
         }
     }
+    if (pickChapters) ChapterPicker(entries, chapters.map { it.id }.toSet(), addingChapters,
+        onDismiss = { pickChapters = false }, onWrite = { pickChapters = false; onTab(2) },
+        onAdd = { ids -> vm.addChapters(book.id, ids) { pickChapters = false } })
     if (addResource) ResourceDialog(folders, creatingResource, { addResource = false }) { title, folder, category, url, notes ->
         vm.createResource(book.id, title, folder, category, url, notes) { id -> addResource = false; onOpen(id) }
     }

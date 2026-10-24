@@ -108,6 +108,18 @@ constructor(
 
     fun restoreEntry(id: Long) = mutate { repository.restoreEntry(id) }
 
+    private val _addingChapters = MutableStateFlow(false)
+    val addingChapters: StateFlow<Boolean> = _addingChapters.asStateFlow()
+    fun addChapters(bookId: String, ids: List<Long>, done: () -> Unit) {
+        if (_addingChapters.value) return
+        _addingChapters.value = true
+        launchWork {
+            try {
+                if (session.flush()) { manuscript.add(bookId, ids); session.reload(); done() }
+            } finally { _addingChapters.value = false }
+        }
+    }
+
     fun moveChapter(id: Long, delta: Int) = mutate { manuscript.move(id, delta) }
 
     fun includeChapter(id: Long, included: Boolean) = mutate { manuscript.include(id, included) }

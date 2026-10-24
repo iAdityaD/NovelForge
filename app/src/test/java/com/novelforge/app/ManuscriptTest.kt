@@ -18,6 +18,41 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class ManuscriptTest {
+    @Test fun pickerAddsOnlyExistingChaptersAtomicallyWithoutDuplicates() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.deleteDatabase("arrange-picker-test")
+        var db = Room.databaseBuilder(context, ForgeDb::class.java, "arrange-picker-test").build()
+        try {
+            val repo = LocalWorkspaceRepository(db, LocalPreferencesRepository(context))
+            val book = repo.createBook("Picker", "", emptyList(), 0, 0, false)
+            val first = repo.createEntry(book.bookId, "Same title", "Chapter", null, null)
+            val second = repo.createEntry(book.bookId, "Same title", "Chapter", null, null)
+            val note = repo.createEntry(book.bookId, "Reference", "Note", null, null)
+            val foreign = repo.createBook("Other", "", emptyList(), 0, 0, false)
+            val foreignChapter = repo.createEntry(foreign.bookId, "Foreign", "Chapter", null, null)
+            val manuscript = LocalManuscriptRepository(db)
+            assertTrue(manuscriptChapters(db.dao().summaries().first().filter { it.bookId == book.bookId }, manuscript.placements.first()).isEmpty())
+            for (bad in listOf(note, foreignChapter)) {
+                try { manuscript.add(book.bookId, listOf(first, bad)); fail("Expected rejection") }
+                catch (_: IllegalArgumentException) { }
+                assertFalse(manuscript.placements.first().first { it.documentId == first }.included)
+            }
+            manuscript.add(book.bookId, listOf(second, first, second))
+            manuscript.add(book.bookId, listOf(first))
+            fun order(rows: List<com.novelforge.core.model.EntrySummary>, positions: List<ManuscriptPlacement>) = manuscriptChapters(rows.filter { it.bookId == book.bookId }, positions).map { it.id }
+            assertEquals(listOf(second, first), order(db.dao().summaries().first(), manuscript.placements.first()))
+            val old = db.dao().entry(second)!!
+            manuscript.include(second, false)
+            assertEquals(old.body, db.dao().entry(second)!!.body)
+            assertEquals(old.folderId, db.dao().entry(second)!!.folderId)
+            manuscript.add(book.bookId, listOf(second))
+            assertEquals(listOf(first, second), order(db.dao().summaries().first(), manuscript.placements.first()))
+            db.close()
+            db = Room.databaseBuilder(context, ForgeDb::class.java, "arrange-picker-test").build()
+            assertEquals(listOf(first, second), order(db.dao().summaries().first(), LocalManuscriptRepository(db).placements.first()))
+        } finally { db.close(); context.deleteDatabase("arrange-picker-test") }
+    }
+
     @Test fun manuscriptOrderSurvivesFolderMovesReopenAndUnplacing() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         context.deleteDatabase("manuscript-test")

@@ -286,7 +286,7 @@ fun SettingsNavigation(
             item {
                 SurfaceCard {
                     Text("NovelForge", style = MaterialTheme.typography.headlineMedium)
-                    Text("0.5.1 · Writing workspace", color = MaterialTheme.colorScheme.primary)
+                    Text("0.5.2 · Writing workspace", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Your stories stay in a local SQLite database. No internet permission, analytics service, or account. The explorer organizes files inside your workspace; it does not browse arbitrary Android folders.",

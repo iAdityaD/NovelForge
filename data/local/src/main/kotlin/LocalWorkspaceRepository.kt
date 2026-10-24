@@ -82,7 +82,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         kind: String,
         parentId: Long?,
         folderId: Long?,
-    ): Long {
+    ): Long = db.withTransaction {
         require(title.isNotBlank()) { "A file name is required." }
         if (folderId != null)
             require(
@@ -109,11 +109,12 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
                     words = wordCount(body),
                 )
             )
+        if (kind == "Chapter") db.dao().place(ManuscriptPlacementEntity(id, bookId, position, false))
         if (kind == "Novel Profile") dao.book(bookId)?.let { book ->
             if (book.overviewId?.let { dao.entry(it) }?.deleted != false) dao.updateBook(book.copy(overviewId = id))
         }
         dao.touch(bookId, System.currentTimeMillis())
-        return id
+        id
     }
 
     override suspend fun createResource(bookId: String, title: String, folderId: Long?, newCategory: String?, sourceUrl: String?, notes: String): Long = db.withTransaction {
