@@ -30,6 +30,8 @@ constructor(
 
     fun setFont(value: Float) = preferences.update(state.value.copy(fontSize = value))
 
+    fun setReaderFont(value: Float) = preferences.update(state.value.copy(readerFontSize = value))
+
     fun setSerif(value: Boolean) = preferences.update(state.value.copy(readerSerif = value))
 
     fun setWarm(value: Boolean) = preferences.update(state.value.copy(readerWarm = value))

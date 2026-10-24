@@ -30,6 +30,7 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
                 prefs.getBoolean("warm", true),
                 prefs.getInt("synopsisLimit", 500),
                 readStarterFolders(),
+                prefs.getFloat("readerFontSize", prefs.getFloat("fontSize", 19f)),
             )
         )
     private fun readStarterFolders(): List<StarterFolder> = runCatching {
@@ -45,6 +46,8 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
 
     override fun update(value: AppPreferences) {
         require(value.synopsisLimit in 50..10000)
+        require(value.fontSize.isFinite() && value.fontSize in 14f..30f)
+        require(value.readerFontSize.isFinite() && value.readerFontSize in 14f..30f)
         validateStarterFolders(value.starterFolders)
         current.value = value
         prefs
@@ -53,6 +56,7 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
             .putBoolean("editorMono", value.editorMono)
             .putBoolean("syntaxColors", value.syntaxColors)
             .putFloat("fontSize", value.fontSize)
+            .putFloat("readerFontSize", value.readerFontSize)
             .putBoolean("serif", value.readerSerif)
             .putBoolean("warm", value.readerWarm)
             .putInt("synopsisLimit", value.synopsisLimit)

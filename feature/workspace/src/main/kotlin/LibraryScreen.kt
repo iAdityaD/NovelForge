@@ -89,8 +89,9 @@ fun NovelDetailsScreen(book: Book, onDismiss: () -> Unit, onSave: (Book) -> Unit
                             target,
                             { target = it.filter(Char::isDigit).take(8) },
                             label = { Text("Target word count") },
+                            supportingText = { Text("0 disables the goal") },
                             singleLine = true,
-                            isError = target.toIntOrNull()?.let { it !in 1..10000000 } ?: true,
+                            isError = target.toIntOrNull()?.let { it !in 0..10000000 } ?: true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -127,7 +128,7 @@ fun NovelDetailsScreen(book: Book, onDismiss: () -> Unit, onSave: (Book) -> Unit
                     },
                     enabled =
                         title.isNotBlank() &&
-                            target.toIntOrNull()?.let { it in 1..10000000 } == true,
+                            target.toIntOrNull()?.let { it in 0..10000000 } == true,
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp),
                 ) {
                     Text("Save changes")

@@ -13,6 +13,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.novelforge.core.model.Book
 import com.novelforge.presentation.SettingsViewModel
@@ -30,7 +34,10 @@ fun SettingsNavigation(
     var picker by remember { mutableStateOf(false) }
     val trash by vm.trash.collectAsStateWithLifecycle()
     fun back() {
-        page = if (page == "Workspace structure") "Writing" else ""
+        page = when (page) {
+            "Workspace structure", "Writing limits" -> "Writing"
+            else -> ""
+        }
     }
     BackHandler(page.isNotEmpty()) { back() }
     LazyColumn(
@@ -38,12 +45,12 @@ fun SettingsNavigation(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item {
-            if (page.isEmpty()) ScreenHeading("Settings", "Your studio, your way.")
+            if (page.isEmpty()) Text("Settings", style = MaterialTheme.typography.headlineLarge)
             else
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ActionIcon(
                         Icons.AutoMirrored.Outlined.ArrowBack,
-                        if (page == "Workspace structure") "Back to writing settings"
+                        if (page == "Workspace structure" || page == "Writing limits") "Back to writing settings"
                         else "Back to settings",
                         { back() },
                     )
@@ -51,27 +58,6 @@ fun SettingsNavigation(
                 }
         }
         if (page.isEmpty()) {
-            item {
-                SurfaceCard(Modifier.fillMaxWidth()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        Icon(Icons.Outlined.Shield, null, tint = MaterialTheme.colorScheme.primary)
-                        Column {
-                            Text(
-                                "Local. Private. Yours.",
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                "No account or internet connection needed.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
             item {
                 SettingsAction(
                     Icons.Outlined.Palette,
@@ -88,7 +74,7 @@ fun SettingsNavigation(
                 SettingsAction(
                     Icons.Outlined.Rule,
                     "Writing",
-                    "Workspace defaults",
+                    "Structure and limits",
                     { page = "Writing" },
                 )
                 SettingsAction(
@@ -103,7 +89,7 @@ fun SettingsNavigation(
                 SettingsAction(
                     Icons.Outlined.SaveAlt,
                     "Data & backup",
-                    "Export, restore and storage",
+                    "Export and restore projects",
                     { page = "Data & backup" },
                 )
                 SettingsAction(
@@ -125,10 +111,18 @@ fun SettingsNavigation(
                 SettingsAction(
                     Icons.Outlined.TextFields,
                     "Workspace structure",
-                    "Customize folders for new novels",
+                    "Folders for standard projects",
                     { page = "Workspace structure" },
                 )
+                SettingsAction(
+                    Icons.Outlined.Rule,
+                    "Writing limits",
+                    "Synopsis word limit",
+                    { page = "Writing limits" },
+                )
             }
+        if (page == "Writing limits")
+            item { SynopsisLimitSetting(preferences.synopsisLimit) { vm.setSynopsisLimit(it) } }
         if (page == "Workspace structure")
             item { WorkspaceStructureSettings(preferences.starterFolders) { vm.setStarterFolders(it) } }
         if (page == "Appearance")
@@ -160,27 +154,22 @@ fun SettingsNavigation(
             item {
                 Text("Text size · ${preferences.fontSize.toInt()} sp")
                 Slider(preferences.fontSize, { vm.setFont(it) }, valueRange = 14f..30f, steps = 15)
-                Text(
-                    "Shared by writing and reading modes.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
-                SurfaceCard {
-                    Text("Markdown source", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Formatting stays visible while writing. Preview with the reading button. Wiki links use stable file IDs so renaming and moving files keeps references intact.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                Text("The first sentence opens a door.",
+                    fontSize = preferences.fontSize.sp,
+                    fontFamily = if (preferences.editorMono) FontFamily.Monospace else FontFamily.Default,
+                    modifier = Modifier.padding(vertical = 16.dp))
             }
         }
         if (page == "Reading") {
             item {
-                Text("Text size · ${preferences.fontSize.toInt()} sp")
-                Slider(preferences.fontSize, { vm.setFont(it) }, valueRange = 14f..30f, steps = 15)
+                Text("Text size · ${preferences.readerFontSize.toInt()} sp")
+                Slider(preferences.readerFontSize, { vm.setReaderFont(it) }, valueRange = 14f..30f, steps = 15)
+            }
+            item {
+                Text("A quiet room. An unfinished story. A new beginning.",
+                    fontSize = preferences.readerFontSize.sp,
+                    fontFamily = if (preferences.readerSerif) FontFamily.Serif else FontFamily.Default,
+                    modifier = Modifier.padding(vertical = 16.dp))
             }
             item {
                 SettingToggle(
@@ -318,5 +307,26 @@ private fun SettingToggle(
             )
         }
         Switch(value, change)
+    }
+}
+
+@Composable
+private fun SynopsisLimitSetting(limit: Int, onSave: (Int) -> Unit) {
+    var input by rememberSaveable(limit) { mutableStateOf(limit.toString()) }
+    val value = input.toIntOrNull()
+    val valid = value != null && value in 50..10000
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        OutlinedTextField(
+            value = input, onValueChange = { input = it },
+            label = { Text("Synopsis word limit") },
+            supportingText = { Text(if (valid) "50–10,000 words" else "Enter a number from 50 to 10,000") },
+            isError = !valid, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text("Existing summaries are never shortened automatically.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Button(onClick = { value?.let(onSave) }, enabled = valid && value != limit,
+            modifier = Modifier.fillMaxWidth()) { Text("Save limit") }
     }
 }

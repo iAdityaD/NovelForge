@@ -22,7 +22,7 @@ class ReaderViewModel @Inject constructor(private val preferences: PreferencesRe
     fun readingPosition(id: Long, index: Int, offset: Int) =
         preferences.readingPosition(id, index, offset)
 
-    fun setFont(value: Float) = preferences.update(state.value.copy(fontSize = value))
+    fun setFont(value: Float) = preferences.update(state.value.copy(readerFontSize = value))
 
     fun setSerif(value: Boolean) = preferences.update(state.value.copy(readerSerif = value))
 

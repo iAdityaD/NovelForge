@@ -136,7 +136,7 @@ fun ReaderScreen(
                     SelectionContainer {
                         MarkdownParagraph(
                             text,
-                            preferences.fontSize,
+                            preferences.readerFontSize,
                             preferences.readerSerif,
                             onLink = onOpen,
                         )
@@ -210,9 +210,9 @@ fun ReaderScreen(
         ModalBottomSheet(onDismissRequest = { appearance = false }) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Text("Make yourself comfortable", style = MaterialTheme.typography.headlineMedium)
-                Text("Text size · ${preferences.fontSize.toInt()}")
+                Text("Text size · ${preferences.readerFontSize.toInt()}")
                 Slider(
-                    value = preferences.fontSize,
+                    value = preferences.readerFontSize,
                     onValueChange = { vm.setFont(it) },
                     valueRange = 14f..30f,
                     steps = 15,
