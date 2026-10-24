@@ -9,9 +9,10 @@ import org.junit.Test
 
 class BackupCodecTest {
     @Test fun maximumLengthTitleRemainsExportableAfterRestore() {
-        val original = Book(title = "x".repeat(200))
+        val original = Book(title = "x".repeat(200), target = 0)
         val restored = BackupCodec.decode(BackupCodec.encode(original, emptyList())).first
         assertEquals(original.title, restored.title)
+        assertEquals(0, restored.target)
         assertEquals(original.title, BackupCodec.decode(BackupCodec.encode(restored, emptyList())).first.title)
     }
 

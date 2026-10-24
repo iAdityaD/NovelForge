@@ -108,7 +108,7 @@ object BackupCodec {
                     b.optString("status", "In progress").takeIf { it in bookStatuses }
                         ?: "In progress",
                 cover = b.optInt("cover").coerceIn(0, 3),
-                target = b.optInt("target", 80000).coerceIn(1, 10000000),
+                target = b.optInt("target", 80000).coerceIn(0, 10000000),
             )
         val array = root.getJSONArray("entries")
         require(array.length() <= 10000) { "Too many entries." }
