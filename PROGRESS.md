@@ -203,3 +203,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Searchable multi-select chapter picker with stable IDs, folder paths, Added states, empty/search states. Atomic batch inclusion validates the workspace and document type before writes; repeated additions preserve order.
 - Replaced Unplace with Remove from manuscript; removed the unplaced tray and instructional paragraphs. New drafts are excluded until selected; existing/template/restored membership is preserved.
 - Added batch rejection/idempotency/reopen regression and updated device flow. Verification pending.
+
+
+## 0.5.2 verified delivery
+- Source `12593a5158257d1c1917f2b1ce6c7fa264d340ba`; CI `40060173193`: both jobs passed. 29 JVM tests, six API 34 device tests, no failures/skips; compilation, architecture checks and lint passed.
+- Verified APK signature/version 0.5.2 (7), minSDK 26; inspected Arrange capture. Packaged NovelForge-v0.5.2-Android.zip.
+- Arrange now selects existing chapters; no chapter creation route. Remove from manuscript preserves documents. New draft membership is explicit, existing data untouched.
+- Requirements/design live in docs/ARRANGE_REQUIREMENTS.md. No schema change; repository batch addition owns transactional validation.
