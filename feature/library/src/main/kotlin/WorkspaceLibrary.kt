@@ -185,7 +185,7 @@ fun LibraryScreen(
 
 @Composable
 private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Boolean) {
-    val words = entries.filter { it.kind == "Chapter" }.sumOf { it.words }
+    val words = entries.filter { isManuscriptKind(it.kind) }.sumOf { it.words }
     if (compact)
         Row(
             horizontalArrangement = Arrangement.spacedBy(14.dp),

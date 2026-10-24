@@ -160,7 +160,7 @@ fun EntryDialog(initialKind: String, onDismiss: () -> Unit, manuscriptOnly: Bool
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    (if (manuscriptOnly) listOf("Chapter", "Screenplay") else kinds).forEach {
+                    (if (manuscriptOnly) listOf("Document", "Chapter", "Screenplay") else kinds).forEach {
                         FilterChip(
                             selected = kind == it,
                             onClick = { kind = it },

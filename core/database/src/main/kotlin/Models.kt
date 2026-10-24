@@ -2,6 +2,7 @@ package com.novelforge.app.data
 
 import androidx.room.*
 import com.novelforge.core.model.EntrySummary
+import com.novelforge.core.model.isManuscriptKind
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
@@ -175,9 +176,9 @@ interface ForgeDao {
     @Transaction
     suspend fun addDocument(entry: EntryEntity): Long {
         val id = addEntry(entry)
-        if (entry.kind == "Chapter") {
+        if (isManuscriptKind(entry.kind)) {
             val order = maxOf(manuscriptPlacements(entry.bookId).maxOfOrNull { it.position } ?: -1, entry.position - 1) + 1
-            place(ManuscriptPlacementEntity(id, entry.bookId, order))
+            place(ManuscriptPlacementEntity(id, entry.bookId, order, entry.kind == "Chapter"))
         }
         return id
     }

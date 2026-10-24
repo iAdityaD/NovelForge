@@ -90,12 +90,12 @@ class MetadataFlowTest {
         screenshot("workspace-arrange")
         compose.onNodeWithContentDescription("Move Chapter 2 earlier").performClick()
         compose.onAllNodesWithText("Remove from manuscript").onFirst().performClick()
-        compose.onNodeWithText("Add chapter").performClick()
-        compose.onNodeWithText("Add chapters").assertExists()
+        compose.onNodeWithText("Add document").performClick()
+        compose.onNodeWithText("Add to manuscript").assertExists()
         compose.onNodeWithText("A new piece of your story").assertDoesNotExist()
         compose.onNode(hasText("Chapter 2") and hasAnyAncestor(isDialog())).performClick()
         compose.onNodeWithText("Add selected (1)").performClick()
-        compose.waitUntil(10000) { compose.onAllNodesWithText("Add chapters").fetchSemanticsNodes().isEmpty() }
+        compose.waitUntil(10000) { compose.onAllNodesWithText("Add to manuscript").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("workspace-tab-4").performClick()
         screenshot("workspace-read")
         compose.onNodeWithText("Read from the beginning").performClick()

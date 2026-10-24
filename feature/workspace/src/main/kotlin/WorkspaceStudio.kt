@@ -42,9 +42,9 @@ fun WorkspaceStudio(
     var query by rememberSaveable(book.id) { mutableStateOf("") }
     var graph by rememberSaveable(book.id) { mutableStateOf(false) }
     val folders = entries.filter { it.kind == "Folder" }.sortedBy { resourceFolderPath(it, entries.filter { e -> e.kind == "Folder" }) }
-    val manuscriptFolder = entries.firstOrNull { it.kind == "Chapter" && it.folderId != null }?.folderId
+    val manuscriptFolder = entries.firstOrNull { isManuscriptKind(it.kind) && it.folderId != null }?.folderId
         ?: folders.firstOrNull { it.title.equals("Manuscript", true) }?.id
-    val latest = entries.filter { it.kind == "Chapter" }.maxByOrNull { it.updated }
+    val latest = entries.filter { isManuscriptKind(it.kind) }.maxByOrNull { it.updated }
     val overview = entries.firstOrNull { it.id == book.overviewId }
     LaunchedEffect(book.id, graph) { if (graph) vm.loadConnections(book.id) }
     Column(Modifier.fillMaxSize()) {
@@ -81,7 +81,7 @@ fun WorkspaceStudio(
                     }
 
                     item {
-                        FilledTonalButton(onClick = { if (latest != null) onOpen(latest.id) else onAdd(manuscriptFolder, "Chapter") }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                        FilledTonalButton(onClick = { if (latest != null) onOpen(latest.id) else onAdd(manuscriptFolder, "Document") }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                             Icon(Icons.Outlined.EditNote, null); Spacer(Modifier.width(10.dp)); Text(if (latest == null) "Start writing" else "Continue writing")
                         }
                         latest?.let { Text(it.title, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -127,11 +127,11 @@ fun WorkspaceStudio(
                         }
                     } else {
                         item { OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search resources") }, singleLine = true, leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
-                        val resources = entries.filter { it.kind !in listOf("Folder", "Chapter", "Screenplay", "Guide", "Novel Profile") }
+                        val resources = entries.filter { it.kind !in listOf("Folder", "Document", "Chapter", "Screenplay", "Guide", "Novel Profile") }
                         if (resources.isEmpty() && folders.isEmpty()) item { Text("Start with your first category using +. Nothing is created until you choose it.") }
                         folders.forEach { folder ->
                             val documents = resources.filter { it.folderId == folder.id && (it.title.contains(query, true) || folder.title.contains(query, true)) }
-                            if (documents.isNotEmpty() || (query.isBlank() && entries.none { it.folderId == folder.id && it.kind in listOf("Chapter", "Screenplay", "Novel Profile") })) {
+                            if (documents.isNotEmpty() || (query.isBlank() && entries.none { it.folderId == folder.id && it.kind in listOf("Document", "Chapter", "Screenplay", "Novel Profile") })) {
                                 item(key = "category-${folder.id}") { Text(resourceFolderPath(folder, folders), style = MaterialTheme.typography.titleMedium) }
                                 if (documents.isEmpty()) item { Text("No resources yet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                                 items(documents, key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
@@ -147,11 +147,11 @@ fun WorkspaceStudio(
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Manuscript", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
-                            TextButton(onClick = { onAdd(manuscriptFolder, "Chapter") }) { Icon(Icons.Outlined.Add, null); Text("Chapter") }
+                            TextButton(onClick = { onAdd(manuscriptFolder, "Document") }) { Icon(Icons.Outlined.Add, null); Text("Document") }
                         }
                     }
-                    val drafts = entries.filter { it.kind in listOf("Chapter", "Screenplay") }.sortedByDescending { it.updated }
-                    if (drafts.isEmpty()) item { EmptyState("Your first line starts here", "You don’t need an outline to begin.", action = "Start writing", onAction = { onAdd(manuscriptFolder, "Chapter") }) }
+                    val drafts = entries.filter { isManuscriptKind(it.kind) }.sortedByDescending { it.updated }
+                    if (drafts.isEmpty()) item { EmptyState("Your first line starts here", "You don’t need an outline to begin.", action = "Start writing", onAction = { onAdd(manuscriptFolder, "Document") }) }
                     items(drafts, key = { it.id }) { doc -> StudioDocument(doc, { onOpen(doc.id) }) }
                 }
                 3 -> {
@@ -159,12 +159,12 @@ fun WorkspaceStudio(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Manuscript", style = MaterialTheme.typography.headlineMedium)
-                                Text("${chapters.size} chapters", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${chapters.size} documents", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            TextButton(onClick = { pickChapters = true }) { Icon(Icons.Outlined.Add, null); Text("Add chapter") }
+                            TextButton(onClick = { pickChapters = true }) { Icon(Icons.Outlined.Add, null); Text("Add document") }
                         }
                     }
-                    if (chapters.isEmpty()) item { Text("No chapters added", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (chapters.isEmpty()) item { Text("No documents added", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     itemsIndexed(chapters, key = { _, e -> e.id }) { index, doc ->
                         Column {
                             StudioDocument(doc, { onOpen(doc.id) }, "${index + 1} · ${doc.words} words")
@@ -181,7 +181,7 @@ fun WorkspaceStudio(
                     item { Text("Reading room", style = MaterialTheme.typography.headlineMedium) }
                     if (chapters.isNotEmpty()) item { FilledTonalButton(onClick = { onRead(chapters.first().id) }, modifier = Modifier.fillMaxWidth()) { Text("Read from the beginning") } }
                     else item { EmptyState("A book waiting to happen", "Include chapters in Arrange to preview your manuscript.", action = "Arrange manuscript", onAction = { onTab(3) }) }
-                    itemsIndexed(chapters, key = { _, e -> e.id }) { index, doc -> StudioDocument(doc, { onRead(doc.id) }, "Chapter ${index + 1} · ${doc.words} words") }
+                    itemsIndexed(chapters, key = { _, e -> e.id }) { index, doc -> StudioDocument(doc, { onRead(doc.id) }, "${index + 1} · ${doc.words} words") }
                 }
             }
         }

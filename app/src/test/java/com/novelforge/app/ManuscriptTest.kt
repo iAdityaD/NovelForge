@@ -18,6 +18,34 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class ManuscriptTest {
+    @Test fun documentAndScreenplayShareCompilationAndRecovery() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, ForgeDb::class.java).build()
+        val file = java.io.File(context.cacheDir, "mixed-content-backup.json")
+        try {
+            val repo = LocalWorkspaceRepository(db, LocalPreferencesRepository(context))
+            val book = repo.createBook("Mixed", "", emptyList(), 0, 0, false)
+            val document = repo.createEntry(book.bookId, "Essay", "Document", null, null)
+            val script = repo.createEntry(book.bookId, "Scene", "Screenplay", null, null)
+            val resource = repo.createEntry(book.bookId, "Research", "Resource", null, null)
+            db.dao().updateEntry(db.dao().entry(document)!!.copy(body = "ESSAY_CONTENT"))
+            db.dao().updateEntry(db.dao().entry(script)!!.copy(body = "SCREENPLAY_CONTENT"))
+            db.dao().updateEntry(db.dao().entry(resource)!!.copy(body = "PRIVATE_RESEARCH"))
+            val manuscript = LocalManuscriptRepository(db)
+            assertTrue(manuscriptChapters(db.dao().summaries().first(), manuscript.placements.first()).isEmpty())
+            manuscript.add(book.bookId, listOf(script, document))
+            assertEquals(listOf(script, document), manuscriptChapters(db.dao().summaries().first(), manuscript.placements.first()).map { it.id })
+            val compiled = compileManuscript(db.dao().allEntries(book.bookId).map { it.toModel() }, manuscript.placements.first())
+            val output = BackupCodec.markdown(com.novelforge.core.model.Book(title = "Mixed"), compiled)
+            assertTrue(output.indexOf("SCREENPLAY_CONTENT") < output.indexOf("ESSAY_CONTENT"))
+            assertFalse(output.contains("PRIVATE_RESEARCH"))
+            val backups = LocalBackupRepository(context, db)
+            backups.export(android.net.Uri.fromFile(file).toString(), book.bookId, false)
+            val restored = backups.restore(android.net.Uri.fromFile(file).toString())
+            assertEquals(listOf("Screenplay", "Document"), manuscriptChapters(db.dao().summaries().first().filter { it.bookId == restored }, manuscript.placements.first()).map { it.kind })
+        } finally { db.close(); file.delete() }
+    }
+
     @Test fun pickerAddsOnlyExistingChaptersAtomicallyWithoutDuplicates() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         context.deleteDatabase("arrange-picker-test")

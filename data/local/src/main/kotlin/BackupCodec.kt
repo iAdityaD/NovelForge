@@ -191,7 +191,7 @@ object BackupCodec {
             for (i in 0 until entries.length()) {
                 val entry = entries.getJSONObject(i)
                 if (entry.has("manuscriptPosition")) {
-                    require(entry.getString("kind") == "Chapter") { "Only chapters can be placed in a manuscript." }
+                    require(isManuscriptKind(entry.getString("kind"))) { "This document type cannot be placed in a manuscript." }
                     put(entry.getLong("id"), entry.getInt("manuscriptPosition") to entry.getBoolean("manuscriptIncluded"))
                 }
             }
@@ -201,7 +201,7 @@ object BackupCodec {
     fun markdown(book: Book, entries: List<Entry>): String = buildString {
         append("# ${book.title}\n\n${book.author}\n\n")
         entries
-            .filter { it.kind == "Chapter" }
+            .filter { isManuscriptKind(it.kind) }
             .forEach { append("## ${it.title}\n\n${it.body}\n\n---\n\n") }
     }
 }

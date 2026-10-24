@@ -1,6 +1,6 @@
 package com.novelforge.domain.story
 val kinds =
-    listOf("Resource", "External source",
+    listOf("Document", "Resource", "External source",
         "Chapter",
         "Novel Profile",
         "Guide",

@@ -7,6 +7,7 @@ import com.novelforge.app.data.*
 import com.novelforge.core.model.*
 import com.novelforge.domain.analytics.*
 import com.novelforge.domain.backup.*
+import com.novelforge.domain.manuscript.*
 import com.novelforge.domain.preferences.*
 import com.novelforge.domain.story.*
 import com.novelforge.domain.workspace.*
@@ -29,8 +30,7 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 val entries = db.dao().allEntries(bookId).map { it.toModel() }
                 require(entries.size <= 10000) { "Project exceeds the 10,000-document backup limit." }
                 val positions = db.dao().manuscriptPlacements(bookId).associate { it.documentId to (it.position to it.included) }
-                val ordered = entries.filter { !it.deleted && it.kind == "Chapter" && positions[it.id]?.second != false }
-                    .sortedWith(compareBy<Entry> { positions[it.id]?.first ?: it.position }.thenBy { it.id })
+                val ordered = compileManuscript(entries, positions.map { (id, p) -> ManuscriptPlacement(id, bookId, p.first, p.second) })
                 if (markdown) BackupCodec.markdown(book, ordered)
                 else BackupCodec.encode(book, entries, positions, RecoveryHistory(
                     db.dao().workspaceRevisions(bookId).map { it.toModel() },
@@ -74,9 +74,9 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 dao.updateBook(book.copy(overviewId = ids[book.overviewId]))
                 entries.forEach { e ->
                     val body = remapLinks(e.body, ids)
-                    if (e.kind == "Chapter") {
+                    if (isManuscriptKind(e.kind)) {
                         val placement = placements[e.id]
-                        db.dao().place(ManuscriptPlacementEntity(ids.getValue(e.id), book.id, placement?.first ?: e.position, placement?.second ?: true))
+                        db.dao().place(ManuscriptPlacementEntity(ids.getValue(e.id), book.id, placement?.first ?: e.position, manuscriptIncluded(e.kind, placement?.second)))
                     }
                     dao.updateEntry(
                         e.copy(

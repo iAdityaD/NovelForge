@@ -109,7 +109,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
                     words = wordCount(body),
                 )
             )
-        if (kind == "Chapter") db.dao().place(ManuscriptPlacementEntity(id, bookId, position, false))
+        if (isManuscriptKind(kind)) db.dao().place(ManuscriptPlacementEntity(id, bookId, position, false))
         if (kind == "Novel Profile") dao.book(bookId)?.let { book ->
             if (book.overviewId?.let { dao.entry(it) }?.deleted != false) dao.updateBook(book.copy(overviewId = id))
         }

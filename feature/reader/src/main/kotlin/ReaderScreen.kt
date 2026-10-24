@@ -47,7 +47,7 @@ fun ReaderScreen(
         if (preferences.dark) MaterialTheme.colorScheme.background
         else if (preferences.readerWarm) Color(0xFFFAF4E7) else Color(0xFFFFFEFA)
     val paragraphs = remember(e.body) { e.body.split(Regex("\n\\s*\n")).filter { it.isNotBlank() } }
-    val chapters = entries.filter { it.kind == "Chapter" }
+    val chapters = entries.filter { isManuscriptKind(it.kind) }
     val index = chapters.indexOfFirst { it.id == e.id }
     key(e.id) {
         val state =

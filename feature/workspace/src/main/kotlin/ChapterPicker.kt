@@ -1,5 +1,7 @@
 package com.novelforge.app.ui
 
+import com.novelforge.core.model.isManuscriptKind
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,16 +21,16 @@ fun ChapterPicker(entries: List<EntrySummary>, included: Set<Long>, busy: Boolea
     var query by rememberSaveable { mutableStateOf("") }
     var selected by rememberSaveable { mutableStateOf(listOf<Long>()) }
     val folders = entries.filter { it.kind == "Folder" }
-    val chapters = entries.filter { it.kind == "Chapter" }.sortedWith(compareBy<EntrySummary> { it.position }.thenBy { it.id })
+    val chapters = entries.filter { isManuscriptKind(it.kind) }.sortedWith(compareBy<EntrySummary> { it.position }.thenBy { it.id })
     val chosen = chapters.filter { it.id in selected && it.id !in included }
     val visible = chapters.filter { it.title.contains(query, true) }
-    AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("Add chapters") }, text = {
+    AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("Add to manuscript") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(query, { query = it }, label = { Text("Search chapters") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(query, { query = it }, label = { Text("Search documents") }, singleLine = true, modifier = Modifier.fillMaxWidth())
             when {
-                chapters.isEmpty() -> { Text("No chapters yet"); TextButton(onClick = onWrite) { Text("Go to Write") } }
-                chapters.all { it.id in included } -> Text("All chapters added")
-                visible.isEmpty() -> Text("No matching chapters")
+                chapters.isEmpty() -> { Text("No drafts yet"); TextButton(onClick = onWrite) { Text("Go to Write") } }
+                chapters.all { it.id in included } -> Text("All documents added")
+                visible.isEmpty() -> Text("No matching documents")
             }
             LazyColumn(Modifier.heightIn(max = 340.dp)) {
                 items(visible, key = { it.id }) { chapter ->

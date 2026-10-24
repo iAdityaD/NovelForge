@@ -226,3 +226,10 @@ Every stage is committed to main as requested. Build verification and limitation
 - Backup operations flush the editor and reject concurrent requests. Data settings describe the actual scope.
 - This is a project-recovery increment, not a complete application snapshot: preferences, bookmarks, reading positions and pending drafts still need explicit preservation before the content-model migration gate is complete.
 - Added fresh-database recovery and invalid-history rollback coverage; CI pending.
+
+
+## Redesign implementation B2 — consistent manuscript eligibility
+- Added one core compatibility boundary for Document, Chapter and Screenplay manuscript eligibility; legacy Chapter membership preserved, other old/new drafts require explicit inclusion. This is an adapter toward the future project-owned type registry, not the registry itself.
+- Write, picker, Arrange, Reader, export, library totals and analytics use the same eligibility/inclusion rule. Export compiles through the manuscript projection. Resources remain excluded.
+- Generic Document is available alongside Chapter and Screenplay; UI uses document terminology for the assembled manuscript. Added mixed-format compilation/recovery regression.
+- Full configurable metadata/types/templates and nested manuscript structure remain the next stages; no claim of completed redesign.

@@ -41,7 +41,8 @@ fun ForgeApp() {
     val prefs by settings.state.collectAsStateWithLifecycle()
     val books = workspaceUi.books
     val entries = workspaceUi.entries
-    val excludedChapters = workspaceUi.placements.filter { !it.included }.map { it.documentId }.toSet()
+    val includedIds = manuscriptChapters(entries, workspaceUi.placements).map { it.id }.toSet()
+    val excludedChapters = entries.filter { isManuscriptKind(it.kind) && it.id !in includedIds }.map { it.id }.toSet()
     val days by analytics.days.collectAsStateWithLifecycle()
     val busy by backups.busy.collectAsStateWithLifecycle()
     val workspaceError by workspace.error.collectAsStateWithLifecycle()
@@ -343,7 +344,7 @@ fun ForgeApp() {
         }
     }
     showEntry?.let { kind ->
-        EntryDialog(kind, { showEntry = null }, manuscriptOnly = screen == Destination.Project && kind == "Chapter") { title, type ->
+        EntryDialog(kind, { showEntry = null }, manuscriptOnly = screen == Destination.Project && isManuscriptKind(kind)) { title, type ->
             workspace.createEntry(bookId, title, type, null, entryFolder) {
                 showEntry = null
                 open(it)
