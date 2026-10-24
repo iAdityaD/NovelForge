@@ -406,8 +406,8 @@ fun ExplorerTree(
     }
     if (filters) AlertDialog(onDismissRequest = { filters = false }, title = { Text("Filter files") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            ChoiceField("Type", typeFilter ?: "All types", listOf("All types") + types) { typeFilter = it.takeUnless { value -> value == "All types" } }
-            ChoiceField("Status", statusFilter ?: "All statuses", listOf("All statuses") + entries.filter { it.kind != "Folder" }.map { it.status }.distinct()) { statusFilter = it.takeUnless { value -> value == "All statuses" } }
+            OptionalFileFilter("Type", typeFilter, types) { typeFilter = it }
+            OptionalFileFilter("Status", statusFilter, entries.filter { it.kind != "Folder" }.map { it.status }.distinct()) { statusFilter = it }
             TextButton(onClick = { typeFilter = null; statusFilter = null }) { Text("Reset filters") }
         }
     }, confirmButton = { TextButton(onClick = { filters = false }) { Text("Done") } })
@@ -481,6 +481,23 @@ fun ExplorerTree(
                     },
                     confirmButton = { TextButton(onClick = { action = null }) { Text("Cancel") } },
                 )
+        }
+    }
+}
+
+@Composable
+private fun OptionalFileFilter(label: String, selected: String?, options: List<String>, onSelect: (String?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        Box {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(selected ?: "Any", Modifier.weight(1f)); Icon(Icons.Outlined.ExpandMore, null)
+            }
+            DropdownMenu(expanded, { expanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
+                DropdownMenuItem(text = { Text("Any") }, onClick = { onSelect(null); expanded = false })
+                options.forEach { value -> DropdownMenuItem(text = { Text(value) }, onClick = { onSelect(value); expanded = false }) }
+            }
         }
     }
 }
