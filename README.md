@@ -33,7 +33,7 @@ Recovery backup **v6** preserves project metadata, documents, custom labels/stat
 
 Project backups do **not** include app preferences, historical reader bookmarks/positions or pending unsaved drafts. Limits: 16 MB and 10,000 documents per backup. Export before uninstalling or changing devices. Android cloud backup is disabled.
 
-Autosave runs after a short pause and flushes on navigation/backgrounding. Saved locally follows successful persistence. Save failures block normal editor departure. A forced process kill during the unsaved debounce window can still lose the latest fragment; durable draft journaling remains future work.
+Autosave runs after a short pause and flushes on navigation/backgrounding. Saved locally follows successful persistence. Save failures block normal editor departure. An atomic recovery journal is written before the debounced database commit. Reopening restores pending text, or preserves it as a separate copy if the saved document has diverged. An interruption before the journal write finishes can still lose the latest fragment.
 
 ## Build and installation
 
@@ -50,6 +50,6 @@ GitHub Actions also runs API 34 emulator journeys and migration checks. Successf
 
 ## Remaining scope
 
-This is a development build, not physical-device performance/accessibility certification. Full custom field schemas and reusable user-authored project recipes, durable draft recovery, full-app snapshots, structural undo, media/cover import and production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
+This is a development build, not physical-device performance/accessibility certification. Full custom field schemas and reusable user-authored project recipes, full-app snapshots, structural undo, media/cover import and production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
 
 Read `PROGRESS.md` and the latest owner amendments in `docs/PRODUCT_REDESIGN.md` before continuing. Older screenshots and design documents may show retired Arrange/Read workflows.

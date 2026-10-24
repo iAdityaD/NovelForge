@@ -20,6 +20,7 @@ class EditorSession(private val repository: WritingRepository, private val scope
     val state = mutable.asStateFlow()
     private var persisted: Entry? = null
     private var saveJob: Job? = null
+    private var journaled: Entry? = null
     private val mutex = Mutex()
     private val undo = ArrayDeque<String>()
     private val redo = ArrayDeque<String>()
@@ -32,10 +33,18 @@ class EditorSession(private val repository: WritingRepository, private val scope
             mutable.update { it.copy(error = "This page is unavailable. Check Recently deleted.") }
             return false
         }
-        persisted = entry
+        val recovered = try { repository.recoverDraft(entry) } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            mutable.update { it.copy(error = "Draft recovery failed. Your saved document and recovery file have been kept.") }
+            return false
+        }
+        val opened = recovered ?: entry
+        persisted = if (opened.id == entry.id) entry else repository.entry(opened.id)
+        journaled = null
         undo.clear()
         redo.clear()
-        mutable.value = EditorState(entry)
+        mutable.value = EditorState(opened, if (recovered == null) "Saved locally" else "Recovered draft · saving…")
+        if (recovered != null) saveJob = scope.launch { persist() }
         return true
     }
 
@@ -89,6 +98,21 @@ class EditorSession(private val repository: WritingRepository, private val scope
                 canRedo = redo.isNotEmpty(),
             )
         }
+        // Journal work is independent from the cancellable debounce job.
+        scope.launch {
+            mutex.withLock {
+                val current = state.value.entry ?: return@withLock
+                if (current != persisted && current != journaled) {
+                    try {
+                        repository.stageDraft(current, persisted)
+                        journaled = current
+                    } catch (e: CancellationException) { throw e }
+                    catch (_: Exception) {
+                        mutable.update { it.copy(saveStatus = "Recovery unavailable · saving…") }
+                    }
+                }
+            }
+        }
         saveJob?.cancel()
         saveJob =
             scope.launch {
@@ -105,8 +129,13 @@ class EditorSession(private val repository: WritingRepository, private val scope
                 return@withLock true
             }
             try {
+                if (snapshot != journaled) {
+                    repository.stageDraft(snapshot, persisted)
+                    journaled = snapshot
+                }
                 repository.save(snapshot, persisted)
                 persisted = snapshot
+                journaled = null
                 mutable.update {
                     if (it.entry == snapshot) it.copy(saveStatus = "Saved locally") else it
                 }

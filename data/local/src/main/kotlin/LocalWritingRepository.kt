@@ -15,12 +15,36 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 @Singleton
-class LocalWritingRepository @Inject constructor(private val db: ForgeDb) : WritingRepository {
+class LocalWritingRepository @Inject constructor(private val db: ForgeDb, private val journal: LocalDraftJournal? = null) : WritingRepository {
     private val dao = Records(db.dao())
 
     override suspend fun entry(id: Long) = dao.entry(id)
 
-    override suspend fun save(entry: Entry, previous: Entry?) =
+    override suspend fun stageDraft(entry: Entry, previous: Entry?) {
+        journal?.write(entry, previous)
+    }
+
+    override suspend fun recoverDraft(entry: Entry): Entry? {
+        val storage = journal ?: return null
+        val pending = storage.read(entry) ?: return null
+        if (storage.fingerprint(entry) == storage.fingerprint(pending.entry)) {
+            storage.clear(entry.id)
+            return null
+        }
+        if (storage.fingerprint(entry) == pending.baseFingerprint) return pending.entry
+        // Never overwrite a newer saved edit. Preserve the interrupted text as a separate document.
+        val recovered = db.withTransaction {
+            val title = pending.entry.title.take(180) + " (recovered)"
+            dao.entries(entry.bookId).firstOrNull { it.title == title && it.body == pending.entry.body && it.kind == pending.entry.kind }
+                ?: pending.entry.copy(id = 0, title = title, words = wordCount(pending.entry.body)).let { copy ->
+                    copy.copy(id = dao.addEntry(copy))
+                }
+        }
+        storage.clear(entry.id)
+        return recovered
+    }
+
+    override suspend fun save(entry: Entry, previous: Entry?) {
         db.withTransaction {
             // Never resurrect a file trashed while the editor was open.
             val existing = dao.entry(entry.id) ?: error("This file is unavailable.")
@@ -45,6 +69,8 @@ class LocalWritingRepository @Inject constructor(private val db: ForgeDb) : Writ
                 )
             }
         }
+        journal?.clear(entry.id)
+    }
 
     override suspend fun checkpoint(entry: Entry) =
         db.withTransaction {

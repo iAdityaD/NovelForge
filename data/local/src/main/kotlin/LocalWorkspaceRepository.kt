@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.*
 @Singleton
 class LocalWorkspaceRepository
 @Inject
-constructor(private val db: ForgeDb, private val preferences: PreferencesRepository) :
+constructor(private val db: ForgeDb, private val preferences: PreferencesRepository, private val journal: LocalDraftJournal? = null) :
     WorkspaceRepository {
     private val dao = Records(db.dao())
     override val books = dao.books()
@@ -89,6 +89,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
             db.dao().deleteWritingDays(bookId)
             db.dao().deleteBook(bookId)
         }
+        ids.forEach { journal?.clear(it) }
         preferences.forgetWorkspace(bookId, ids)
     }
 

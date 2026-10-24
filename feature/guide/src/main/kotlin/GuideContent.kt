@@ -33,7 +33,7 @@ internal val guideArticles = listOf(
     GuideArticle("editor", "Writing", "Formatting and saving", listOf(
         "Markdown" to "Use ## Heading, **bold**, *italic*, > quote and - bullet. The toolbar inserts syntax at the cursor or wraps selected text. Callouts use > [!NOTE]. The editor retains Markdown source.",
         "Your writing canvas" to "Focus mode hides extra controls. Settings → Editor controls writing text size, monospace text and syntax colors. The writing canvas scrolls as your text grows.",
-        "Save state" to "Edits save locally after a short pause and before navigation. Saved locally means the database write succeeded. If saving fails, retry before leaving. A sudden process kill can still lose the latest unsaved fragment.",
+        "Save state" to "Edits save locally after a short pause and before navigation. Saved locally means the database write succeeded. If saving fails, retry before leaving. Draft recovery is written before the normal autosave. Reopening a document recovers durable pending text; a conflicting saved version is kept and the recovery opens as a separate copy. An edit interrupted before the recovery write completes can still be lost.",
         "Undo and checkpoints" to "Undo and redo belong to the editing session. Checkpoints are persistent saved versions. Neither replaces an exported backup."
     )),
     GuideArticle("arrange", "Manuscript", "Arrange a nested manuscript", listOf(
