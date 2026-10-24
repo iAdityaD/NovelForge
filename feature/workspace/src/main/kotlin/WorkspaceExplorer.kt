@@ -18,6 +18,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -94,6 +96,7 @@ fun ExplorerTree(
     var point by remember { mutableStateOf(Offset.Zero) }
     var viewport by remember { mutableStateOf(Rect.Zero) }
     var filters by remember { mutableStateOf(false) }
+    var viewMenu by remember { mutableStateOf(false) }
     var typeFilter by rememberSaveable(book.id, rootLabel) { mutableStateOf<String?>(null) }
     var statusFilter by rememberSaveable(book.id, rootLabel) { mutableStateOf<String?>(null) }
     val types = entries.filter { it.kind != "Folder" }.map { it.kind }.distinct().sorted()
@@ -182,12 +185,14 @@ fun ExplorerTree(
                 },
             )
             ActionIcon(Icons.Outlined.FilterList, "Filter files", { filters = true })
-            ActionIcon(
-                Icons.Outlined.UnfoldMore,
-                "Expand all folders",
-                { entries.filter { it.kind == "Folder" }.forEach { expanded[it.id] = true } },
-            )
-            ActionIcon(Icons.Outlined.UnfoldLess, "Collapse all folders", { expanded.clear() })
+            Box {
+                ActionIcon(Icons.Outlined.MoreVert, "Outline options", { viewMenu = true })
+                DropdownMenu(viewMenu, { viewMenu = false }) {
+                    DropdownMenuItem(text = { Text("Expand all folders") }, onClick = { entries.filter { it.kind == "Folder" }.forEach { expanded[it.id] = true }; viewMenu = false })
+                    DropdownMenuItem(text = { Text("Collapse all folders") }, onClick = { expanded.clear(); viewMenu = false })
+                    DropdownMenuItem(text = { Text("Clear search and filters") }, onClick = { query = ""; typeFilter = null; statusFilter = null; viewMenu = false })
+                }
+            }
         }
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag("explorer-tree").scrollIndicator(listState),
@@ -243,8 +248,17 @@ fun ExplorerTree(
                         dragging != e.id &&
                         (folder || arrange) &&
                         bounds[e.id]?.contains(point) == true
+                val dropColor = MaterialTheme.colorScheme.primary
                 Row(
                     Modifier.fillMaxWidth()
+                        .alpha(if (arrange && dragging == e.id) .45f else 1f)
+                        .drawWithContent {
+                            drawContent()
+                            if (hover && arrange) {
+                                val y = if (point.y > (bounds[e.id]?.center?.y ?: point.y)) size.height - 1.dp.toPx() else 1.dp.toPx()
+                                drawLine(dropColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx())
+                            }
+                        }
                         .onGloballyPositioned { bounds[e.id] = it.boundsInRoot() }
                         .clip(RoundedCornerShape(4.dp))
                         .background(

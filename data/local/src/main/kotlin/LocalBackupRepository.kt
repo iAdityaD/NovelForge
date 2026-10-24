@@ -81,7 +81,7 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 dao.updateBook(book.copy(overviewId = ids[book.overviewId]))
                 entries.forEach { e ->
                     val body = remapLinks(e.body, ids)
-                    if (isManuscriptKind(e.kind)) {
+                    if (isManuscriptKind(e.kind) || e.id in placements) {
                         val placement = placements[e.id]
                         db.dao().place(ManuscriptPlacementEntity(ids.getValue(e.id), book.id, placement?.first ?: e.position, manuscriptIncluded(e.kind, placement?.second)))
                     }

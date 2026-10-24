@@ -33,7 +33,8 @@ class WorkspaceAreaTest {
             val second = repo.createNode(project, "Ending", false, MANUSCRIPT_AREA, nested, "Reflection", null)
             val notes = repo.createNode(project, "Sources", true, PLAN_AREA, null, "", null)
             val source = repo.createNode(project, "Reference", false, PLAN_AREA, notes, "My evidence", "https://example.org/article")
-            db.dao().updateEntry(db.dao().entry(first)!!.copy(body = "FIRST [[${source}|Reference]]"))
+            db.dao().updateEntry(db.dao().entry(first)!!.copy(body = "FIRST [[${source}|Reference]]", status = "My review"))
+            db.dao().place(ManuscriptPlacementEntity(first, project, 0, false)) // Historical placement survives custom labels.
             db.dao().updateEntry(db.dao().entry(second)!!.copy(body = "SECOND"))
             fun order(rows: List<EntrySummary>) = orderedManuscript(rows.filter { it.bookId == project }).map { it.id }
             assertEquals(listOf(first, second), order(db.dao().summaries().first()))
@@ -55,6 +56,7 @@ class WorkspaceAreaTest {
             val restored = backups.restore(android.net.Uri.fromFile(file).toString())
             val restoredEntries = db.dao().entries(restored)
             assertEquals("Verse", restoredEntries.first { it.title == "Renamed" }.kind)
+            assertEquals("My review", restoredEntries.first { it.title == "Renamed" }.status)
             assertEquals(PLAN_AREA, restoredEntries.first { it.title == "Reference" }.area)
             backups.export(android.net.Uri.fromFile(output).toString(), restored, true)
             assertTrue(output.readText().indexOf("FIRST") < output.readText().indexOf("SECOND"))

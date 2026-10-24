@@ -49,8 +49,14 @@ constructor(
         done(repository.createBook(title, author, genres, cover, target, standard, templateId))
     }
 
-    fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String, sourceUrl: String?, categoryName: String? = null, done: (Long) -> Unit) = launchWork {
-        done(repository.createNode(bookId, title, folder, area, parent, typeLabel, sourceUrl, categoryName))
+    private var creatingNode = false
+    fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String, sourceUrl: String?, categoryName: String? = null, done: (Long) -> Unit) {
+        if (creatingNode) return
+        creatingNode = true
+        launchWork {
+            try { done(repository.createNode(bookId, title, folder, area, parent, typeLabel, sourceUrl, categoryName)) }
+            finally { creatingNode = false }
+        }
     }
 
     fun deleteBook(bookId: String, done: () -> Unit) = launchWork {

@@ -160,34 +160,6 @@ fun SettingsNavigation(
                     modifier = Modifier.padding(vertical = 16.dp))
             }
         }
-        if (page == "Reading") {
-            item {
-                Text("Text size · ${preferences.readerFontSize.toInt()} sp")
-                Slider(preferences.readerFontSize, { vm.setReaderFont(it) }, valueRange = 14f..30f, steps = 15)
-            }
-            item {
-                Text("A quiet room. An unfinished story. A new beginning.",
-                    fontSize = preferences.readerFontSize.sp,
-                    fontFamily = if (preferences.readerSerif) FontFamily.Serif else FontFamily.Default,
-                    modifier = Modifier.padding(vertical = 16.dp))
-            }
-            item {
-                SettingToggle(
-                    "Serif typeface",
-                    "Book-style text in reading mode",
-                    preferences.readerSerif,
-                    { vm.setSerif(it) },
-                )
-            }
-            item {
-                SettingToggle(
-                    "Warm paper",
-                    "Applied when the app uses light theme",
-                    preferences.readerWarm,
-                    { vm.setWarm(it) },
-                )
-            }
-        }
         if (page == "Data & backup") {
             item {
                 Text("Project recovery backup", style = MaterialTheme.typography.titleLarge)

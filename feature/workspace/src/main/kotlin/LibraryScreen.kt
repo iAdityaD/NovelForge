@@ -53,9 +53,9 @@ fun NovelDetailsScreen(book: Book, onDismiss: () -> Unit, onSave: (Book) -> Unit
                     Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ActionIcon(Icons.Outlined.Close, "Close novel details", { close() })
+                    ActionIcon(Icons.Outlined.Close, "Close project details", { close() })
                     Text(
-                        "Novel details",
+                        "Project details",
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f),
                     )
@@ -69,7 +69,7 @@ fun NovelDetailsScreen(book: Book, onDismiss: () -> Unit, onSave: (Book) -> Unit
                         OutlinedTextField(
                             title,
                             { title = it.take(200) },
-                            label = { Text("Novel title") },
+                            label = { Text("Project title") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )

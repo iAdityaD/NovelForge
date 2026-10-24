@@ -34,7 +34,7 @@ class StudioUiTest {
     @Test
     fun redesignedWorkspaceAndFourTabsRender() {
         compose.onNodeWithTag("new-workspace").performClick()
-        compose.onNodeWithText("Novel title").assertExists()
+        compose.onNodeWithText("Project title").assertExists()
         shot("00-creation")
         compose.onNodeWithContentDescription("Cancel workspace creation").performClick()
         compose.onNodeWithText("Open demo").performScrollTo().performClick()

@@ -25,14 +25,17 @@ fun orderedManuscript(entries: List<EntrySummary>): List<EntrySummary> {
     val children = nodes.groupBy { it.folderId }
     val seen = mutableSetOf<Long>()
     val result = mutableListOf<EntrySummary>()
-    fun visit(parent: Long?) {
-        children[parent].orEmpty().sortedWith(compareBy<EntrySummary> { it.position }.thenBy { it.id }).forEach { node ->
-            if (seen.add(node.id)) {
-                if (node.kind == "Folder") visit(node.id)
-                else if (node.area == MANUSCRIPT_AREA) result.add(node)
-            }
+    val stack = ArrayDeque<EntrySummary>()
+    fun pushChildren(parent: Long?) {
+        children[parent].orEmpty().sortedWith(compareBy<EntrySummary> { it.position }.thenBy { it.id }).asReversed().forEach { stack.addLast(it) }
+    }
+    pushChildren(null)
+    while (stack.isNotEmpty()) {
+        val node = stack.removeLast()
+        if (seen.add(node.id)) {
+            if (node.kind == "Folder") pushChildren(node.id)
+            else if (node.area == MANUSCRIPT_AREA) result.add(node)
         }
     }
-    visit(null)
     return result
 }

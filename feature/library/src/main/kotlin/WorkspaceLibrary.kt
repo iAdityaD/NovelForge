@@ -277,7 +277,7 @@ fun NewWorkspaceScreen(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            item { OutlinedTextField(title, { title = it.take(200) }, label = { Text("Novel title") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
+            item { OutlinedTextField(title, { title = it.take(200) }, label = { Text("Project title") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
             item {
                 Text("Choose your starting point", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(10.dp))

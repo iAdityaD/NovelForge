@@ -14,7 +14,7 @@ class WritingFlowTest {
     @Test(timeout = 90000)
     fun createsCustomWorkspaceFileAndAnalytics() {
         compose.onNodeWithTag("new-workspace").performClick()
-        compose.onNodeWithText("Novel title").performTextInput("The Glass World")
+        compose.onNodeWithText("Project title").performTextInput("The Glass World")
         compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("Build from scratch"))
         compose.onNodeWithText("Build from scratch").performClick()
         compose.onNodeWithText("Create workspace").performClick()

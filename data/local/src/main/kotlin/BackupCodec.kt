@@ -195,7 +195,7 @@ object BackupCodec {
             for (i in 0 until entries.length()) {
                 val entry = entries.getJSONObject(i)
                 if (entry.has("manuscriptPosition")) {
-                    require(isManuscriptKind(entry.getString("kind"))) { "This document type cannot be placed in a manuscript." }
+                    require(if (root.getInt("version") < 6) isManuscriptKind(entry.getString("kind")) else entry.getString("kind") != "Folder") { "Invalid legacy placement." }
                     put(entry.getLong("id"), entry.getInt("manuscriptPosition") to entry.getBoolean("manuscriptIncluded"))
                 }
             }

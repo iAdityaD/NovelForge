@@ -1,6 +1,7 @@
 package com.novelforge.app
 
 import android.graphics.Bitmap
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -50,7 +51,7 @@ class MetadataFlowTest {
         compose.onNodeWithText("Library").performClick()
         compose.onNodeWithContentDescription("Import backup").assertIsDisplayed()
         compose.onNodeWithTag("new-workspace").performClick()
-        compose.onNodeWithText("Novel title").performTextInput("The Two Worlds")
+        compose.onNodeWithText("Project title").performTextInput("The Two Worlds")
         compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("Optional details"))
         compose.onNodeWithText("Optional details").performClick()
         compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("Add genre"))
@@ -92,8 +93,22 @@ class MetadataFlowTest {
         compose.onNodeWithTag("workspace-tab-3").performClick()
         screenshot("workspace-arrange")
         compose.onNodeWithContentDescription("Expand Manuscript").performClick()
+        val firstBounds = compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot
+        val secondBounds = compose.onNodeWithText("Chapter 2.md").fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithText("Chapter 2.md").performTouchInput {
+            down(center)
+            advanceEventTime(700)
+            moveTo(Offset(center.x, firstBounds.top + 3f - secondBounds.top))
+            advanceEventTime(100)
+            up()
+        }
+        compose.waitUntil(10000) {
+            compose.onNodeWithText("Chapter 2.md").fetchSemanticsNode().boundsInRoot.top <
+                compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot.top
+        }
+        screenshot("arrange-after-drag")
         compose.onNodeWithContentDescription("Actions for Chapter 2").performClick()
-        compose.onNodeWithText("Move up").performClick()
+        compose.onNodeWithText("Move down").performClick()
         compose.onNodeWithText("Remove from manuscript").assertDoesNotExist()
         compose.onNodeWithTag("workspace-tab-4").assertDoesNotExist()
         compose.onNodeWithText("Chapter 1.md").assertExists()
@@ -104,7 +119,7 @@ class MetadataFlowTest {
         compose.onNodeWithText("All statuses").performClick()
         compose.onNodeWithText("Completed").performClick()
         compose.onNodeWithText("All genres").performClick()
-        compose.onNodeWithText("Historical fiction").performClick()
+        compose.onNode(hasText("Historical fiction") and hasAnyAncestor(isPopup())).performClick()
         screenshot("library-filter")
         compose.onNodeWithText("Apply filters").performClick()
         compose.onAllNodesWithText("The Two Worlds").onLast().performClick()
