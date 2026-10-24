@@ -147,7 +147,7 @@ class ManuscriptTest {
             assertEquals(1, db.dao().manuscriptPlacements(restored).count { !it.included })
             backup.export(android.net.Uri.fromFile(markdown).toString(), restored, true)
             assertTrue(markdown.readText().contains("FIRST_CONTENT"))
-            assertFalse(markdown.readText().contains("EXCLUDED_CONTENT"))
+            assertTrue(markdown.readText().contains("EXCLUDED_CONTENT")) // Legacy exclusion no longer hides manuscript content.
             assertTrue(db.dao().entries(restored).any { it.body == "EXCLUDED_CONTENT" })
         } finally { db.close(); file.delete(); markdown.delete() }
     }

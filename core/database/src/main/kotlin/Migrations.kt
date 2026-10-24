@@ -82,3 +82,13 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("INSERT INTO ManuscriptPlacement(documentId,bookId,position,included) SELECT rowid,bookId,position,1 FROM Entry WHERE kind='Chapter'")
     }
 }
+
+/** Roles are persisted independently of editable names and type labels. */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE Entry ADD COLUMN area TEXT NOT NULL DEFAULT 'plan'")
+        db.execSQL("UPDATE Entry SET area='manuscript' WHERE kind IN ('Chapter','Document','Screenplay')")
+        // Keep mixed legacy folders shared through view projections; never move or delete prose.
+        db.execSQL("UPDATE Entry SET area='manuscript' WHERE kind='Folder' AND rowid IN (SELECT folderId FROM Entry WHERE area='manuscript')")
+    }
+}

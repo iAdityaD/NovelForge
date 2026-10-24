@@ -31,6 +31,7 @@ data class Entry(
     val updated: Long = System.currentTimeMillis(),
     val deleted: Boolean = false,
     val folderId: Long? = null,
+    val area: String = if (isManuscriptKind(kind)) "manuscript" else "plan",
 )
 
 data class EntryFts(val title: String, val body: String)
@@ -46,6 +47,7 @@ data class EntrySummary(
     val words: Int,
     val updated: Long,
     val folderId: Long? = null,
+    val area: String = if (isManuscriptKind(kind)) "manuscript" else "plan",
 )
 
 data class Revision(

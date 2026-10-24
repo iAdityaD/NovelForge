@@ -41,8 +41,8 @@ fun ForgeApp() {
     val prefs by settings.state.collectAsStateWithLifecycle()
     val books = workspaceUi.books
     val entries = workspaceUi.entries
-    val includedIds = manuscriptChapters(entries, workspaceUi.placements).map { it.id }.toSet()
-    val excludedChapters = entries.filter { isManuscriptKind(it.kind) && it.id !in includedIds }.map { it.id }.toSet()
+    val includedIds = orderedManuscript(entries).map { it.id }.toSet()
+    val excludedChapters = entries.filter { it.area == MANUSCRIPT_AREA && it.kind != "Folder" && it.id !in includedIds }.map { it.id }.toSet()
     val days by analytics.days.collectAsStateWithLifecycle()
     val busy by backups.busy.collectAsStateWithLifecycle()
     val workspaceError by workspace.error.collectAsStateWithLifecycle()
@@ -82,7 +82,7 @@ fun ForgeApp() {
     fun open(id: Long, read: Boolean? = null) {
         editor.openEntry(id) {
             bookId = editor.state.value.entry?.bookId ?: bookId
-            screen = if (read == true || (read == null && editor.state.value.entry?.kind == "Guide")) Destination.Reader else Destination.Editor
+            screen = Destination.Editor
         }
     }
     val export =
@@ -263,8 +263,8 @@ fun ForgeApp() {
                             excludedChapters,
                         )
                     Destination.New ->
-                        NewWorkspaceScreen(prefs.starterFolders, { screen = Destination.Library }) { title, author, genre, cover, target, standard ->
-                            workspace.createBook(title, author, genre, cover, target, standard) { created ->
+                        NewWorkspaceScreen(prefs.starterFolders, { screen = Destination.Library }) { title, author, genre, cover, target, standard, templateId ->
+                            workspace.createBook(title, author, genre, cover, target, standard, templateId) { created ->
                                 project(created.bookId)
                                 workspaceTab = 0
                             }
@@ -291,8 +291,7 @@ fun ForgeApp() {
                                 workspace, b, bookEntries, workspaceTab,
                                 { workspaceTab = it },
                                 { screen = Destination.Library },
-                                { open(it) }, { open(it, true) }, { editBook = b },
-                                { folder, kind -> entryFolder = folder; showEntry = kind },
+                                { open(it) }, { editBook = b },
                                 { backup(b.id, it) }, { scope.launch { drawer.open() } }, prefs.synopsisLimit,
                             )
                         }

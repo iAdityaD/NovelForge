@@ -46,6 +46,7 @@ data class EntryEntity(
     val updated: Long = System.currentTimeMillis(),
     val deleted: Boolean = false,
     val folderId: Long? = null,
+    @ColumnInfo(defaultValue = "'plan'") val area: String = if (isManuscriptKind(kind)) "manuscript" else "plan",
 )
 
 @Fts4(contentEntity = EntryEntity::class)
@@ -145,7 +146,7 @@ interface ForgeDao {
     @Query("SELECT * FROM Book ORDER BY updated DESC") fun books(): Flow<List<BookEntity>>
 
     @Query(
-        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated, folderId FROM Entry WHERE deleted = 0 ORDER BY position, rowid"
+        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated, folderId, area FROM Entry WHERE deleted = 0 ORDER BY position, rowid"
     )
     fun summaries(): Flow<List<EntrySummary>>
 
@@ -195,7 +196,7 @@ interface ForgeDao {
     fun trash(): Flow<List<EntryEntity>>
 
     @Query(
-        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated, folderId FROM Entry WHERE deleted = 0 AND kind != 'Folder' AND rowid IN (SELECT rowid FROM entry_fts WHERE entry_fts MATCH :query) ORDER BY updated DESC LIMIT 80"
+        "SELECT rowid AS id, bookId, title, kind, status, parentId, position, words, updated, folderId, area FROM Entry WHERE deleted = 0 AND kind != 'Folder' AND rowid IN (SELECT rowid FROM entry_fts WHERE entry_fts MATCH :query) ORDER BY updated DESC LIMIT 80"
     )
     suspend fun search(query: String): List<EntrySummary>
 
@@ -232,7 +233,7 @@ interface ForgeDao {
             BookGenreEntity::class,
             ManuscriptPlacementEntity::class,
         ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class ForgeDb : RoomDatabase() {

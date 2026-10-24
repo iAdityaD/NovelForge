@@ -47,20 +47,20 @@ private val Light =
     )
 private val Dark =
     darkColorScheme(
-        primary = Color(0xFFB9A5FF),
+        primary = Color(0xFFB99AF7),
         onPrimary = Color(0xFF211045),
         primaryContainer = Color(0xFF302744),
         onPrimaryContainer = Color(0xFFE4D9FF),
-        secondary = Color(0xFFB9A5FF),
+        secondary = Color(0xFFB99AF7),
         secondaryContainer = Color(0xFF302744),
         onSecondaryContainer = Color(0xFFE4D9FF),
-        background = Color(0xFF101116),
-        onBackground = Color(0xFFF2F2F7),
-        surface = Color(0xFF191B23),
-        onSurface = Color(0xFFF2F2F7),
-        surfaceVariant = Color(0xFF242631),
-        onSurfaceVariant = Color(0xFFA2A6B8),
-        outlineVariant = Color(0xFF2D303D),
+        background = Color(0xFF17171C),
+        onBackground = Color(0xFFE8E5ED),
+        surface = Color(0xFF24242C),
+        onSurface = Color(0xFFE8E5ED),
+        surfaceVariant = Color(0xFF2D2D36),
+        onSurfaceVariant = Color(0xFFA5A2AE),
+        outlineVariant = Color(0xFF383842),
     )
 
 @Composable

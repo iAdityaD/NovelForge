@@ -43,9 +43,14 @@ constructor(
         cover: Int,
         target: Int,
         standard: Boolean,
+        templateId: String = "novel",
         done: (CreatedWorkspace) -> Unit,
     ) = launchWork {
-        done(repository.createBook(title, author, genres, cover, target, standard))
+        done(repository.createBook(title, author, genres, cover, target, standard, templateId))
+    }
+
+    fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String, sourceUrl: String?, done: (Long) -> Unit) = launchWork {
+        done(repository.createNode(bookId, title, folder, area, parent, typeLabel, sourceUrl))
     }
 
     fun deleteBook(bookId: String, done: () -> Unit) = launchWork {
@@ -123,6 +128,8 @@ constructor(
     fun moveChapter(id: Long, delta: Int) = mutate { manuscript.move(id, delta) }
 
     fun includeChapter(id: Long, included: Boolean) = mutate { manuscript.include(id, included) }
+
+    fun placeBefore(id: Long, targetId: Long, after: Boolean = false) = mutate { repository.placeBefore(id, targetId, after) }
 
     fun moveEntry(id: Long, delta: Int) = mutate { repository.moveEntry(id, delta) }
 

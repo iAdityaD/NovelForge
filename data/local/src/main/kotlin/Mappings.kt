@@ -41,6 +41,7 @@ fun EntryEntity.toModel() =
         updated,
         deleted,
         folderId,
+        area,
     )
 
 fun Entry.toEntity() =
@@ -57,6 +58,7 @@ fun Entry.toEntity() =
         updated,
         deleted,
         folderId,
+        area,
     )
 
 fun RevisionEntity.toModel() = Revision(id, entryId, title, body, created)

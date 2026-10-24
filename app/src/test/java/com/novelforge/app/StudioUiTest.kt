@@ -60,9 +60,7 @@ class StudioUiTest {
         compose
             .onNodeWithContentDescription("Manuscript text")
             .performTextReplacement("A new world begins here.")
-        compose.onNodeWithContentDescription("Read this page").performClick()
-        compose.onNodeWithText("A new world begins here.").assertExists()
-        shot("04-reader")
+        compose.onNodeWithContentDescription("Read this page").assertDoesNotExist()
         compose.onNodeWithContentDescription("Back to workspace").performClick()
         compose.onNodeWithContentDescription("Back to library").performClick()
         shot("01-library")

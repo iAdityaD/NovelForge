@@ -15,7 +15,10 @@ interface WorkspaceRepository {
         cover: Int,
         target: Int,
         standard: Boolean,
+        templateId: String = "novel",
     ): CreatedWorkspace
+
+    suspend fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String = "", sourceUrl: String? = null): Long
 
     suspend fun deleteBook(bookId: String)
 
@@ -41,6 +44,8 @@ interface WorkspaceRepository {
     suspend fun deleteEntry(id: Long)
 
     suspend fun restoreEntry(id: Long)
+
+    suspend fun placeBefore(id: Long, targetId: Long, after: Boolean = false)
 
     suspend fun moveEntry(id: Long, delta: Int)
 

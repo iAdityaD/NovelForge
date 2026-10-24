@@ -26,27 +26,55 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
 
     override suspend fun createBook(
         title: String, author: String, genres: List<String>, cover: Int, target: Int,
-        standard: Boolean,
+        standard: Boolean, templateId: String,
     ): CreatedWorkspace {
-        require(title.isNotBlank()) { "A novel title is required." }
-        val folders = if (standard) validateStarterFolders(preferences.state.value.starterFolders).filter { it.enabled } else emptyList()
+        require(title.isNotBlank() && title.trim().length <= 200) { "Use a project title of 1–200 characters." }
+        require(target in 0..10000000) { "Use a word goal from 0 to 10,000,000." }
+        val recipe = projectRecipe(templateId, preferences.state.value.starterFolders)
+        val folders = if (standard) recipe.folders.filter { it.enabled } else emptyList()
         val book = Book(title = title.trim(), author = author.trim(), genres = MetadataPolicy.genres(genres), cover = cover, target = target)
         var overviewId: Long? = null
         db.withTransaction {
             dao.addBook(book)
             folders.forEachIndexed { index, folder ->
-                val folderId = dao.addEntry(Entry(bookId = book.id, title = folder.name, kind = "Folder", position = index))
+                val folderId = dao.addEntry(Entry(bookId = book.id, title = folder.name, kind = "Folder", position = index, area = if (folder.key == "manuscript") MANUSCRIPT_AREA else PLAN_AREA))
                 val body = folderGuide(folder, book)
                 val guideId = dao.addEntry(Entry(bookId = book.id, title = "README", kind = "Guide", folderId = folderId, body = body, words = wordCount(body)))
                 if (folder.key == "overview") overviewId = guideId
-                if (folder.key == "manuscript") (1..2).forEach { n ->
-                    val chapter = template("Chapter").replace("# Chapter title", "# Chapter $n")
-                    dao.addEntry(Entry(bookId = book.id, title = "Chapter $n", folderId = folderId, body = chapter, words = wordCount(chapter), position = n))
+                if (folder.key == "manuscript") recipe.draftTitles.forEachIndexed { n, draftTitle ->
+                    val body = template(recipe.draftKind).replace("# Chapter title", "# $draftTitle")
+                    val id = dao.addEntry(Entry(bookId = book.id, title = draftTitle, kind = recipe.draftKind,
+                        folderId = folderId, body = body, words = wordCount(body), position = n + 1))
+                    db.dao().place(ManuscriptPlacementEntity(id, book.id, n, true))
                 }
             }
             dao.updateBook(book.copy(overviewId = overviewId))
         }
         return CreatedWorkspace(book.id, overviewId)
+    }
+
+    override suspend fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String, sourceUrl: String?): Long = db.withTransaction {
+        require(area == PLAN_AREA || area == MANUSCRIPT_AREA) { "Invalid workspace area." }
+        require(title.trim().isNotEmpty() && title.trim().length <= 200) { "Use a name of 1–200 characters." }
+        require(dao.book(bookId) != null) { "Workspace is unavailable." }
+        if (parent != null) require(dao.entry(parent)?.let { it.bookId == bookId && it.kind == "Folder" && !it.deleted } == true) { "Folder is unavailable." }
+        val label = typeLabel.trim().ifBlank { if (area == MANUSCRIPT_AREA) "Document" else "Resource" }
+        require(label.length <= 80 && label != "Folder") { "Choose a type label of at most 80 characters." }
+        if (folder) {
+            MetadataPolicy.folder(title)
+            require(dao.entries(bookId).none { it.kind == "Folder" && it.folderId == parent && it.title.equals(title.trim(), true) }) { "A folder with this name already exists here." }
+        }
+        val url = sourceUrl?.trim()?.takeIf { it.isNotEmpty() }
+        if (url != null) {
+            val parsed = runCatching { java.net.URI(url) }.getOrNull()
+            require(parsed != null && parsed.scheme?.lowercase() in listOf("https", "http") && !parsed.host.isNullOrBlank() && parsed.userInfo == null) { "Enter a valid http or https address." }
+        }
+        val body = if (url == null) "" else "## Source\n\n$url\n\n## Notes\n\n"
+        val position = dao.entries(bookId).filter { it.folderId == parent }.maxOfOrNull { it.position }?.plus(1) ?: 0
+        val id = dao.addEntry(Entry(bookId = bookId, title = title.trim(), kind = if (folder) "Folder" else label, folderId = parent,
+            area = area, body = if (folder) "" else body, words = if (folder) 0 else wordCount(body), position = position))
+        dao.touch(bookId, System.currentTimeMillis())
+        id
     }
 
     override suspend fun deleteBook(bookId: String) {
@@ -242,14 +270,30 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         }
     }
 
+    override suspend fun placeBefore(id: Long, targetId: Long, after: Boolean) = db.withTransaction {
+        if (id == targetId) return@withTransaction
+        val entry = requireNotNull(dao.entry(id)) { "Document is unavailable." }
+        val target = requireNotNull(dao.entry(targetId)) { "Destination is unavailable." }
+        require(!entry.deleted && !target.deleted && entry.bookId == target.bookId && entry.area == target.area) { "Choose a destination in the same workspace area." }
+        val all = dao.entries(entry.bookId)
+        require(canRelocate(entry, target.folderId, all)) { "A folder cannot contain itself or its descendants." }
+        if (entry.kind == "Folder") require(all.none { it.id != id && it.kind == "Folder" && it.folderId == target.folderId && it.title.equals(entry.title, true) }) { "A folder with this name already exists here." }
+        val siblings = all.filter { it.folderId == target.folderId && it.id != id }.sortedWith(compareBy<Entry> { it.position }.thenBy { it.id }).toMutableList()
+        val index = siblings.indexOfFirst { it.id == targetId }
+        require(index >= 0)
+        siblings.add(index + if (after) 1 else 0, entry.copy(folderId = target.folderId))
+        siblings.forEachIndexed { position, node -> dao.updateEntry(node.copy(position = position)) }
+        dao.touch(entry.bookId, System.currentTimeMillis())
+    }
+
     override suspend fun moveEntry(id: Long, delta: Int) {
         val e = dao.entry(id) ?: return
         val entries =
             dao.entries(e.bookId)
                 .filter {
-                    it.folderId == e.folderId && (it.kind == "Folder") == (e.kind == "Folder")
+                    it.folderId == e.folderId
                 }
-                .sortedWith(compareBy<Entry> { it.position }.thenBy { it.title })
+                .sortedWith(compareBy<Entry> { it.position }.thenBy { it.id })
         val index = entries.indexOfFirst { it.id == id }
         val target = index + delta
         if (target !in entries.indices) return

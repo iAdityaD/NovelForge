@@ -30,7 +30,8 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                 val entries = db.dao().allEntries(bookId).map { it.toModel() }
                 require(entries.size <= 10000) { "Project exceeds the 10,000-document backup limit." }
                 val positions = db.dao().manuscriptPlacements(bookId).associate { it.documentId to (it.position to it.included) }
-                val ordered = compileManuscript(entries, positions.map { (id, p) -> ManuscriptPlacement(id, bookId, p.first, p.second) })
+                val byId = entries.associateBy { it.id }
+                val ordered = orderedManuscript(entries.filter { !it.deleted }.map { e -> EntrySummary(e.id, e.bookId, e.title, e.kind, e.status, e.parentId, e.position, e.words, e.updated, e.folderId, e.area) }).map { byId.getValue(it.id) }
                 if (markdown) BackupCodec.markdown(book, ordered)
                 else BackupCodec.encode(book, entries, positions, RecoveryHistory(
                     db.dao().workspaceRevisions(bookId).map { it.toModel() },

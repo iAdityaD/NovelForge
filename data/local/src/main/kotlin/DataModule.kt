@@ -32,7 +32,7 @@ object DataModule {
     @Singleton
     fun database(@ApplicationContext context: Context): ForgeDb =
         Room.databaseBuilder(context, ForgeDb::class.java, "novelforge.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
 
     @Provides fun manuscript(value: LocalManuscriptRepository): ManuscriptRepository = value

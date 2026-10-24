@@ -13,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -98,7 +100,7 @@ fun EditorScreen(
                 if (focus) "Exit focus mode" else "Enter focus mode",
                 { focus = !focus },
             )
-            if (!focus) ActionIcon(Icons.Outlined.MenuBook, "Read this page", onRead)
+
             Box {
                 ActionIcon(Icons.Outlined.MoreVert, "Page actions", { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
@@ -143,7 +145,7 @@ fun EditorScreen(
             }
         }
         if (!focus)
-            TextButton(onClick = onBack) {
+            TextButton(onClick = onBack, modifier = Modifier.semantics { contentDescription = "Back to workspace" }) {
                 Icon(Icons.Outlined.FolderOpen, null, Modifier.size(14.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(
@@ -306,7 +308,7 @@ fun EditorScreen(
                     )
                     if (focus) {
                         Spacer(Modifier.width(8.dp))
-                        ActionIcon(Icons.Outlined.MenuBook, "Read", onRead)
+
                     }
                 }
             }

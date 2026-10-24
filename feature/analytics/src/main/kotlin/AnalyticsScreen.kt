@@ -27,7 +27,7 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
     val book = books.find { it.id == selected }
     val chosen = if (book == null) entries else entries.filter { it.bookId == book.id }
     val activity = if (book == null) days else days.filter { it.bookId == book.id }
-    val chapters = chosen.filter { isManuscriptKind(it.kind) && it.id !in excludedChapters }
+    val chapters = chosen.filter { it.area == MANUSCRIPT_AREA && it.kind != "Folder" && it.id !in excludedChapters }
     val words = chapters.sumOf { it.words }
     val today = LocalDate.now()
     LazyColumn(

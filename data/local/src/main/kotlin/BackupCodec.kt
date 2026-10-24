@@ -16,7 +16,7 @@ object BackupCodec {
         JSONObject()
             .apply {
                 put("format", "novelforge")
-                put("version", if (recovery == null) 4 else 5)
+                put("version", 6)
                 put(
                     "book",
                     JSONObject().apply {
@@ -37,10 +37,11 @@ object BackupCodec {
                             put(
                                 JSONObject().apply {
                                     put("id", e.id)
-                                    if (recovery != null) { put("deleted", e.deleted); put("updated", e.updated) }
+                                    put("deleted", e.deleted); put("updated", e.updated)
                                     put("title", e.title)
                                     put("body", e.body)
                                     put("kind", e.kind)
+                                    put("area", e.area)
                                     put("status", e.status)
                                     put(
                                         "parentId",
@@ -85,7 +86,7 @@ object BackupCodec {
     fun decode(text: String): Pair<Book, List<Entry>> {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds 16 MB." }
         val root = JSONObject(text)
-        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..5) {
+        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..6) {
             "Unsupported backup format."
         }
         val b = root.getJSONObject("book")
@@ -117,7 +118,9 @@ object BackupCodec {
                 val e = array.getJSONObject(i)
                 val body = e.getString("body")
                 val kind = e.getString("kind")
-                require(kind in kinds || kind == "Folder")
+                require(kind.isNotBlank() && kind.length <= 80) { "Invalid document type label." }
+                val area = if (root.getInt("version") >= 6) e.getString("area") else if (isManuscriptKind(kind)) MANUSCRIPT_AREA else PLAN_AREA
+                require(area in listOf(PLAN_AREA, MANUSCRIPT_AREA)) { "Invalid document role." }
                 require(e.getString("title").isNotBlank())
                 require(body.length <= 2000000) { "An entry is too large." }
                 Entry(
@@ -128,6 +131,7 @@ object BackupCodec {
                     title = e.getString("title"),
                     body = body,
                     kind = kind,
+                    area = area,
                     status = e.optString("status", "Draft").takeIf { it in statuses } ?: "Draft",
                     parentId = if (e.isNull("parentId")) null else e.getLong("parentId"),
                     position = e.optInt("position"),
@@ -159,7 +163,7 @@ object BackupCodec {
 
     fun recovery(text: String, book: Book, entries: List<Entry>): RecoveryHistory {
         val root = JSONObject(text)
-        if (root.getInt("version") < 5) return RecoveryHistory()
+        if (root.getInt("version") < 5 || !root.has("recovery")) return RecoveryHistory()
         val history = root.getJSONObject("recovery")
         val revisions = history.getJSONArray("revisions")
         val days = history.getJSONArray("days")
@@ -201,7 +205,7 @@ object BackupCodec {
     fun markdown(book: Book, entries: List<Entry>): String = buildString {
         append("# ${book.title}\n\n${book.author}\n\n")
         entries
-            .filter { isManuscriptKind(it.kind) }
+            .filter { it.kind != "Folder" && it.area == MANUSCRIPT_AREA }
             .forEach { append("## ${it.title}\n\n${it.body}\n\n---\n\n") }
     }
 }

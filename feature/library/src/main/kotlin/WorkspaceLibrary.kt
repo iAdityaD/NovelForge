@@ -185,7 +185,7 @@ fun LibraryScreen(
 
 @Composable
 private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Boolean) {
-    val words = entries.filter { isManuscriptKind(it.kind) }.sumOf { it.words }
+    val words = entries.filter { it.area == MANUSCRIPT_AREA && it.kind != "Folder" }.sumOf { it.words }
     if (compact)
         Row(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -226,7 +226,7 @@ private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Bool
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(10.dp))
-        LinearProgressIndicator(
+        if (book.target > 0) LinearProgressIndicator(
             progress = { (words.toFloat() / book.target).coerceIn(0f, 1f) },
             modifier = Modifier.fillMaxWidth().height(3.dp),
             gapSize = 0.dp,
@@ -234,7 +234,7 @@ private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Bool
         )
         Spacer(Modifier.height(7.dp))
         Text(
-            "${number(words)} / ${number(book.target)} words",
+            if (book.target > 0) "${number(words)} / ${number(book.target)} words" else "${number(words)} words",
             style =
                 MaterialTheme.typography.labelSmall.copy(
                     letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified
@@ -256,12 +256,15 @@ private fun WorkspaceCard(book: Book, entries: List<EntrySummary>, compact: Bool
 fun NewWorkspaceScreen(
     starterFolders: List<StarterFolder>,
     onBack: () -> Unit,
-    onCreate: (String, String, List<String>, Int, Int, Boolean) -> Unit,
+    onCreate: (String, String, List<String>, Int, Int, Boolean, String) -> Unit,
 ) {
     var title by rememberSaveable { mutableStateOf("") }
     var author by rememberSaveable { mutableStateOf("") }
-    var genres by rememberSaveable { mutableStateOf(listOf("Fantasy")) }
+    var genres by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var standard by rememberSaveable { mutableStateOf(true) }
+    var templateId by rememberSaveable { mutableStateOf("novel") }
+    var details by rememberSaveable { mutableStateOf(false) }
+    val recipe = projectRecipe(templateId, starterFolders)
     var cover by rememberSaveable { mutableIntStateOf(0) }
     var preview by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().imePadding()) {
@@ -274,29 +277,29 @@ fun NewWorkspaceScreen(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            item {
-                Text("Make room for your story.", style = MaterialTheme.typography.headlineMedium)
-                Text("All planning is optional. Start writing whenever you are ready.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
             item { OutlinedTextField(title, { title = it.take(200) }, label = { Text("Novel title") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
-            item { OutlinedTextField(author, { author = it.take(120) }, label = { Text("Author (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
-            item { GenreInput(genres, { genres = it }) }
             item {
                 Text("Choose your starting point", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(10.dp))
-                StructureChoice("Standard structure", "A place for ideas, characters, your world and chapters, with short editable guides.", standard) { standard = true }
+                StructureChoice("Standard structure", "Start with a writing template.", standard) { standard = true }
                 Spacer(Modifier.height(10.dp))
-                StructureChoice("Build from scratch", "An empty workspace. Add your own folders and documents as you go.", !standard) { standard = false }
+                StructureChoice("Build from scratch", "No preset folders or documents.", !standard) { standard = false }
             }
             if (standard) item {
+                ChoiceField("Template", recipe.name, projectRecipes.map { it.name }) { selected ->
+                    templateId = projectRecipes.first { it.name == selected }.id
+                }
                 TextButton(onClick = { preview = !preview }) {
                     Text(if (preview) "Hide starter folders" else "Preview starter folders")
                     Icon(if (preview) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, null)
                 }
-                if (preview) starterFolders.filter { it.enabled }.forEach { Text("• ${it.name}", modifier = Modifier.padding(vertical = 4.dp)) }
-                Text("Customize the standard structure in Settings → Writing → Workspace structure. Changes apply to new novels.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (preview) recipe.folders.filter { it.enabled }.forEach { Text("• ${it.name}", modifier = Modifier.padding(vertical = 4.dp)) }
+
             }
-            item {
+            item { TextButton(onClick = { details = !details }) { Text(if (details) "Hide optional details" else "Optional details"); Icon(if (details) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, null) } }
+            if (details) item { OutlinedTextField(author, { author = it.take(120) }, label = { Text("Author (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
+            if (details) item { GenreInput(genres, { genres = it }) }
+            if (details) item {
                 Text("Workspace color", style = MaterialTheme.typography.titleMedium)
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("Iris", "Ocean", "Ember", "Moss").forEachIndexed { i, name ->
@@ -305,7 +308,7 @@ fun NewWorkspaceScreen(
                 }
             }
         }
-        Button(onClick = { onCreate(title.trim(), author.trim(), genres, cover, 80000, standard) }, enabled = title.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(20.dp).height(52.dp), shape = RoundedCornerShape(14.dp)) {
+        Button(onClick = { onCreate(title.trim(), author.trim(), genres, cover, 0, standard, templateId) }, enabled = title.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(20.dp).height(52.dp), shape = RoundedCornerShape(14.dp)) {
             Text("Create workspace")
         }
     }

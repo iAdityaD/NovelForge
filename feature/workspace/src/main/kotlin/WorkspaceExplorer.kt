@@ -2,6 +2,8 @@ package com.novelforge.app.ui
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -81,6 +83,8 @@ fun ExplorerTree(
     selected: Long?,
     modifier: Modifier = Modifier,
     activeFileId: Long? = null,
+    rootLabel: String = "Workspace root",
+    arrange: Boolean = false,
 ) {
     var query by rememberSaveable(book.id) { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -88,6 +92,21 @@ fun ExplorerTree(
     val bounds = remember { mutableMapOf<Long, Rect>() }
     var dragging by remember { mutableStateOf<Long?>(null) }
     var point by remember { mutableStateOf(Offset.Zero) }
+    var viewport by remember { mutableStateOf(Rect.Zero) }
+    var filters by remember { mutableStateOf(false) }
+    var typeFilter by rememberSaveable(book.id, rootLabel) { mutableStateOf<String?>(null) }
+    var statusFilter by rememberSaveable(book.id, rootLabel) { mutableStateOf<String?>(null) }
+    val types = entries.filter { it.kind != "Folder" }.map { it.kind }.distinct().sorted()
+    LaunchedEffect(dragging, point, viewport) {
+        if (dragging != null && arrange) {
+            val direction = when {
+                point.y < viewport.top + 80 -> -1
+                point.y > viewport.bottom - 80 -> 1
+                else -> 0
+            }
+            while (direction != 0) { listState.scrollBy(direction * 18f); delay(16) }
+        }
+    }
     var action by remember { mutableStateOf<Pair<String, EntrySummary>?>(null) }
     LaunchedEffect(activeFileId, entries) {
         var parent = entries.find { it.id == activeFileId }?.folderId
@@ -98,13 +117,13 @@ fun ExplorerTree(
         }
     }
     val visibleIds =
-        remember(query, entries) {
-            if (query.isBlank()) null
+        remember(query, entries, typeFilter, statusFilter) {
+            if (query.isBlank() && typeFilter == null && statusFilter == null) null
             else
                 buildSet<Long> {
                     val byId = entries.associateBy { it.id }
                     entries
-                        .filter { it.title.contains(query, true) }
+                        .filter { it.title.contains(query, true) && (typeFilter == null || it.kind == typeFilter) && (statusFilter == null || it.status == statusFilter) }
                         .forEach { entry ->
                             add(entry.id)
                             var parent = entry.folderId
@@ -124,9 +143,7 @@ fun ExplorerTree(
                 entries
                     .filter { it.folderId == parent && (visibleIds == null || it.id in visibleIds) }
                     .sortedWith(
-                        compareBy<EntrySummary> { it.kind != "Folder" }
-                            .thenBy { it.position }
-                            .thenBy { it.title }
+                        compareBy<EntrySummary> { it.position }.thenBy { it.id }
                     )
                     .forEach { e ->
                         if (seen.add(e.id)) {
@@ -164,6 +181,7 @@ fun ExplorerTree(
                         ActionIcon(Icons.Outlined.Close, "Clear explorer search", { query = "" })
                 },
             )
+            ActionIcon(Icons.Outlined.FilterList, "Filter files", { filters = true })
             ActionIcon(
                 Icons.Outlined.UnfoldMore,
                 "Expand all folders",
@@ -172,7 +190,7 @@ fun ExplorerTree(
             ActionIcon(Icons.Outlined.UnfoldLess, "Collapse all folders", { expanded.clear() })
         }
         LazyColumn(
-            Modifier.weight(1f).fillMaxWidth().testTag("explorer-tree"),
+            Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag("explorer-tree"),
             state = listState,
             contentPadding = PaddingValues(8.dp, 8.dp, 8.dp, 16.dp),
         ) {
@@ -198,7 +216,7 @@ fun ExplorerTree(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "Workspace root",
+                        rootLabel,
                         fontFamily = FontFamily.SansSerif,
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
@@ -214,7 +232,7 @@ fun ExplorerTree(
                         Icons.Outlined.FolderOpen,
                     )
                 }
-            if (query.isNotBlank() && rows.isEmpty())
+            if (visibleIds != null && rows.isEmpty())
                 item { Text("No matching files", Modifier.padding(16.dp)) }
             items(rows, key = { it.first.id }) { (e, depth) ->
                 DisposableEffect(e.id) { onDispose { bounds.remove(e.id) } }
@@ -223,7 +241,7 @@ fun ExplorerTree(
                 val hover =
                     dragging != null &&
                         dragging != e.id &&
-                        folder &&
+                        (folder || arrange) &&
                         bounds[e.id]?.contains(point) == true
                 Row(
                     Modifier.fillMaxWidth()
@@ -236,7 +254,8 @@ fun ExplorerTree(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .4f)
                             else Color.Transparent
                         )
-                        .pointerInput(e.id, entries) {
+                        .border(if (hover && arrange) 1.dp else 0.dp, if (hover && arrange) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(4.dp))
+                        .pointerInput(e.id, entries, arrange) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = { local ->
                                     dragging = e.id
@@ -255,12 +274,14 @@ fun ExplorerTree(
                                                     rect.contains(point) &&
                                                     (id == 0L ||
                                                         entries.any {
-                                                            it.id == id && it.kind == "Folder"
+                                                            it.id == id && (arrange || it.kind == "Folder")
                                                         })
                                             }
                                             ?.key
-                                    if (target != null)
-                                        vm.relocate(e.id, target.takeIf { it != 0L })
+                                    if (target != null) {
+                                        if (arrange && target != 0L) vm.placeBefore(e.id, target, point.y > (bounds[target]?.center?.y ?: point.y))
+                                        else vm.relocate(e.id, target.takeIf { it != 0L })
+                                    }
                                     dragging = null
                                 },
                             )
@@ -278,6 +299,7 @@ fun ExplorerTree(
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    if (arrange) Icon(Icons.Outlined.DragHandle, "Drag ${e.title} to reorder", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (folder)
                         IconButton(
                             onClick = { expanded[e.id] = expanded[e.id] != true },
@@ -293,7 +315,7 @@ fun ExplorerTree(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                    else Spacer(Modifier.width(48.dp))
+                    else Spacer(Modifier.width(if (arrange) 12.dp else 24.dp))
                     Icon(
                         if (folder) Icons.Outlined.Folder else kindIcon(e.kind),
                         null,
@@ -332,10 +354,10 @@ fun ExplorerTree(
                             val siblings =
                                 entries
                                     .filter {
-                                        it.folderId == e.folderId && (it.kind == "Folder") == folder
+                                        it.folderId == e.folderId
                                     }
                                     .sortedWith(
-                                        compareBy<EntrySummary> { it.position }.thenBy { it.title }
+                                        compareBy<EntrySummary> { it.position }.thenBy { it.id }
                                     )
                             DropdownMenuItem(
                                 text = { Text("Move up") },
@@ -368,6 +390,13 @@ fun ExplorerTree(
             }
         }
     }
+    if (filters) AlertDialog(onDismissRequest = { filters = false }, title = { Text("Filter files") }, text = {
+        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            ChoiceField("Type", typeFilter ?: "All types", listOf("All types") + types) { typeFilter = it.takeUnless { value -> value == "All types" } }
+            ChoiceField("Status", statusFilter ?: "All statuses", listOf("All statuses") + entries.filter { it.kind != "Folder" }.map { it.status }.distinct()) { statusFilter = it.takeUnless { value -> value == "All statuses" } }
+            TextButton(onClick = { typeFilter = null; statusFilter = null }) { Text("Reset filters") }
+        }
+    }, confirmButton = { TextButton(onClick = { filters = false }) { Text("Done") } })
     action?.let { (name, e) ->
         when (name) {
             "Rename" ->
@@ -418,7 +447,7 @@ fun ExplorerTree(
                                         action = null
                                     }
                                 ) {
-                                    Text("Workspace root")
+                                    Text(rootLabel)
                                 }
                             }
                             items(

@@ -36,7 +36,7 @@ class WorkspaceTest {
         assertEquals(1L, items[1].folderId)
         val legacy =
             BackupCodec.encode(b, listOf(files[1].copy(folderId = null)))
-                .replace("\"version\": 4", "\"version\": 1")
+                .replace("\"version\": 6", "\"version\": 1")
         assertNull(BackupCodec.decode(legacy).second.single().folderId)
     }
 

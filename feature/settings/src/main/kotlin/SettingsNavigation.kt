@@ -41,6 +41,7 @@ fun SettingsNavigation(
     }
     BackHandler(page.isNotEmpty()) { back() }
     LazyColumn(
+        modifier = Modifier.fillMaxSize().imePadding(),
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
@@ -77,12 +78,7 @@ fun SettingsNavigation(
                     "Structure and limits",
                     { page = "Writing" },
                 )
-                SettingsAction(
-                    Icons.Outlined.MenuBook,
-                    "Reading",
-                    "Text size, typeface and paper",
-                    { page = "Reading" },
-                )
+
             }
             item {
                 HorizontalDivider()

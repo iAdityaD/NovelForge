@@ -18,7 +18,7 @@ fun folderGuide(folder: StarterFolder, book: Book): String {
     val action: String
     when (folder.key) {
         "overview" -> {
-            purpose = "Your novel’s central reference. Keep the big picture and your next step close at hand."
+            purpose = "Your project’s central reference. Keep the big picture and your next step close at hand."
             contents = "Working title, genres, premise, synopsis, main characters, writing status, important decisions and next steps."
             action = "Write one sentence about the story you want to tell."
         }
@@ -43,9 +43,9 @@ fun folderGuide(folder: StarterFolder, book: Book): String {
             action = "Note a possible beginning, turning point or ending."
         }
         "manuscript" -> {
-            purpose = "The novel itself. Begin drafting here whenever you are ready."
+            purpose = "The manuscript itself. Begin drafting here whenever you are ready."
             contents = "Chapters, optional parts and the scenes that belong in your current manuscript."
-            action = "Open Chapter 1 and write your first line."
+            action = "Open a draft in Write and begin your first line."
         }
         "scenes" -> {
             purpose = "Save moments that do not yet have a place in the manuscript."
@@ -65,17 +65,14 @@ fun folderGuide(folder: StarterFolder, book: Book): String {
     }
     val profile = if (folder.key == "overview") """
 
-## Novel profile
-- Working title: ${book.title}
-- Genre: ${book.genre}
+## Story decisions
 - Core premise:
-- Short synopsis: ${book.synopsis}
 - Main characters:
-- Current writing status: ${book.status}
 - Important decisions:
 - Next steps:
 
-This profile is your editable reference. Update it as your ideas evolve; workspace details are managed with the pencil button.
+Edit the title, genres and status using the workspace pencil. Edit the synopsis on Overview; those fields are the project's central reference.
+
 """ else ""
     return """# ${folder.name}
 
