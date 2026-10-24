@@ -233,3 +233,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - Write, picker, Arrange, Reader, export, library totals and analytics use the same eligibility/inclusion rule. Export compiles through the manuscript projection. Resources remain excluded.
 - Generic Document is available alongside Chapter and Screenplay; UI uses document terminology for the assembled manuscript. Added mixed-format compilation/recovery regression.
 - Full configurable metadata/types/templates and nested manuscript structure remain the next stages; no claim of completed redesign.
+
+
+## 0.5.3 verified redesign foundation
+- Source `2081176386301243568c71b1b5701fc781ad9da7`; CI `40068046883`, build/device jobs passed. 33 JVM tests, six API 34 tests, no failures/skips; compilation, lint and architecture checks passed.
+- Verified APK signature/versionCode 8/versionName 0.5.3/minSDK 26; inspected actual Arrange capture. Packaged NovelForge-v0.5.3-Android.zip.
+- New project recovery backups preserve trash, checkpoints and writing history; imports remap checkpoint links, preserve disabled goals and allow long restored titles to be exported again. Export preflights the payload before opening its destination.
+- Generic Document, Chapter and Screenplay share eligibility and compilation; reader/export/counts follow the same membership. Resources stay out of compiled content.
+- Remaining gates: full application snapshots/preferences/reader state, durable pending drafts, project-owned configurable type/metadata registry, declarative reusable templates, nested manuscript groups/undo and the reviewed visual redesign. Existing static capabilities are a compatibility adapter, not the final registry.
