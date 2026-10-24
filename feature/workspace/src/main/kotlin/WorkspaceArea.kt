@@ -32,18 +32,22 @@ internal fun WorkspaceArea(vm: WorkspaceViewModel, book: Book, entries: List<Ent
                 }
             }
         }
-        ExplorerTree(vm, book, visible, onOpen, { selected = it }, destination, Modifier.weight(1f), rootLabel = if (area == PLAN_AREA) "Plan" else "Manuscript", arrange = arrange)
+        key(book.id, area, arrange) {
+            ExplorerTree(vm, book, visible, onOpen, { selected = it }, destination, Modifier.weight(1f), rootLabel = if (area == PLAN_AREA) "Plan" else "Manuscript", arrange = arrange)
+        }
     }
     folder?.let { isFolder -> WorkspaceNodeDialog(vm, book.id, visible, area, destination, isFolder, { folder = null }) { id -> folder = null; if (isFolder) selected = id else onOpen(id) } }
 }
 
 @Composable
-internal fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries: List<EntrySummary>, area: String, parent: Long?, folder: Boolean, onDismiss: () -> Unit, onCreated: (Long) -> Unit) {
+fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries: List<EntrySummary>, area: String, parent: Long?, folder: Boolean, onDismiss: () -> Unit, onCreated: (Long) -> Unit) {
     var title by rememberSaveable { mutableStateOf("") }
     var label by rememberSaveable { mutableStateOf("") }
     var source by rememberSaveable { mutableStateOf("") }
     var destination by rememberSaveable { mutableStateOf(parent) }
     var submitting by remember { mutableStateOf(false) }
+    var category by rememberSaveable { mutableStateOf("") }
+    var newCategory by rememberSaveable { mutableStateOf(false) }
     val folders = entries.filter { it.kind == "Folder" }
     // Errors are surfaced by the feature host; allow retry after the operation ends.
     val error by vm.error.collectAsState()
@@ -62,12 +66,16 @@ internal fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries
                 }
                 if (!folder) {
                     OutlinedTextField(label, { label = it.take(80) }, label = { Text("Type label (optional)") }, singleLine = true)
-                    if (area == PLAN_AREA) OutlinedTextField(source, { source = it }, label = { Text("Source URL (optional)") }, singleLine = true)
+                    if (area == PLAN_AREA) {
+                        TextButton(onClick = { newCategory = !newCategory }) { Text(if (newCategory) "Use existing location" else "+ New category") }
+                        if (newCategory) OutlinedTextField(category, { category = it.take(200) }, label = { Text("Category name") }, singleLine = true)
+                        OutlinedTextField(source, { source = it }, label = { Text("Source URL (optional)") }, singleLine = true)
+                    }
                 }
             }
         }, confirmButton = { TextButton(onClick = {
             submitting = true
-            vm.createNode(bookId, title, folder, area, destination, label, source.takeIf { it.isNotBlank() }, onCreated)
-        }, enabled = title.isNotBlank() && !submitting) { Text("Create") } },
+            vm.createNode(bookId, title, folder, area, destination, label, source.takeIf { it.isNotBlank() }, if (newCategory) category else null, onCreated)
+        }, enabled = title.isNotBlank() && (!newCategory || category.isNotBlank()) && !submitting) { Text("Create") } },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !submitting) { Text("Cancel") } })
 }

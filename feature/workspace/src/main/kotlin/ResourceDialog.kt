@@ -74,7 +74,7 @@ fun SynopsisDialog(book: Book, limit: Int, onDismiss: () -> Unit, onSave: (Strin
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(text, { text = it }, modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp, max = 260.dp), label = { Text("Short story summary") }, isError = !valid)
             Text("${wordCount(text)} / $limit words", color = if (valid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
-            Text("Change the limit in Settings → Writing → Content limits.", style = MaterialTheme.typography.bodySmall)
+            Text("Change the limit in Settings → Writing → Writing limits.", style = MaterialTheme.typography.bodySmall)
         }
     }, confirmButton = { TextButton(enabled = valid, onClick = { onSave(text) }) { Text("Save synopsis") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
 }

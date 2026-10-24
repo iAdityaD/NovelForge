@@ -1,6 +1,18 @@
 # NovelForge: configurable writing workspace
 
-Status: authoritative redesign specification; implementation is not complete.
+Status: implementation specification with a newer owner workflow amendment below; broader customization/reliability work remains incomplete.
+
+## Owner amendment — 2026-10-24 (takes precedence)
+
+- Plan holds research, notes, sources, ideas and freely named resource categories as nested folders/documents.
+- Write is the nested manuscript. Arrange is a second view of this same hierarchy and sibling order, including every manuscript document. The earlier independent placement and inclusion rules below are superseded.
+- Read is removed from active navigation for now. Existing reader code/settings may remain dormant for future work; no Read tab or editor shortcut is exposed.
+- Persist role independently from names and editable type labels. Names never determine behavior for new nodes. Legacy kind inference is restricted to migration/import compatibility.
+- Drag before/after reorders the canonical tree. Move-to-folder and up/down remain accessible alternatives. Source IDs, text and links remain unchanged.
+- Forms and lists scroll; file filters use project-owned labels/statuses. Guidance lives in Guide instead of permanent instructional paragraphs.
+- Existing folder organization is preserved during migration. Legacy mixed folders can appear as ancestors in both projections. All old manuscript drafts become visible in Arrange/export, including formerly excluded drafts, as requested by the new workflow.
+
+The detailed earlier sections remain design history where they conflict with this amendment.
 Decision date: 2026-10-24. Supersedes conflicting product rules in WORKSPACE_UPGRADE_PLAN.md. Existing version 0.5.2 remains the verified application baseline.
 
 ## 1. Scope and technology decision

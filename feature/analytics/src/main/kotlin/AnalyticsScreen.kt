@@ -34,7 +34,7 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        item { ScreenHeading("Analytics", "A little progress, every day.") }
+        item { Text("Analytics", style = MaterialTheme.typography.headlineLarge) }
         item {
             SurfaceCard(Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -97,11 +97,7 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    "A day counts when you save a text edit. Tracking starts with this version.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+
             }
         }
         item {
@@ -170,16 +166,16 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
                     Eyebrow("MANUSCRIPT GOAL")
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "${((words.toFloat()/book.target)*100).toInt()}%",
+                        if (book.target > 0) "${((words.toFloat()/book.target)*100).toInt()}%" else "No goal set",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        "${number(words)} of ${number(book.target)} words",
+                        if (book.target > 0) "${number(words)} of ${number(book.target)} words" else "${number(words)} words",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(14.dp))
-                    LinearProgressIndicator(
+                    if (book.target > 0) LinearProgressIndicator(
                         progress = { (words.toFloat() / book.target).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -202,8 +198,8 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
         item {
             MetricRow(
                 listOf(
-                    "Included documents" to chapters.size.toString(),
-                    "Character profiles" to chosen.count { it.kind == "Character" }.toString(),
+                    "Manuscript documents" to chapters.size.toString(),
+                    "Resources" to chosen.count { it.area == PLAN_AREA && it.kind != "Folder" }.toString(),
                 )
             )
         }
@@ -212,7 +208,7 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
                 SurfaceCard(Modifier.fillMaxWidth()) {
                     Text("Manuscript progress", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(12.dp))
-                    statuses.forEach { status ->
+                    chapters.map { it.status }.distinct().sorted().forEach { status ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                             Text(
                                 status,
@@ -230,12 +226,7 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
             item {
                 MetricRow(
                     listOf(
-                        "Lore files" to
-                            chosen
-                                .count {
-                                    it.kind in listOf("Worldbuilding", "Location", "Research")
-                                }
-                                .toString(),
+                        "Folders" to chosen.count { it.kind == "Folder" }.toString(),
                         "All files" to chosen.count { it.kind != "Folder" }.toString(),
                     )
                 )
@@ -278,11 +269,7 @@ fun AnalyticsScreen(books: List<Book>, entries: List<EntrySummary>, days: List<W
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    "Positive net word changes between saves. Page estimates use 250 manuscript words per page.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+
             }
         }
     }

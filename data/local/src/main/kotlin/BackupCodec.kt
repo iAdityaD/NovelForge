@@ -132,7 +132,7 @@ object BackupCodec {
                     body = body,
                     kind = kind,
                     area = area,
-                    status = e.optString("status", "Draft").takeIf { it in statuses } ?: "Draft",
+                    status = e.optString("status", "Draft").also { require(it.isNotBlank() && it.length <= 80) { "Invalid document status." } },
                     parentId = if (e.isNull("parentId")) null else e.getLong("parentId"),
                     position = e.optInt("position"),
                     words = if (kind == "Folder") 0 else wordCount(body),

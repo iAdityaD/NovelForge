@@ -31,7 +31,6 @@ fun ForgeApp() {
     val workspace: WorkspaceViewModel = hiltViewModel()
     val editor: EditorViewModel = hiltViewModel()
     val settings: SettingsViewModel = hiltViewModel()
-    val reader: ReaderViewModel = hiltViewModel()
     val library: LibraryViewModel = hiltViewModel()
     val analytics: AnalyticsViewModel = hiltViewModel()
     val backups: BackupViewModel = hiltViewModel()
@@ -107,7 +106,7 @@ fun ForgeApp() {
         export.launch(if (md) "NovelForge-manuscript.md" else "NovelForge-backup.novelforge.json")
     }
     LaunchedEffect(Unit) {
-        if (screen in listOf(Destination.Editor, Destination.Reader) && editorUi.entry == null) {
+        if (screen in listOf(Destination.Editor) && editorUi.entry == null) {
             val id = nav.lastEntry()
             if (id > 0) editor.openEntry(id) {} else screen = Destination.Library
         }
@@ -116,13 +115,13 @@ fun ForgeApp() {
     LaunchedEffect(editorUi.entry?.deleted) {
         if (
             editorUi.entry?.deleted == true &&
-                screen in listOf(Destination.Editor, Destination.Reader)
+                screen in listOf(Destination.Editor)
         )
             screen = Destination.Project
     }
     BackHandler(screen != Destination.Library || drawer.isOpen) {
         if (drawer.isOpen) scope.launch { drawer.close() }
-        else if (screen in listOf(Destination.Editor, Destination.Reader))
+        else if (screen in listOf(Destination.Editor))
             editor.leave { screen = Destination.Project }
         else screen = Destination.Library
     }
@@ -131,7 +130,7 @@ fun ForgeApp() {
     if (editBook == null) {
                             ModalNavigationDrawer(
                                 drawerState = drawer,
-                                gesturesEnabled = screen in listOf(Destination.Project, Destination.Editor, Destination.Reader),
+                                gesturesEnabled = screen in listOf(Destination.Project, Destination.Editor),
                                 drawerContent = {
                                     if (drawer.isOpen || drawer.targetValue == DrawerValue.Open) ModalDrawerSheet(
                                         Modifier.fillMaxWidth(.9f).widthIn(max = 360.dp),
@@ -304,7 +303,6 @@ fun ForgeApp() {
                                     selected,
                                     bookEntries,
                                     { editor.leave { screen = Destination.Project } },
-                                    { editor.leave { screen = Destination.Reader } },
                                     { open(it) },
                                     {
                                         workspace.deleteEntry(e.id) { screen = Destination.Project }
@@ -312,19 +310,7 @@ fun ForgeApp() {
                                     { scope.launch { drawer.open() } },
                                 )
                         }
-                    Destination.Reader ->
-                        editorUi.entry?.let { e ->
-                            ReaderScreen(
-                                reader,
-                                e,
-                                selected,
-                                manuscriptChapters(bookEntries, workspaceUi.placements),
-                                { screen = Destination.Project },
-                                { screen = Destination.Editor },
-                                { open(it, true) },
-                                { scope.launch { drawer.open() } },
-                            )
-                        }
+
                 }
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -333,7 +319,7 @@ fun ForgeApp() {
     } // Shared workspace drawer
     if (newDrawerFolder)
         NameDialog("New folder", "Folder name", onDismiss = { newDrawerFolder = false }) { name ->
-            workspace.createFolder(bookId, name, drawerFolder)
+            workspace.createNode(bookId, name, true, bookEntries.find { it.id == drawerFolder }?.area ?: if (workspaceTab in 2..3) MANUSCRIPT_AREA else PLAN_AREA, drawerFolder, "", null) {}
             newDrawerFolder = false
         }
     }
@@ -342,12 +328,11 @@ fun ForgeApp() {
             workspace.editBook(updated) { editBook = null }
         }
     }
-    showEntry?.let { kind ->
-        EntryDialog(kind, { showEntry = null }, manuscriptOnly = screen == Destination.Project && isManuscriptKind(kind)) { title, type ->
-            workspace.createEntry(bookId, title, type, null, entryFolder) {
-                showEntry = null
-                open(it)
-            }
+    showEntry?.let {
+        val area = bookEntries.find { it.id == entryFolder }?.area ?: if (workspaceTab in 2..3) MANUSCRIPT_AREA else PLAN_AREA
+        WorkspaceNodeDialog(workspace, bookId, areaEntries(bookEntries, area), area, entryFolder, false, { showEntry = null }) { id ->
+            showEntry = null
+            open(id)
         }
     }
     error?.let { message ->
@@ -387,5 +372,4 @@ private enum class Destination {
     Search,
     Project,
     Editor,
-    Reader,
 }

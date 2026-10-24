@@ -62,6 +62,7 @@ class StudioUiTest {
             .performTextReplacement("A new world begins here.")
         compose.onNodeWithContentDescription("Read this page").assertDoesNotExist()
         compose.onNodeWithContentDescription("Back to workspace").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Back to library").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Back to library").performClick()
         shot("01-library")
         compose.onNodeWithText("Analytics").performClick()

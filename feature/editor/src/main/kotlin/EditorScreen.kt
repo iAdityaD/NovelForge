@@ -16,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
@@ -41,7 +39,6 @@ fun EditorScreen(
     book: Book?,
     entries: List<EntrySummary>,
     onBack: () -> Unit,
-    onRead: () -> Unit,
     onOpen: (Long) -> Unit,
     onDelete: () -> Unit,
     onExplorer: () -> Unit = onBack,
@@ -53,6 +50,7 @@ fun EditorScreen(
     var statusMenu by remember { mutableStateOf(false) }
     var sheet by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
+    var properties by remember { mutableStateOf(false) }
     var field by remember(e.id) { mutableStateOf(TextFieldValue(e.body)) }
     LaunchedEffect(e.body) {
         if (field.text != e.body)
@@ -70,6 +68,16 @@ fun EditorScreen(
                 field.text.substring(end)
         field = TextFieldValue(text, TextRange(end + before.length))
         vm.updateBody(text)
+    }
+    if (properties) {
+        var type by rememberSaveable(e.id) { mutableStateOf(e.kind) }
+        var status by rememberSaveable(e.id) { mutableStateOf(e.status) }
+        AlertDialog(onDismissRequest = { properties = false }, title = { Text("Document details") }, text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(type, { type = it.take(80) }, label = { Text("Type label") }, singleLine = true)
+                OutlinedTextField(status, { status = it.take(80) }, label = { Text("Status") }, singleLine = true)
+            }
+        }, confirmButton = { TextButton(onClick = { vm.metadata(type, status); properties = false }, enabled = type.isNotBlank() && type.trim() != "Folder" && status.isNotBlank()) { Text("Save details") } }, dismissButton = { TextButton(onClick = { properties = false }) { Text("Cancel") } })
     }
     val scroll = rememberScrollState()
     val words = remember(e.body) { wordCount(e.body) }
@@ -104,6 +112,7 @@ fun EditorScreen(
             Box {
                 ActionIcon(Icons.Outlined.MoreVert, "Page actions", { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Document details") }, onClick = { menu = false; properties = true })
                     DropdownMenuItem(
                         text = { Text("Save checkpoint") },
                         onClick = {

@@ -60,6 +60,12 @@ class EditorSession(private val repository: WritingRepository, private val scope
         state.value.entry?.let { change(it.copy(status = value)) }
     }
 
+    fun metadata(kind: String, status: String) {
+        require(kind.trim().isNotEmpty() && kind.length <= 80 && kind.trim() != "Folder") { "Use a type label of 1–80 characters." }
+        require(status.trim().isNotEmpty() && status.length <= 80) { "Use a status of 1–80 characters." }
+        state.value.entry?.let { change(it.copy(kind = kind.trim(), status = status.trim())) }
+    }
+
     fun undo() {
         val e = state.value.entry ?: return
         if (undo.isEmpty()) return

@@ -241,3 +241,11 @@ Every stage is committed to main as requested. Build verification and limitation
 - New project recovery backups preserve trash, checkpoints and writing history; imports remap checkpoint links, preserve disabled goals and allow long restored titles to be exported again. Export preflights the payload before opening its destination.
 - Generic Document, Chapter and Screenplay share eligibility and compilation; reader/export/counts follow the same membership. Resources stay out of compiled content.
 - Remaining gates: full application snapshots/preferences/reader state, durable pending drafts, project-owned configurable type/metadata registry, declarative reusable templates, nested manuscript groups/undo and the reviewed visual redesign. Existing static capabilities are a compatibility adapter, not the final registry.
+
+## 2026-10-24 — v0.6 workflow revision (verification in progress)
+
+Latest owner direction supersedes the independent manuscript-selection model: Plan contains freely named resource folders/documents; Write and Arrange share one manuscript tree; all manuscript documents compile; Read is removed from active navigation. User specifically requests minimalist UI, scrolling, filters and drag arrangement.
+
+Implemented: persisted area roles (Room 5 / migration 4→5), portable backup v6 with roles/custom labels, generic node creation including optional inline categories/source URL, nested shared manuscript projection, drag before/after with edge scrolling and accessible move actions, type/status filters, four workspace tabs, searchable current Guide, synopsis limit settings, independent stored editor/reader font values (reader controls now hidden), optional creation details and declarative starter recipes. Existing IDs/text/folders are preserved; old placement records remain for historical backup compatibility but no longer exclude writing in current views/export.
+
+Initial stage e840a17 passed build + six device tests. First role build compiled and ran 37 JVM tests; two failures were obsolete backup-version expectation and asynchronous navigation assertion, corrected next. Further device regressions and migration checks pending; do not call this release verified yet.

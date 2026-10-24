@@ -53,7 +53,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         return CreatedWorkspace(book.id, overviewId)
     }
 
-    override suspend fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String, sourceUrl: String?): Long = db.withTransaction {
+    override suspend fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String, sourceUrl: String?, categoryName: String?): Long = db.withTransaction {
         require(area == PLAN_AREA || area == MANUSCRIPT_AREA) { "Invalid workspace area." }
         require(title.trim().isNotEmpty() && title.trim().length <= 200) { "Use a name of 1–200 characters." }
         require(dao.book(bookId) != null) { "Workspace is unavailable." }
@@ -70,8 +70,14 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
             require(parsed != null && parsed.scheme?.lowercase() in listOf("https", "http") && !parsed.host.isNullOrBlank() && parsed.userInfo == null) { "Enter a valid http or https address." }
         }
         val body = if (url == null) "" else "## Source\n\n$url\n\n## Notes\n\n"
-        val position = dao.entries(bookId).filter { it.folderId == parent }.maxOfOrNull { it.position }?.plus(1) ?: 0
-        val id = dao.addEntry(Entry(bookId = bookId, title = title.trim(), kind = if (folder) "Folder" else label, folderId = parent,
+        val destination = if (categoryName != null) {
+            require(!folder && area == PLAN_AREA)
+            val name = MetadataPolicy.folder(categoryName)
+            require(dao.entries(bookId).none { it.kind == "Folder" && it.folderId == parent && it.title.equals(name, true) }) { "A category with this name already exists here." }
+            dao.addEntry(Entry(bookId = bookId, title = name, kind = "Folder", area = PLAN_AREA, folderId = parent))
+        } else parent
+        val position = dao.entries(bookId).filter { it.folderId == destination }.maxOfOrNull { it.position }?.plus(1) ?: 0
+        val id = dao.addEntry(Entry(bookId = bookId, title = title.trim(), kind = if (folder) "Folder" else label, folderId = destination,
             area = area, body = if (folder) "" else body, words = if (folder) 0 else wordCount(body), position = position))
         dao.touch(bookId, System.currentTimeMillis())
         id

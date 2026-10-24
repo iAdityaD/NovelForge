@@ -18,7 +18,7 @@ interface WorkspaceRepository {
         templateId: String = "novel",
     ): CreatedWorkspace
 
-    suspend fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String = "", sourceUrl: String? = null): Long
+    suspend fun createNode(bookId: String, title: String, folder: Boolean, area: String, parent: Long?, typeLabel: String = "", sourceUrl: String? = null, categoryName: String? = null): Long
 
     suspend fun deleteBook(bookId: String)
 

@@ -93,4 +93,25 @@ class MigrationTest {
         } finally { db.close() }
     }
 
+
+    @Test fun v4RolesPreserveWritingLinksAndLegacyDrafts() {
+        helper.createDatabase("migration-v4", 4).apply {
+            execSQL("INSERT INTO Book(id,title,author,genre,synopsis,cover,target,status,updated) VALUES ('v4','Existing','','','',0,0,'In progress',0)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (31,'v4','Renamed folder','','Folder','Draft',NULL,0,0,0,0,NULL)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (32,'v4','Draft','Keep [[33|Source]]','Document','Draft',NULL,0,3,0,0,31)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (33,'v4','Source','Notes','Resource','Draft',NULL,1,1,0,0,31)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("migration-v4", 5, true, MIGRATION_4_5)
+        db.query("SELECT area,body,folderId FROM Entry WHERE rowid=32").use {
+            Assert.assertTrue(it.moveToFirst())
+            Assert.assertEquals("manuscript", it.getString(0))
+            Assert.assertEquals("Keep [[33|Source]]", it.getString(1))
+            Assert.assertEquals(31L, it.getLong(2))
+        }
+        db.query("SELECT area FROM Entry WHERE rowid=33").use {
+            Assert.assertTrue(it.moveToFirst()); Assert.assertEquals("plan", it.getString(0))
+        }
+        db.close()
+    }
 }

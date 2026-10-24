@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
@@ -40,8 +41,11 @@ fun SettingsNavigation(
         }
     }
     BackHandler(page.isNotEmpty()) { back() }
+    val scrollState = rememberLazyListState()
+    LaunchedEffect(page) { scrollState.scrollToItem(0) }
     LazyColumn(
-        modifier = Modifier.fillMaxSize().imePadding(),
+        state = scrollState,
+        modifier = Modifier.fillMaxSize().imePadding().scrollIndicator(scrollState),
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
@@ -237,7 +241,7 @@ fun SettingsNavigation(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Includes documents, trash, revision checkpoints, manuscript order and writing history. App settings, bookmarks and reading positions are not included.",
+                        "Includes documents, folders, custom type labels, planning/manuscript roles, trash, checkpoints and writing history. App settings and unsaved drafts are not included.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(8.dp))
@@ -271,7 +275,7 @@ fun SettingsNavigation(
             item {
                 SurfaceCard {
                     Text("NovelForge", style = MaterialTheme.typography.headlineMedium)
-                    Text("0.5.3 · Writing workspace", color = MaterialTheme.colorScheme.primary)
+                    Text("0.6.0 · Writing workspace", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Your stories stay in a local SQLite database. No internet permission, analytics service, or account. The explorer organizes files inside your workspace; it does not browse arbitrary Android folders.",

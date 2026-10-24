@@ -190,7 +190,7 @@ fun ExplorerTree(
             ActionIcon(Icons.Outlined.UnfoldLess, "Collapse all folders", { expanded.clear() })
         }
         LazyColumn(
-            Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag("explorer-tree"),
+            Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag("explorer-tree").scrollIndicator(listState),
             state = listState,
             contentPadding = PaddingValues(8.dp, 8.dp, 8.dp, 16.dp),
         ) {

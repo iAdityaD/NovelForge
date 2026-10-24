@@ -44,6 +44,8 @@ constructor(
 
     fun setStatus(value: String) = session.status(value)
 
+    fun metadata(kind: String, status: String) = launchWork { session.metadata(kind, status) }
+
     fun undo() = session.undo()
 
     fun redo() = session.redo()

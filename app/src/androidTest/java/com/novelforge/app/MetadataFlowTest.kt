@@ -69,6 +69,7 @@ class MetadataFlowTest {
         compose.onNodeWithContentDescription("Manuscript text").assertExists()
         screenshot("overview-guide")
         compose.onNodeWithContentDescription("Back to workspace").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Back to library").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Edit workspace details").performClick()
 
         compose.onNodeWithText("Historical fiction").assertExists()

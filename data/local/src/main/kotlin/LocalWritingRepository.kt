@@ -28,6 +28,7 @@ class LocalWritingRepository @Inject constructor(private val db: ForgeDb) : Writ
             val saved =
                 entry.copy(
                     folderId = existing.folderId,
+                    area = existing.area,
                     position = existing.position,
                     words = wordCount(entry.body),
                     updated = System.currentTimeMillis(),
