@@ -24,6 +24,8 @@ interface WorkspaceRepository {
 
     suspend fun editBook(book: Book)
 
+    suspend fun setCover(bookId: String, source: String?)
+
     suspend fun createEntry(
         bookId: String,
         title: String,

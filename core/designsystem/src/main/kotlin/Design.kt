@@ -231,6 +231,15 @@ fun EmptyState(
 
 @Composable
 fun BookCover(book: Book, modifier: Modifier = Modifier, compact: Boolean = false) {
+    val image = androidx.compose.runtime.remember(book.coverImage) {
+        runCatching {
+            if (book.coverImage.isEmpty()) null else android.util.Base64.decode(book.coverImage, android.util.Base64.NO_WRAP).let { android.graphics.BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
+        }.getOrNull()
+    }
+    if (image != null) {
+        androidx.compose.foundation.Image(image, "Cover of ${book.title}", modifier.clip(RoundedCornerShape(12.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        return
+    }
     val accents = listOf(Color(0xFF7460C4), Color(0xFF337F96), Color(0xFFB16C50), Color(0xFF577D68))
     val accent = accents[book.cover.coerceIn(0, 3)]
     BoxWithConstraints(

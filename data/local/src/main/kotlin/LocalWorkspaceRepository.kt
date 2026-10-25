@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.*
 @Singleton
 class LocalWorkspaceRepository
 @Inject
-constructor(private val db: ForgeDb, private val preferences: PreferencesRepository, private val journal: LocalDraftJournal? = null) :
+constructor(private val db: ForgeDb, private val preferences: PreferencesRepository, private val journal: LocalDraftJournal? = null, private val covers: CoverImages? = null) :
     WorkspaceRepository {
     private val dao = Records(db.dao())
     override val books = dao.books()
@@ -102,9 +102,20 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         preferences.forgetWorkspace(bookId, ids)
     }
 
+    override suspend fun setCover(bookId: String, source: String?) {
+        val image = if (source == null) "" else requireNotNull(covers) { "Cover import is unavailable." }.import(source)
+        db.withTransaction {
+            val book = requireNotNull(dao.book(bookId))
+            dao.updateBook(book.copy(coverImage = image, updated = System.currentTimeMillis()))
+        }
+    }
+
     override suspend fun editBook(book: Book) {
         db.withTransaction {
             val previous = dao.book(book.id) ?: error("Workspace is unavailable.")
+            require(book.title.isNotBlank() && book.title.length <= 200)
+            require(book.target in 0..10000000)
+            CoverImages.validate(book.coverImage)
             validateFields(book.fields)
             book.fields.forEach { field ->
                 previous.fields.find { it.id == field.id }?.let { require(it.type == field.type) { "Create a new field to change its type." } }

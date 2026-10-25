@@ -99,3 +99,9 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("ALTER TABLE Entry ADD COLUMN metadataJson TEXT NOT NULL DEFAULT '{}'")
     }
 }
+
+val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
+    override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE Book ADD COLUMN coverImage TEXT NOT NULL DEFAULT ''")
+    }
+}

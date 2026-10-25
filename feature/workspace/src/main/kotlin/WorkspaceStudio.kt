@@ -51,38 +51,7 @@ fun WorkspaceStudio(
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         if (currentTab == 0) {
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("workspace-content"), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                item {
-                    Text("Your story, at a glance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(12.dp))
-                    Text(book.title.replace('\n', ' '), style = MaterialTheme.typography.headlineMedium)
-                    if (book.genre.isNotBlank()) Text(book.genre, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item {
-                    FilledTonalButton(onClick = { latest?.let { onOpen(it.id) } ?: run { startDocument = true } }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
-                        Icon(Icons.Outlined.EditNote, null); Spacer(Modifier.width(8.dp)); Text(if (latest == null) "Start writing" else "Continue writing")
-                    }
-                    latest?.let { Text(it.title, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
-                item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Synopsis", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                        ActionIcon(Icons.Outlined.Edit, "Edit synopsis", { editSynopsis = true })
-                    }
-                    Text(book.synopsis.ifBlank { "Add a short summary" }, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item {
-                    val words = manuscript.sumOf { it.words }
-                    Text("${number(words)} words · ${manuscript.size} documents", style = MaterialTheme.typography.titleMedium)
-                    if (book.target > 0) {
-                        LinearProgressIndicator(progress = { (words.toFloat() / book.target).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp))
-                        Text("Goal: ${number(book.target)} words", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-                book.overviewId?.let { id -> if (entries.any { it.id == id }) item {
-                    TextButton(onClick = { onOpen(id) }) { Text("Open project notes") }
-                } }
-            }
+            WorkspaceOverview(vm, book, entries, onEdit, { editSynopsis = true }, { onTab(1) }, onOpen, Modifier.weight(1f))
         } else if (currentTab == 1) {
             WorkspaceArea(vm, book, entries, MANUSCRIPT_AREA, true, onOpen, Modifier.weight(1f))
         } else {

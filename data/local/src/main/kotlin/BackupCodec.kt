@@ -17,7 +17,7 @@ object BackupCodec {
         JSONObject()
             .apply {
                 put("format", "novelforge")
-                put("version", 7)
+                put("version", 8)
                 put(
                     "book",
                     JSONObject().apply {
@@ -27,6 +27,7 @@ object BackupCodec {
                         put("genres", JSONArray(book.genres))
                         put("synopsis", book.synopsis)
                         put("cover", book.cover)
+                        put("coverImage", book.coverImage)
                         put("target", book.target)
                         put("status", book.status)
                         put("overviewId", book.overviewId?.takeIf { id -> entries.any { it.id == id } } ?: JSONObject.NULL)
@@ -89,7 +90,7 @@ object BackupCodec {
     fun decode(text: String): Pair<Book, List<Entry>> {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds 16 MB." }
         val root = JSONObject(text)
-        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..7) {
+        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..8) {
             "Unsupported backup format."
         }
         val b = root.getJSONObject("book")
@@ -97,6 +98,7 @@ object BackupCodec {
         require(title.isNotBlank() && title.length <= 200)
         val book =
             Book(
+                coverImage = b.optString("coverImage", "").also { CoverImages.validate(it) },
                 fields = FieldCodec.definitions(b.optJSONArray("fields")?.toString() ?: "[]"),
                 title = if (title.length <= 189) "$title (restored)" else title,
                 overviewId = if (b.isNull("overviewId")) null else b.getLong("overviewId"),

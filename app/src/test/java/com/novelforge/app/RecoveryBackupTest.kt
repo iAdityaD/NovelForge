@@ -33,7 +33,7 @@ class RecoveryBackupTest {
             source.dao().addWritingDays(listOf(WritingDayEntity(book.bookId, "2026-10-23", 123, 7)))
             repo.deleteEntry(second.id)
             LocalBackupRepository(context, source).export(Uri.fromFile(file).toString(), book.bookId, false)
-            assertEquals(7, JSONObject(file.readText()).getInt("version"))
+            assertEquals(8, JSONObject(file.readText()).getInt("version"))
             val restoredId = LocalBackupRepository(context, target).restore(Uri.fromFile(file).toString())
             val restored = target.dao().allEntries(restoredId)
             val restoredFirst = restored.single { it.title == first.title }

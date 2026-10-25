@@ -62,9 +62,10 @@ class MetadataFlowTest {
         compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("Standard structure"))
         screenshot("creation-modes")
         compose.onNodeWithText("Create workspace").performClick()
-        compose.waitUntil(10000) { compose.onAllNodesWithText("Your story, at a glance").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(10000) { compose.onAllNodesWithText("Open writing workspace").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("workspace-tab-0").assertIsDisplayed()
         screenshot("workspace-overview")
+        compose.onNodeWithTag("workspace-content").performScrollToNode(hasText("Open project notes"))
         compose.onNodeWithText("Open project notes").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Back to workspace").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Manuscript text").assertExists()
@@ -87,11 +88,15 @@ class MetadataFlowTest {
         screenshot("workspace")
         compose.onNodeWithContentDescription("Close file explorer").performClick()
         compose.onNodeWithTag("workspace-tab-1").performClick()
-        screenshot("workspace-plan")
         compose.onNodeWithTag("workspace-tab-2").performClick()
+        compose.onNodeWithText("Coming soon").assertIsDisplayed()
+        screenshot("workspace-ai")
+        compose.onNodeWithTag("workspace-tab-1").performClick()
+        compose.onNodeWithContentDescription("Choose location").performClick()
+        compose.onNode(hasText("Manuscript", substring = false) and hasAnyAncestor(isPopup())).performClick()
         screenshot("workspace-write")
         screenshot("workspace-write-outline")
-        compose.onNodeWithContentDescription("Expand Manuscript").performClick()
+
         val firstBounds = compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot
         val secondBounds = compose.onNodeWithText("Chapter 2.md").fetchSemanticsNode().boundsInRoot
         compose.onNodeWithText("Chapter 2.md").performTouchInput {

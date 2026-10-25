@@ -14,6 +14,7 @@ data class Book(
     val updated: Long = System.currentTimeMillis(),
     val overviewId: Long? = null,
     val fields: List<FieldDefinition> = emptyList(),
+    val coverImage: String = "",
 ) {
     val genre: String
         get() = genres.joinToString(" · ")

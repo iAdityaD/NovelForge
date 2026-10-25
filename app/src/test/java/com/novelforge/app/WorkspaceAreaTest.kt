@@ -43,7 +43,8 @@ class WorkspaceAreaTest {
             repo.placeBefore(second, first, true)
             assertEquals(listOf(first, second), order(db.dao().summaries().first()))
             assertTrue(runCatching { repo.placeBefore(group, first) }.isFailure)
-            assertTrue(runCatching { repo.placeBefore(source, first) }.isFailure)
+            repo.placeBefore(source, first)
+            assertEquals(PLAN_AREA, db.dao().entry(source)!!.area)
             repo.renameEntry(group, "My own structure")
             repo.renameEntry(first, "Renamed")
             val before = db.dao().entry(first)!!.body

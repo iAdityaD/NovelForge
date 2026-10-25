@@ -19,6 +19,7 @@ data class BookEntity(
     val updated: Long = System.currentTimeMillis(),
     val overviewId: Long? = null,
     @ColumnInfo(defaultValue = "'[]'") val fieldsJson: String = "[]",
+    @ColumnInfo(defaultValue = "''") val coverImage: String = "",
 )
 
 @Entity(
@@ -235,7 +236,7 @@ interface ForgeDao {
             BookGenreEntity::class,
             ManuscriptPlacementEntity::class,
         ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class ForgeDb : RoomDatabase() {

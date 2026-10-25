@@ -13,8 +13,8 @@ android {
         applicationId = "com.novelforge.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.6.1"
+        versionCode = 11
+        versionName = "1.0.0-rc1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")

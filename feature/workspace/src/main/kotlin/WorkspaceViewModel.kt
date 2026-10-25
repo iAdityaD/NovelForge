@@ -66,6 +66,8 @@ constructor(
         }
     }
 
+    fun setCover(bookId: String, source: String?) = launchWork { repository.setCover(bookId, source) }
+
     fun editBook(book: Book, done: () -> Unit = {}) = launchWork {
         repository.editBook(book)
         done()

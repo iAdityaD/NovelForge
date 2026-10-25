@@ -24,9 +24,10 @@ fun BookEntity.toModel() =
         updated,
         overviewId,
         FieldCodec.definitions(fieldsJson),
+        coverImage,
     )
 
-fun Book.toEntity() = BookEntity(id, title, author, genre, synopsis, cover, target, status, updated, overviewId, FieldCodec.encodeDefinitions(fields))
+fun Book.toEntity() = BookEntity(id, title, author, genre, synopsis, cover, target, status, updated, overviewId, FieldCodec.encodeDefinitions(fields), coverImage)
 
 fun EntryEntity.toModel() =
     Entry(
