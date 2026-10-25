@@ -18,6 +18,7 @@ data class BookEntity(
     @ColumnInfo(defaultValue = "'In progress'") val status: String = "In progress",
     val updated: Long = System.currentTimeMillis(),
     val overviewId: Long? = null,
+    @ColumnInfo(defaultValue = "'[]'") val fieldsJson: String = "[]",
 )
 
 @Entity(
@@ -47,6 +48,7 @@ data class EntryEntity(
     val deleted: Boolean = false,
     val folderId: Long? = null,
     @ColumnInfo(defaultValue = "'plan'") val area: String = if (isManuscriptKind(kind)) "manuscript" else "plan",
+    @ColumnInfo(defaultValue = "'{}'") val metadataJson: String = "{}",
 )
 
 @Fts4(contentEntity = EntryEntity::class)
@@ -233,7 +235,7 @@ interface ForgeDao {
             BookGenreEntity::class,
             ManuscriptPlacementEntity::class,
         ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class ForgeDb : RoomDatabase() {

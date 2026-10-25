@@ -25,6 +25,7 @@ class LocalDraftJournal @Inject constructor(@ApplicationContext context: Context
         val json = JSONObject().apply {
             put("version", 1); put("id", entry.id); put("bookId", entry.bookId)
             put("title", entry.title); put("body", entry.body); put("kind", entry.kind); put("status", entry.status)
+            put("metadata", JSONObject(FieldCodec.encodeValues(entry.metadata)))
             put("base", previous?.let(::fingerprint) ?: "")
         }.toString().toByteArray(Charsets.UTF_8)
         val target = file(entry.id)
@@ -38,13 +39,13 @@ class LocalDraftJournal @Inject constructor(@ApplicationContext context: Context
         if (!target.baseFile.exists() && !File(target.baseFile.path + ".bak").exists()) return@withContext null
         val json = JSONObject(target.readFully().toString(Charsets.UTF_8))
         require(json.getInt("version") == 1 && json.getLong("id") == saved.id && json.getString("bookId") == saved.bookId) { "Invalid recovery record." }
-        JournalDraft(saved.copy(title = json.getString("title"), body = json.getString("body"), kind = json.getString("kind"), status = json.getString("status")), json.getString("base"))
+        JournalDraft(saved.copy(title = json.getString("title"), body = json.getString("body"), kind = json.getString("kind"), status = json.getString("status"), metadata = FieldCodec.values(json.optJSONObject("metadata")?.toString() ?: "{}")), json.getString("base"))
     }
 
     internal suspend fun clear(id: Long) = withContext(Dispatchers.IO) { file(id).delete() }
 
     internal fun fingerprint(entry: Entry): String {
-        val value = JSONObject().apply { put("title", entry.title); put("body", entry.body); put("kind", entry.kind); put("status", entry.status) }.toString()
+        val value = JSONObject().apply { put("title", entry.title); put("body", entry.body); put("kind", entry.kind); put("status", entry.status); put("metadata", JSONObject(FieldCodec.encodeValues(entry.metadata))) }.toString()
         return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
     }
 }

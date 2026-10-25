@@ -75,6 +75,8 @@ class EditorSession(private val repository: WritingRepository, private val scope
         state.value.entry?.let { change(it.copy(kind = kind.trim(), status = status.trim())) }
     }
 
+    fun fields(values: Map<String, List<String>>) { state.value.entry?.let { change(it.copy(metadata = values)) } }
+
     fun undo() {
         val e = state.value.entry ?: return
         if (undo.isEmpty()) return

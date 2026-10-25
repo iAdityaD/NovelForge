@@ -36,7 +36,7 @@ fun SettingsNavigation(
     val trash by vm.trash.collectAsStateWithLifecycle()
     fun back() {
         page = when (page) {
-            "Workspace structure", "Writing limits", "My templates" -> "Writing"
+            "Workspace structure", "Writing limits", "My templates", "Custom fields" -> "Writing"
             else -> ""
         }
     }
@@ -55,7 +55,7 @@ fun SettingsNavigation(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ActionIcon(
                         Icons.AutoMirrored.Outlined.ArrowBack,
-                        if (page == "Workspace structure" || page == "Writing limits" || page == "My templates") "Back to writing settings"
+                        if (page == "Workspace structure" || page == "Writing limits" || page == "My templates" || page == "Custom fields") "Back to writing settings"
                         else "Back to settings",
                         { back() },
                     )
@@ -120,8 +120,10 @@ fun SettingsNavigation(
                     "Synopsis word limit",
                     { page = "Writing limits" },
                 )
+                SettingsAction(Icons.Outlined.Tune, "Custom fields", "Project document properties", { page = "Custom fields" })
                 SettingsAction(Icons.Outlined.FolderCopy, "My templates", "Reusable project structures", { page = "My templates" })
             }
+        if (page == "Custom fields") item { ProjectFieldSettings(vm, books) }
         if (page == "My templates") item { ProjectTemplateSettings(vm, books, preferences.savedTemplates) }
         if (page == "Writing limits")
             item { SynopsisLimitSetting(preferences.synopsisLimit) { vm.setSynopsisLimit(it) } }
@@ -249,7 +251,7 @@ fun SettingsNavigation(
             item {
                 SurfaceCard {
                     Text("NovelForge", style = MaterialTheme.typography.headlineMedium)
-                    Text("0.6.0 · Writing workspace", color = MaterialTheme.colorScheme.primary)
+                    Text("0.6.1 · Writing workspace", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Your stories stay in a local SQLite database. No internet permission, analytics service, or account. The explorer organizes files inside your workspace; it does not browse arbitrary Android folders.",

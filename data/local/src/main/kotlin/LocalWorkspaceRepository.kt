@@ -33,7 +33,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         val custom = preferences.state.value.savedTemplates.firstOrNull { it.id == templateId }?.let(::validateSavedTemplate)
         val recipe = if (custom == null) projectRecipe(templateId, preferences.state.value.starterFolders) else null
         val folders = if (standard) recipe?.folders.orEmpty().filter { it.enabled } else emptyList()
-        val book = Book(title = title.trim(), author = author.trim(), genres = MetadataPolicy.genres(genres), cover = cover, target = target)
+        val book = Book(title = title.trim(), author = author.trim(), genres = MetadataPolicy.genres(genres), cover = cover, target = target, fields = if (standard) custom?.fields.orEmpty() else emptyList())
         var overviewId: Long? = null
         db.withTransaction {
             dao.addBook(book)
@@ -105,6 +105,11 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
     override suspend fun editBook(book: Book) {
         db.withTransaction {
             val previous = dao.book(book.id) ?: error("Workspace is unavailable.")
+            validateFields(book.fields)
+            book.fields.forEach { field ->
+                previous.fields.find { it.id == field.id }?.let { require(it.type == field.type) { "Create a new field to change its type." } }
+                dao.allEntries(book.id).forEach { validateFieldValue(field, it.metadata[field.id].orEmpty()) }
+            }
             require(book.status in bookStatuses) { "Choose a valid writing status." }
             MetadataPolicy.synopsis(
                 previous.synopsis,

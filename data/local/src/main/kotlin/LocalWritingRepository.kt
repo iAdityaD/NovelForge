@@ -35,7 +35,7 @@ class LocalWritingRepository @Inject constructor(private val db: ForgeDb, privat
         // Never overwrite a newer saved edit. Preserve the interrupted text as a separate document.
         val recovered = db.withTransaction {
             val title = pending.entry.title.take(180) + " (recovered)"
-            dao.entries(entry.bookId).firstOrNull { it.title == title && it.body == pending.entry.body && it.kind == pending.entry.kind }
+            dao.entries(entry.bookId).firstOrNull { it.title == title && it.body == pending.entry.body && it.kind == pending.entry.kind && it.metadata == pending.entry.metadata && it.status == pending.entry.status }
                 ?: pending.entry.copy(id = 0, title = title, words = wordCount(pending.entry.body)).let { copy ->
                     copy.copy(id = dao.addEntry(copy))
                 }
@@ -48,6 +48,12 @@ class LocalWritingRepository @Inject constructor(private val db: ForgeDb, privat
         db.withTransaction {
             // Never resurrect a file trashed while the editor was open.
             val existing = dao.entry(entry.id) ?: error("This file is unavailable.")
+            val book = requireNotNull(dao.book(entry.bookId))
+            book.fields.forEach { field ->
+                val values = entry.metadata[field.id].orEmpty()
+                validateFieldValue(field, values)
+                if (field.type == FieldType.REFERENCE && values.isNotEmpty()) require(dao.entry(values.single().toLong())?.bookId == entry.bookId) { "Choose a document in this workspace." }
+            }
             require(!existing.deleted) { "This file is in Recently deleted." }
             val saved =
                 entry.copy(

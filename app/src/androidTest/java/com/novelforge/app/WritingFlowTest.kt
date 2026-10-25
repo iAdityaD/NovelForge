@@ -96,7 +96,8 @@ class WritingFlowTest {
         compose.onNodeWithText("Library").performClick()
         compose.onNodeWithTag("new-workspace").performClick()
         compose.onNodeWithText("Project title").performTextInput("From my layout")
-        compose.onNodeWithText("Novel", substring = false).performScrollTo().performClick()
+        compose.onNodeWithTag("workspace-form").performScrollToNode(hasText("Novel", substring = false))
+        compose.onNodeWithText("Novel", substring = false).performClick()
         compose.onNodeWithText("Reusable layout · My template").performClick()
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithText("Files").fetchSemanticsNodes().isNotEmpty() }

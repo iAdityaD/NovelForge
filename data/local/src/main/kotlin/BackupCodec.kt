@@ -3,6 +3,7 @@ package com.novelforge.app.data
 import com.novelforge.core.model.*
 import com.novelforge.domain.story.*
 import com.novelforge.domain.workspace.*
+import com.novelforge.data.local.FieldCodec
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -16,11 +17,12 @@ object BackupCodec {
         JSONObject()
             .apply {
                 put("format", "novelforge")
-                put("version", 6)
+                put("version", 7)
                 put(
                     "book",
                     JSONObject().apply {
                         put("title", book.title)
+                        put("fields", JSONArray(FieldCodec.encodeDefinitions(book.fields)))
                         put("author", book.author)
                         put("genres", JSONArray(book.genres))
                         put("synopsis", book.synopsis)
@@ -42,6 +44,7 @@ object BackupCodec {
                                     put("body", e.body)
                                     put("kind", e.kind)
                                     put("area", e.area)
+                                    put("metadata", JSONObject(FieldCodec.encodeValues(e.metadata)))
                                     put("status", e.status)
                                     put(
                                         "parentId",
@@ -86,7 +89,7 @@ object BackupCodec {
     fun decode(text: String): Pair<Book, List<Entry>> {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds 16 MB." }
         val root = JSONObject(text)
-        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..6) {
+        require(root.getString("format") == "novelforge" && root.getInt("version") in 1..7) {
             "Unsupported backup format."
         }
         val b = root.getJSONObject("book")
@@ -94,6 +97,7 @@ object BackupCodec {
         require(title.isNotBlank() && title.length <= 200)
         val book =
             Book(
+                fields = FieldCodec.definitions(b.optJSONArray("fields")?.toString() ?: "[]"),
                 title = if (title.length <= 189) "$title (restored)" else title,
                 overviewId = if (b.isNull("overviewId")) null else b.getLong("overviewId"),
                 author = b.optString("author"),
@@ -132,6 +136,7 @@ object BackupCodec {
                     body = body,
                     kind = kind,
                     area = area,
+                    metadata = FieldCodec.values(e.optJSONObject("metadata")?.toString() ?: "{}"),
                     status = e.optString("status", "Draft").also { require(it.isNotBlank() && it.length <= 80) { "Invalid document status." } },
                     parentId = if (e.isNull("parentId")) null else e.getLong("parentId"),
                     position = e.optInt("position"),
@@ -140,6 +145,12 @@ object BackupCodec {
                 )
             }
         require(entries.map { it.id }.distinct().size == entries.size) { "Duplicate entry IDs." }
+        val ids = entries.map { it.id }.toSet()
+        entries.forEach { entry -> book.fields.forEach { field ->
+            val values = entry.metadata[field.id].orEmpty()
+            validateFieldValue(field, values)
+            if (field.type == FieldType.REFERENCE) require(values.all { it.toLong() in ids }) { "Invalid metadata reference." }
+        } }
         val arcs = entries.filter { it.kind == "Arc" }.map { it.id }.toSet()
         require(
             entries.all { it.parentId == null || it.parentId in arcs && it.parentId != it.id }

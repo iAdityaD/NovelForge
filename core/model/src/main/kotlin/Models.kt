@@ -13,6 +13,7 @@ data class Book(
     val status: String = "In progress",
     val updated: Long = System.currentTimeMillis(),
     val overviewId: Long? = null,
+    val fields: List<FieldDefinition> = emptyList(),
 ) {
     val genre: String
         get() = genres.joinToString(" · ")
@@ -32,6 +33,7 @@ data class Entry(
     val deleted: Boolean = false,
     val folderId: Long? = null,
     val area: String = if (isManuscriptKind(kind)) "manuscript" else "plan",
+    val metadata: Map<String, List<String>> = emptyMap(),
 )
 
 data class EntryFts(val title: String, val body: String)

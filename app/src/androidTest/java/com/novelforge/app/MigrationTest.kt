@@ -84,7 +84,7 @@ class MigrationTest {
             execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId) VALUES (19,'v3','Renamed reference','## Novel profile','Guide','Draft',NULL,0,2,0,0,NULL)")
             close()
         }
-        val db = androidx.room.Room.databaseBuilder(context, ForgeDb::class.java, "migration-v3").addMigrations(MIGRATION_3_4, MIGRATION_4_5).build()
+        val db = androidx.room.Room.databaseBuilder(context, ForgeDb::class.java, "migration-v3").addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
         try {
             Assert.assertEquals(listOf(18L,17L), db.dao().manuscriptPlacements("v3").map { it.documentId })
             Assert.assertEquals(19L, db.dao().book("v3")!!.overviewId)

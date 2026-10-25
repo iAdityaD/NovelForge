@@ -92,3 +92,10 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL("UPDATE Entry SET area='manuscript' WHERE kind='Folder' AND rowid IN (SELECT folderId FROM Entry WHERE area='manuscript')")
     }
 }
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE Book ADD COLUMN fieldsJson TEXT NOT NULL DEFAULT '[]'")
+        db.execSQL("ALTER TABLE Entry ADD COLUMN metadataJson TEXT NOT NULL DEFAULT '{}'")
+    }
+}

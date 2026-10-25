@@ -46,6 +46,8 @@ constructor(
 
     fun metadata(kind: String, status: String) = launchWork { session.metadata(kind, status) }
 
+    fun fields(values: Map<String, List<String>>) = session.fields(values)
+
     fun undo() = session.undo()
 
     fun redo() = session.redo()

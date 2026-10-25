@@ -51,7 +51,7 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
             validateSavedTemplate(SavedTemplate(item.getString("id"), item.getString("name"), (0 until nodes.length()).map { n ->
                 val node = nodes.getJSONObject(n)
                 TemplateNode(node.getString("key"), if (node.isNull("parent")) null else node.getString("parent"), node.getString("title"), node.getString("kind"), node.getString("area"), node.getInt("position"))
-            }, item.getInt("version")))
+            }, item.getInt("version"), FieldCodec.definitions(item.optJSONArray("fields")?.toString() ?: "[]")))
         }
     }.getOrDefault(emptyList())
 
@@ -78,6 +78,7 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
             .putInt("synopsisLimit", value.synopsisLimit)
             .putString("savedTemplates", org.json.JSONArray().apply {
                 value.savedTemplates.forEach { template -> put(org.json.JSONObject().apply {
+                    put("fields", org.json.JSONArray(FieldCodec.encodeDefinitions(template.fields)))
                     put("id", template.id); put("name", template.name); put("version", template.version)
                     put("nodes", org.json.JSONArray().apply { template.nodes.forEach { node -> put(org.json.JSONObject().apply {
                         put("key", node.key); put("parent", node.parentKey ?: org.json.JSONObject.NULL); put("title", node.title); put("kind", node.kind); put("area", node.area); put("position", node.position)

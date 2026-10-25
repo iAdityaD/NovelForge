@@ -29,6 +29,8 @@ internal class Records(private val dao: ForgeDao) {
 
     suspend fun entry(id: Long) = dao.entry(id)?.toModel()
 
+    suspend fun allEntries(id: String) = dao.allEntries(id).map { it.toModel() }
+
     suspend fun entries(id: String) = dao.entries(id).map { it.toModel() }
 
     suspend fun addBook(book: Book) {

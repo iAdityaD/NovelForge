@@ -91,6 +91,7 @@ constructor(@ApplicationContext private val app: Context, private val db: ForgeD
                             parentId = ids[e.parentId],
                             folderId = ids[e.folderId],
                             body = body,
+                            metadata = FieldCodec.remap(e.metadata, book.fields, ids),
                             words = wordCount(body),
                         )
                     )

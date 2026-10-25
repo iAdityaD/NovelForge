@@ -23,9 +23,10 @@ fun BookEntity.toModel() =
         status,
         updated,
         overviewId,
+        FieldCodec.definitions(fieldsJson),
     )
 
-fun Book.toEntity() = BookEntity(id, title, author, genre, synopsis, cover, target, status, updated, overviewId)
+fun Book.toEntity() = BookEntity(id, title, author, genre, synopsis, cover, target, status, updated, overviewId, FieldCodec.encodeDefinitions(fields))
 
 fun EntryEntity.toModel() =
     Entry(
@@ -42,6 +43,7 @@ fun EntryEntity.toModel() =
         deleted,
         folderId,
         area,
+        FieldCodec.values(metadataJson),
     )
 
 fun Entry.toEntity() =
@@ -59,6 +61,7 @@ fun Entry.toEntity() =
         deleted,
         folderId,
         area,
+        FieldCodec.encodeValues(metadata),
     )
 
 fun RevisionEntity.toModel() = Revision(id, entryId, title, body, created)

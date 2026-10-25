@@ -50,6 +50,7 @@ fun EditorScreen(
     var statusMenu by remember { mutableStateOf(false) }
     var sheet by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
+    var customFields by remember { mutableStateOf(false) }
     var properties by remember { mutableStateOf(false) }
     var field by remember(e.id) { mutableStateOf(TextFieldValue(e.body)) }
     LaunchedEffect(e.body) {
@@ -79,6 +80,7 @@ fun EditorScreen(
             }
         }, confirmButton = { TextButton(onClick = { vm.metadata(type, status); properties = false }, enabled = type.isNotBlank() && type.trim() != "Folder" && status.isNotBlank()) { Text("Save details") } }, dismissButton = { TextButton(onClick = { properties = false }) { Text("Cancel") } })
     }
+    if (customFields) CustomFieldValues(book?.fields.orEmpty(), e, entries, { customFields = false }, vm::fields)
     val scroll = rememberScrollState()
     val words = remember(e.body) { wordCount(e.body) }
     Column(Modifier.fillMaxSize().imePadding()) {
@@ -112,6 +114,7 @@ fun EditorScreen(
             Box {
                 ActionIcon(Icons.Outlined.MoreVert, "Page actions", { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Custom fields") }, onClick = { menu = false; customFields = true })
                     DropdownMenuItem(text = { Text("Document details") }, onClick = { menu = false; properties = true })
                     DropdownMenuItem(
                         text = { Text("Save checkpoint") },

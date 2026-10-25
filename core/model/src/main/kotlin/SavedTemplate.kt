@@ -2,9 +2,10 @@ package com.novelforge.core.model
 
 /** Structure-only template: never stores the author's prose or references to source IDs. */
 data class TemplateNode(val key: String, val parentKey: String?, val title: String, val kind: String, val area: String, val position: Int)
-data class SavedTemplate(val id: String, val name: String, val nodes: List<TemplateNode>, val version: Int = 1)
+data class SavedTemplate(val id: String, val name: String, val nodes: List<TemplateNode>, val version: Int = 1, val fields: List<FieldDefinition> = emptyList())
 
 fun validateSavedTemplate(template: SavedTemplate): SavedTemplate {
+    validateFields(template.fields)
     require(template.version == 1 && template.id.isNotBlank()) { "Unsupported template." }
     require(template.name.isNotBlank() && template.name.length <= 80) { "Use a template name of 1–80 characters." }
     require(template.nodes.size <= 2000) { "A template supports up to 2,000 items." }
