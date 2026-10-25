@@ -87,6 +87,8 @@ fun ExplorerTree(
     activeFileId: Long? = null,
     rootLabel: String = "Workspace root",
     arrange: Boolean = false,
+    rootId: Long? = null,
+    onRootClick: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable(book.id) { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -139,7 +141,7 @@ fun ExplorerTree(
                 }
         }
     val rows =
-        remember(entries, expanded.toMap(), visibleIds) {
+        remember(entries, expanded.toMap(), visibleIds, rootId) {
             val list = mutableListOf<Pair<EntrySummary, Int>>()
             val seen = mutableSetOf<Long>()
             fun add(parent: Long?, depth: Int) {
@@ -158,7 +160,7 @@ fun ExplorerTree(
                         }
                     }
             }
-            add(null, 0)
+            add(rootId, 0)
             list
         }
     LaunchedEffect(activeFileId, rows.map { it.first.id }) {
@@ -209,7 +211,7 @@ fun ExplorerTree(
                                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = .4f)
                             else Color.Transparent
                         )
-                        .clickable { onSelect(null) }
+                        .clickable { onRootClick?.invoke() ?: onSelect(null) }
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -222,14 +224,16 @@ fun ExplorerTree(
                     Spacer(Modifier.width(10.dp))
                     Text(
                         rootLabel,
+                        modifier = Modifier.weight(1f),
                         fontFamily = FontFamily.SansSerif,
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (onRootClick != null) Icon(Icons.Outlined.ExpandMore, "Choose location")
                 }
             }
-            if (entries.isEmpty())
+            if (entries.none { it.folderId == rootId })
                 item {
                     EmptyState(
                         "An open canvas",
@@ -255,8 +259,9 @@ fun ExplorerTree(
                         .drawWithContent {
                             drawContent()
                             if (hover && arrange) {
+                                val inside = folder && bounds[e.id]?.let { point.y in (it.top + it.height * .3f)..(it.bottom - it.height * .3f) } == true
                                 val y = if (point.y > (bounds[e.id]?.center?.y ?: point.y)) size.height - 1.dp.toPx() else 1.dp.toPx()
-                                drawLine(dropColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx())
+                                if (!inside) drawLine(dropColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx())
                             }
                         }
                         .onGloballyPositioned { bounds[e.id] = it.boundsInRoot() }
@@ -293,8 +298,12 @@ fun ExplorerTree(
                                             }
                                             ?.key
                                     if (target != null) {
-                                        if (arrange && target != 0L) vm.placeBefore(e.id, target, point.y > (bounds[target]?.center?.y ?: point.y))
-                                        else vm.relocate(e.id, target.takeIf { it != 0L })
+                                        val targetNode = entries.find { it.id == target }
+                                        val rect = bounds[target]
+                                        val inside = targetNode?.kind == "Folder" && rect != null && point.y in (rect.top + rect.height * .3f)..(rect.bottom - rect.height * .3f)
+                                        if (target == 0L) vm.relocate(e.id, rootId)
+                                        else if (inside || !arrange) { vm.relocate(e.id, target); expanded[target] = true }
+                                        else vm.placeBefore(e.id, target, point.y > (rect?.center?.y ?: point.y))
                                     }
                                     dragging = null
                                 },
@@ -389,6 +398,7 @@ fun ExplorerTree(
                                     menu = false
                                 },
                             )
+                            DropdownMenuItem(text = { Text(if (e.area == MANUSCRIPT_AREA) "Use as reference" else "Include in manuscript") }, onClick = { menu = false; action = "Role" to e })
                             listOf("Rename", "Move", "Trash").forEach { name ->
                                 DropdownMenuItem(
                                     text = { Text(name) },
@@ -413,6 +423,7 @@ fun ExplorerTree(
     }, confirmButton = { TextButton(onClick = { filters = false }) { Text("Done") } })
     action?.let { (name, e) ->
         when (name) {
+            "Role" -> AlertDialog(onDismissRequest = { action = null }, title = { Text(if (e.area == MANUSCRIPT_AREA) "Use as reference?" else "Include in manuscript?") }, text = { Text(if (e.kind == "Folder") "Applies to this folder and everything inside it. Manuscript items are included in export and writing totals." else "Manuscript files are included in export and writing totals. References remain available in the workspace.") }, confirmButton = { TextButton(onClick = { vm.setArea(e.id, if (e.area == MANUSCRIPT_AREA) PLAN_AREA else MANUSCRIPT_AREA); action = null }) { Text("Apply") } }, dismissButton = { TextButton(onClick = { action = null }) { Text("Cancel") } })
             "Rename" ->
                 NameDialog(
                     "Rename ${if(e.kind=="Folder")"folder" else "file"}",
@@ -461,7 +472,7 @@ fun ExplorerTree(
                                         action = null
                                     }
                                 ) {
-                                    Text(rootLabel)
+                                    Text("Workspace root")
                                 }
                             }
                             items(
@@ -474,7 +485,7 @@ fun ExplorerTree(
                                         action = null
                                     }
                                 ) {
-                                    Text(f.title)
+                                    Text(resourceFolderPath(f, entries.filter { it.kind == "Folder" }))
                                 }
                             }
                         }

@@ -240,6 +240,15 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         }
     }
 
+    override suspend fun setArea(id: Long, area: String) = db.withTransaction {
+        require(area in listOf(PLAN_AREA, MANUSCRIPT_AREA))
+        val entry = requireNotNull(dao.entry(id))
+        require(!entry.deleted)
+        val all = dao.entries(entry.bookId)
+        descendantIds(id, all).forEach { child -> dao.entry(child)?.let { dao.updateEntry(it.copy(area = area)) } }
+        dao.touch(entry.bookId, System.currentTimeMillis())
+    }
+
     override suspend fun relocate(id: Long, destination: Long?) {
 
         val e = dao.entry(id) ?: return
@@ -258,7 +267,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
             ) {
                 "A folder with this name already exists at the destination."
             }
-        val changed = e.copy(folderId = destination, updated = System.currentTimeMillis())
+        val changed = e.copy(folderId = destination, position = (all.filter { it.folderId == destination && it.id != id }.maxOfOrNull { it.position } ?: -1) + 1, updated = System.currentTimeMillis())
         db.withTransaction {
             dao.updateEntry(changed)
             dao.touch(changed.bookId, changed.updated)
@@ -295,7 +304,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         if (id == targetId) return@withTransaction
         val entry = requireNotNull(dao.entry(id)) { "Document is unavailable." }
         val target = requireNotNull(dao.entry(targetId)) { "Destination is unavailable." }
-        require(!entry.deleted && !target.deleted && entry.bookId == target.bookId && entry.area == target.area) { "Choose a destination in the same workspace area." }
+        require(!entry.deleted && !target.deleted && entry.bookId == target.bookId) { "Choose a destination in the same workspace." }
         val all = dao.entries(entry.bookId)
         require(canRelocate(entry, target.folderId, all)) { "A folder cannot contain itself or its descendants." }
         if (entry.kind == "Folder") require(all.none { it.id != id && it.kind == "Folder" && it.folderId == target.folderId && it.title.equals(entry.title, true) }) { "A folder with this name already exists here." }

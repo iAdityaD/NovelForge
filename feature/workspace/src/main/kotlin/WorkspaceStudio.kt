@@ -83,12 +83,20 @@ fun WorkspaceStudio(
                     TextButton(onClick = { onOpen(id) }) { Text("Open project notes") }
                 } }
             }
+        } else if (currentTab == 1) {
+            WorkspaceArea(vm, book, entries, MANUSCRIPT_AREA, true, onOpen, Modifier.weight(1f))
         } else {
-            WorkspaceArea(vm, book, entries, if (currentTab == 1) PLAN_AREA else MANUSCRIPT_AREA, currentTab == 2, onOpen, Modifier.weight(1f))
+            Column(Modifier.weight(1f).fillMaxWidth().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                OwlIcon(Modifier.size(72.dp))
+                Spacer(Modifier.height(24.dp))
+                Text("Your writing companion", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(12.dp))
+                Text("Coming soon", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-            listOf("Overview" to Icons.Outlined.Home, "Plan" to Icons.Outlined.ListAlt, "Write" to Icons.Outlined.EditNote).forEachIndexed { i, (label, icon) ->
-                NavigationBarItem(selected = currentTab == i, onClick = { onTab(i) }, icon = { Icon(icon, null) }, label = { Text(label, maxLines = 1) }, modifier = Modifier.testTag("workspace-tab-$i"))
+            listOf("Overview" to Icons.Outlined.Home, "Write" to Icons.Outlined.EditNote, "AI" to Icons.Outlined.AutoAwesome).forEachIndexed { i, (label, icon) ->
+                NavigationBarItem(selected = currentTab == i, onClick = { onTab(i) }, icon = { if (i == 2) OwlIcon() else Icon(icon, null) }, label = { Text(label, maxLines = 1) }, modifier = Modifier.testTag("workspace-tab-$i"))
             }
         }
     }

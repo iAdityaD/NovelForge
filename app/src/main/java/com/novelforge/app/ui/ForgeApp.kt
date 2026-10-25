@@ -319,7 +319,7 @@ fun ForgeApp() {
     } // Shared workspace drawer
     if (newDrawerFolder)
         NameDialog("New folder", "Folder name", onDismiss = { newDrawerFolder = false }) { name ->
-            workspace.createNode(bookId, name, true, bookEntries.find { it.id == drawerFolder }?.area ?: if (workspaceTab in 2..3) MANUSCRIPT_AREA else PLAN_AREA, drawerFolder, "", null) {}
+            workspace.createNode(bookId, name, true, bookEntries.find { it.id == drawerFolder }?.area ?: MANUSCRIPT_AREA, drawerFolder, "", null) {}
             newDrawerFolder = false
         }
     }
@@ -329,7 +329,7 @@ fun ForgeApp() {
         }
     }
     showEntry?.let {
-        val area = bookEntries.find { it.id == entryFolder }?.area ?: if (workspaceTab in 2..3) MANUSCRIPT_AREA else PLAN_AREA
+        val area = bookEntries.find { it.id == entryFolder }?.area ?: MANUSCRIPT_AREA
         WorkspaceNodeDialog(workspace, bookId, areaEntries(bookEntries, area), area, entryFolder, false, { showEntry = null }) { id ->
             showEntry = null
             open(id)

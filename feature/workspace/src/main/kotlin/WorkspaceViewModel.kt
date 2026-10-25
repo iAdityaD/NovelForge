@@ -110,6 +110,8 @@ constructor(
 
     fun renameEntry(id: Long, title: String) = mutate { repository.renameEntry(id, title) }
 
+    fun setArea(id: Long, area: String) = mutate { repository.setArea(id, area) }
+
     fun relocate(id: Long, destination: Long?) = mutate { repository.relocate(id, destination) }
 
     fun deleteEntry(id: Long, done: () -> Unit = {}) = mutate {

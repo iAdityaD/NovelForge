@@ -16,31 +16,37 @@ import com.novelforge.presentation.WorkspaceViewModel
 
 @Composable
 internal fun WorkspaceArea(vm: WorkspaceViewModel, book: Book, entries: List<EntrySummary>, area: String, arrange: Boolean, onOpen: (Long) -> Unit, modifier: Modifier) {
-    var selected by rememberSaveable(book.id, area) { mutableStateOf<Long?>(null) }
-    var add by remember { mutableStateOf(false) }
+    var selected by rememberSaveable(book.id) { mutableStateOf<Long?>(null) }
     var folder by remember { mutableStateOf<Boolean?>(null) }
-    val visible = remember(entries, area) { areaEntries(entries, area) }
-    val destination = selected?.takeIf { id -> visible.any { it.id == id && it.kind == "Folder" } }
+    var locationMenu by remember { mutableStateOf(false) }
+    val destination = selected?.takeIf { id -> entries.any { it.id == id && it.kind == "Folder" } }
+    val current = entries.find { it.id == destination }
     Column(modifier.fillMaxWidth()) {
-        Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (area == PLAN_AREA) "Resources" else "Manuscript", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
-            Box {
-                ActionIcon(Icons.Outlined.Add, if (area == PLAN_AREA) "Add planning item" else "Add manuscript item", { add = true })
-                DropdownMenu(add, { add = false }) {
-                    DropdownMenuItem(text = { Text(if (area == PLAN_AREA) "New resource" else "New document") }, onClick = { add = false; folder = false })
-                    DropdownMenuItem(text = { Text("New folder") }, onClick = { add = false; folder = true })
-                }
+        Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Write", Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+            ActionIcon(Icons.Outlined.CreateNewFolder, "Add folder", { folder = true })
+            ActionIcon(Icons.Outlined.NoteAdd, "Add file", { folder = false })
+        }
+        if (destination != null) TextButton(onClick = { selected = current?.folderId }) {
+            Icon(Icons.Outlined.ArrowUpward, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Up one folder")
+        }
+        Box(Modifier.weight(1f)) {
+            key(book.id, destination) {
+                ExplorerTree(vm, book, entries, onOpen, { selected = it }, destination, Modifier.fillMaxSize(), rootLabel = current?.title ?: "Entire workspace", arrange = true, rootId = destination, onRootClick = { locationMenu = true })
+            }
+            DropdownMenu(locationMenu, { locationMenu = false }, modifier = Modifier.heightIn(max = 360.dp)) {
+                DropdownMenuItem(text = { Text("Entire workspace") }, onClick = { selected = null; locationMenu = false })
+                entries.filter { it.kind == "Folder" }.forEach { f -> DropdownMenuItem(text = { Text(resourceFolderPath(f, entries.filter { it.kind == "Folder" })) }, onClick = { selected = f.id; locationMenu = false }) }
             }
         }
-        key(book.id, area, arrange) {
-            ExplorerTree(vm, book, visible, onOpen, { selected = it }, destination, Modifier.weight(1f), rootLabel = if (area == PLAN_AREA) "Plan" else "Manuscript", arrange = arrange)
-        }
     }
-    folder?.let { isFolder -> WorkspaceNodeDialog(vm, book.id, visible, area, destination, isFolder, { folder = null }) { id -> folder = null; if (isFolder) selected = id else onOpen(id) } }
+    folder?.let { isFolder -> WorkspaceNodeDialog(vm, book.id, entries, current?.area ?: MANUSCRIPT_AREA, destination, isFolder, { folder = null }) { id -> folder = null; if (!isFolder) onOpen(id) } }
+
 }
 
 @Composable
 fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries: List<EntrySummary>, area: String, parent: Long?, folder: Boolean, onDismiss: () -> Unit, onCreated: (Long) -> Unit) {
+    var documentArea by rememberSaveable { mutableStateOf(area) }
     var title by rememberSaveable { mutableStateOf("") }
     var label by rememberSaveable { mutableStateOf("") }
     var source by rememberSaveable { mutableStateOf("") }
@@ -52,7 +58,7 @@ fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries: List<En
     // Errors are surfaced by the feature host; allow retry after the operation ends.
     val error by vm.error.collectAsState()
     LaunchedEffect(error) { if (error != null) submitting = false }
-    AlertDialog(onDismissRequest = { if (!submitting) onDismiss() }, title = { Text(if (folder) "New folder" else if (area == PLAN_AREA) "New resource" else "New document") },
+    AlertDialog(onDismissRequest = { if (!submitting) onDismiss() }, title = { Text(if (folder) "New folder" else "New file") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(title, { title = it.take(200) }, label = { Text(if (folder) "Folder name" else "Title") }, singleLine = true)
@@ -64,9 +70,10 @@ fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries: List<En
                         folders.forEach { f -> DropdownMenuItem(text = { Text(resourceFolderPath(f, folders)) }, onClick = { destination = f.id; expanded = false }) }
                     }
                 }
+                ChoiceField("Use for", if (documentArea == MANUSCRIPT_AREA) "Manuscript" else "Reference", listOf("Manuscript", "Reference")) { documentArea = if (it == "Manuscript") MANUSCRIPT_AREA else PLAN_AREA }
                 if (!folder) {
                     OutlinedTextField(label, { label = it.take(80) }, label = { Text("Type label (optional)") }, singleLine = true)
-                    if (area == PLAN_AREA) {
+                    if (documentArea == PLAN_AREA) {
                         TextButton(onClick = { newCategory = !newCategory }) { Text(if (newCategory) "Use existing location" else "+ New category") }
                         if (newCategory) OutlinedTextField(category, { category = it.take(200) }, label = { Text("Category name") }, singleLine = true)
                         OutlinedTextField(source, { source = it }, label = { Text("Source URL (optional)") }, singleLine = true)
@@ -75,7 +82,7 @@ fun WorkspaceNodeDialog(vm: WorkspaceViewModel, bookId: String, entries: List<En
             }
         }, confirmButton = { TextButton(onClick = {
             submitting = true
-            vm.createNode(bookId, title, folder, area, destination, label, source.takeIf { it.isNotBlank() }, if (newCategory) category else null, onCreated)
+            vm.createNode(bookId, title, folder, documentArea, destination, label, source.takeIf { it.isNotBlank() }, if (newCategory && documentArea == PLAN_AREA) category else null, onCreated)
         }, enabled = title.isNotBlank() && (!newCategory || category.isNotBlank()) && !submitting) { Text("Create") } },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !submitting) { Text("Cancel") } })
 }
