@@ -1,3 +1,19 @@
+# Current Write workflow — 25 October 2026
+
+This section supersedes older browser-first Write and deferred reading descriptions below.
+
+- Workspace navigation remains Overview / Write / owl AI (Coming soon).
+- First Write visit offers New file and Attach link. Later visits resume the last open document for that workspace, including cursor and scroll position.
+- A new file opens as an Untitled draft. Atomic app-private recovery persists it without a database document or explorer entry. One private draft per workspace is supported; New file resumes it until saved or discarded.
+- Save chooses filename, existing/root folder, and optional new subfolder. Folder and document creation are transactional. Retry token makes first save idempotent.
+- Named files autosave, with a manual Save action. Navigation from an untitled draft offers Save / Keep draft / Discard. Private drafts do not enter backups until saved.
+- Read / Write applies to the current document and renders the latest text with internal links; no separate reading tab or manuscript copy.
+- Files drawer owns the nested tree, search, filters, rename/move/trash, folder creation and a Reorder files mode. Reordering is unavailable while filtered.
+- Attach link saves a named HTTP(S) URL with notes; no page scraping. Sources use the reference role.
+- Local-first Kotlin/Compose/Room architecture retained. No schema migration is needed: untitled recovery uses a separate atomic file and document position uses preferences.
+
+---
+
 # Current milestone override — 25 October 2026
 
 This section supersedes navigation and file-placement requirements in the historical specification below.

@@ -6,7 +6,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.novelforge.app.data.*
 import com.novelforge.core.model.*
 import com.novelforge.data.local.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import com.novelforge.domain.writing.EditorSession
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -93,6 +94,38 @@ class DraftRecoveryTest {
             assertNull(repository.untitled(book))
             assertEquals(draft.body, repository.entry(saved.id)!!.body)
         } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun editorSessionKeepsDraftUntilExplicitSaveAndPreservesFailedSave() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        java.io.File(context.filesDir, "writing-recovery").deleteRecursively()
+        val db = Room.inMemoryDatabaseBuilder(context, ForgeDb::class.java).build()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val book = LocalWorkspaceRepository(db, LocalPreferencesRepository(context)).createBook("Session", "", emptyList(), 0, 0, false).bookId
+            val repository = LocalWritingRepository(db, LocalDraftJournal(context))
+            val session = EditorSession(repository, scope)
+            assertTrue(session.openUntitled(book))
+            session.body("The owl returned.")
+            assertTrue(session.flush())
+            assertTrue(db.dao().entries(book).isEmpty())
+            assertEquals("The owl returned.", repository.untitled(book)!!.body)
+            try { session.saveUntitled("Chapter", 99999L, null); fail("Missing folder accepted") } catch (_: IllegalArgumentException) { }
+            assertEquals(0L, session.state.value.entry!!.id)
+            assertFalse(session.state.value.savingAs)
+            assertEquals("The owl returned.", session.state.value.entry!!.body)
+            assertTrue(session.saveUntitled("Chapter", null, null))
+            val id = session.state.value.entry!!.id
+            assertTrue(id > 0)
+            session.body("The owl returned at dawn.")
+            assertTrue(session.flush())
+            assertEquals("The owl returned at dawn.", repository.entry(id)!!.body)
+            assertTrue(session.openUntitled(book))
+            session.body("Discard only this draft")
+            session.discardUntitled()
+            assertNull(repository.untitled(book))
+            assertEquals("The owl returned at dawn.", repository.entry(id)!!.body)
+        } finally { scope.cancel(); db.close() }
     }
 
 }

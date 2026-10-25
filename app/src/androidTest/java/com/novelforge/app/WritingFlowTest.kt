@@ -46,6 +46,7 @@ class WritingFlowTest {
         compose.onNode(hasText("Save") and hasAnyAncestor(isDialog())).performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithText("Filename").fetchSemanticsNodes().isEmpty() }
         compose.activityRule.scenario.recreate()
+        compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Manuscript text").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Manuscript text").assertTextContains("Magic has a cost.")
         compose.onNodeWithContentDescription("Open file explorer").performClick()
         compose.onNodeWithContentDescription("Expand My own category").performClick()

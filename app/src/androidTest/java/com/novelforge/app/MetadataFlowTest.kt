@@ -122,7 +122,6 @@ class MetadataFlowTest {
         compose.onNodeWithText("Move down").performClick()
         compose.onNodeWithText("Remove from manuscript").assertDoesNotExist()
         compose.onNodeWithTag("workspace-tab-3").assertDoesNotExist()
-        compose.onNodeWithText("Read", substring = false).assertDoesNotExist()
         compose.onNodeWithText("Chapter 1.md").assertExists()
         compose.onNodeWithText("Chapter 2.md").assertExists()
         compose.onNodeWithContentDescription("Close file explorer").performClick()

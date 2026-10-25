@@ -278,6 +278,7 @@ fun ExplorerTree(
                         )
                         .border(if (hover && canArrange) 1.dp else 0.dp, if (hover && canArrange) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(4.dp))
                         .pointerInput(e.id, entries, canArrange) {
+                            if (!canArrange) return@pointerInput
                             detectDragGesturesAfterLongPress(
                                 onDragStart = { local ->
                                     dragging = e.id

@@ -298,7 +298,7 @@ fun EditorScreen(
         Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
             Column {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                if (!focus && !reading)
+                if (!focus && !reading && !ui.savingAs)
                     Row(
                         Modifier.fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
