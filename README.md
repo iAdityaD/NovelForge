@@ -7,29 +7,29 @@ NovelForge 0.6.0 is a local-first writing app built with Kotlin, Jetpack Compose
 - **Library:** grid/list projects, search, combined status/genre filters, backup import and creation.
 - **Create:** title required; author, multiple genres and color optional. Start blank or use an optional Novel, Short story, Screenplay, Nonfiction or Essay recipe. Generated folders remain editable. Customize Novel starter folders in Settings.
 - **Overview:** project identity, editable synopsis, resume writing and manuscript totals. Project metadata uses a separate pencil action. Export, backup and confirmed workspace deletion remain in the menu.
-- **Plan:** nested folders and documents for ideas, notes, research and sources. Names and type labels are freeform. Add a category inside the resource form; optional URLs are stored with notes, not downloaded.
-- **Write:** one canonical manuscript tree for writing and organization. Every manuscript document participates automatically. Long-press and drag a row above/below another to reorder; edge dragging scrolls. Move up/down and Move to folder remain available.
-- **Files:** the whole logical workspace, compact collapsible rows, file search, custom type/status filters, rename/move/trash and scroll position indicators. Filters preserve ancestor folders.
+- **References (inside Write):** nested folders and documents for ideas, notes, research and sources. Names and type labels are freeform. Add a category inside the resource form; optional URLs are stored with notes, not downloaded.
+- **Write:** the complete workspace tree with a location dropdown, separate new-file/new-folder buttons, and manuscript/reference roles. Every manuscript document participates automatically. Long-press and drag a row before/inside/after another to reorder; edge dragging scrolls. Move up/down and Move to folder remain available.
+- **Files:** the whole logical workspace, compact collapsible rows, file search, custom type/status filters, rename/duplicate/move/trash and scroll position indicators. Filters preserve ancestor folders.
 - **Editor:** Markdown, syntax colors, typography, focus mode, stable internal links, backlinks, undo/redo, checkpoints, custom type labels/statuses, word counts and truthful autosave state.
 - **Guide:** searchable offline articles matching the current workflow, including resources, writing, nested order, linking and recovery.
 - **Analytics:** streak and project selector, all-project portfolio totals or selected-project metrics, manuscript words/pages/documents, resources and activity.
 - **Settings:** focused category subpages for Appearance, Editor, Writing, Data & backup, Recently deleted and About. Writing includes default folders and the synopsis word limit. No reader settings are exposed while Read is deferred.
 
-The UI uses charcoal/violet and light themes, compact rows and scrollable forms. Templates are optional starting content, not enforced taxonomies. A document's stored Plan/manuscript role is independent of its editable title and type label.
+The UI uses charcoal/violet and light themes, compact rows and scrollable forms. Templates are optional starting content, not enforced taxonomies. A document's stored reference/manuscript role is independent of its editable title and type label.
 
 ## Data model and architecture
 
 The existing Android stack is retained. A domain-based modular monolith separates pure Kotlin models/contracts, application services, Room repositories, feature ViewModels and Compose UI. No SQL belongs in UI components. See [architecture](docs/ARCHITECTURE.md) and [the current product specification](docs/PRODUCT_REDESIGN.md).
 
-Room schema **6** adds optional custom field definitions and values. Schema 5 added the explicit document area while retaining IDs, content, references, folders and revisions. Legacy mixed folders can appear as ancestors in both Plan and Write; migration does not silently reorganize or delete their text. Prior manuscript exclusion records remain for historical compatibility, but no longer hide documents from the current manuscript. Nested folder/sibling order is now shared by Write, export and manuscript statistics.
+Room schema **7** adds locally stored cover images. Schema 6 added optional custom field definitions and values. Schema 5 added the explicit document area while retaining IDs, content, references, folders and revisions. Legacy mixed folders are accessible together in Write; migration does not silently reorganize or delete their text. Prior manuscript exclusion records remain for historical compatibility, but no longer hide documents from the current manuscript. Nested folder/sibling order is now shared by Write, export and manuscript statistics.
 
-`WorkspaceRepository.createNode` creates generic documents/folders and optional resource categories transactionally. `placeBefore` validates project/area ownership and cycles, then changes parent/sibling order atomically. `orderedManuscript` is the iterative depth-first projection used for canonical manuscript order. Type labels and document statuses remain portable freeform values; project-owned field definitions support optional typed metadata. Field types are immutable after creation; used choices cannot be removed.
+`WorkspaceRepository.createNode` creates generic documents/folders and optional resource categories transactionally. `placeBefore` validates project ownership and cycles, then changes parent/sibling order atomically. `orderedManuscript` is the iterative depth-first projection used for canonical manuscript order. Type labels and document statuses remain portable freeform values; project-owned field definitions support optional typed metadata. Field types are immutable after creation; used choices cannot be removed.
 
 ## Storage, backup and recovery
 
 Everything works without an account or network connection. The app has no internet permission. The explorer is a logical SQLite tree, not a live external Markdown vault.
 
-Recovery backup **v7** preserves project metadata, documents, custom labels/statuses, Plan/manuscript roles, folder order, trash, checkpoints and writing history. Restore validates bounded input and creates a separate project in one transaction, remapping IDs and internal links. Legacy v1–v6 backups remain supported. Markdown export contains the complete current manuscript in nested order, excluding Plan resources.
+Recovery backup **v8** preserves project metadata and cover images, documents, custom labels/statuses, Plan/manuscript roles, folder order, trash, checkpoints and writing history. Restore validates bounded input and creates a separate project in one transaction, remapping IDs and internal links. Legacy v1–v7 backups remain supported. Markdown export contains the complete current manuscript in nested order, excluding Plan resources.
 
 Project backups do **not** include app preferences, historical reader bookmarks/positions or pending unsaved drafts. Limits: 16 MB and 10,000 documents per backup. Export before uninstalling or changing devices. Android cloud backup is disabled.
 
@@ -50,8 +50,12 @@ GitHub Actions also runs API 34 emulator journeys and migration checks. Successf
 
 ## Remaining scope
 
-This is a development build, not physical-device performance/accessibility certification. Full-app snapshots, structural undo, media/cover import and production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
+This is a development build, not physical-device performance/accessibility certification. Full-app snapshots, structural undo, production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
 
 Read `PROGRESS.md` and the latest owner amendments in `docs/PRODUCT_REDESIGN.md` before continuing. Older screenshots and design documents may show retired Arrange/Read workflows.
 
 Custom fields are managed in Settings → Writing → Custom fields and edited from Page actions → Custom fields. Reusable structures are saved in Settings → Writing → My templates. They copy names, types, roles, nesting and field definitions, with optional empty documents; manuscript text is never copied. Project backups include field definitions and values, with reference IDs remapped on restore.
+
+## First LTS release candidate
+
+The workspace has Overview, Write, and an owl AI tab marked Coming soon. Overview exposes editable novel details, synopsis, goal and cover import. The app targets API 36. CI builds an unsigned minified release bundle and tests Android 14 and 16. See [release preparation](docs/RELEASE.md); signing and store publication remain owner-controlled.

@@ -16,7 +16,8 @@ import com.novelforge.presentation.WorkspaceViewModel
 
 @Composable
 internal fun WorkspaceArea(vm: WorkspaceViewModel, book: Book, entries: List<EntrySummary>, area: String, arrange: Boolean, onOpen: (Long) -> Unit, modifier: Modifier) {
-    var selected by rememberSaveable(book.id) { mutableStateOf<Long?>(null) }
+    val locations by vm.locations.collectAsState()
+    val selected = locations[book.id]
     var folder by remember { mutableStateOf<Boolean?>(null) }
     var locationMenu by remember { mutableStateOf(false) }
     val destination = selected?.takeIf { id -> entries.any { it.id == id && it.kind == "Folder" } }
@@ -27,16 +28,16 @@ internal fun WorkspaceArea(vm: WorkspaceViewModel, book: Book, entries: List<Ent
             ActionIcon(Icons.Outlined.CreateNewFolder, "Add folder", { folder = true })
             ActionIcon(Icons.Outlined.NoteAdd, "Add file", { folder = false })
         }
-        if (destination != null) TextButton(onClick = { selected = current?.folderId }) {
+        if (destination != null) TextButton(onClick = { vm.selectLocation(book.id, current?.folderId) }) {
             Icon(Icons.Outlined.ArrowUpward, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Up one folder")
         }
         Box(Modifier.weight(1f)) {
             key(book.id, destination) {
-                ExplorerTree(vm, book, entries, onOpen, { selected = it }, destination, Modifier.fillMaxSize(), rootLabel = current?.title ?: "Entire workspace", arrange = true, rootId = destination, onRootClick = { locationMenu = true })
+                ExplorerTree(vm, book, entries, onOpen, { vm.selectLocation(book.id, it) }, destination, Modifier.fillMaxSize(), rootLabel = current?.title ?: "Entire workspace", arrange = true, rootId = destination, onRootClick = { locationMenu = true })
             }
             DropdownMenu(locationMenu, { locationMenu = false }, modifier = Modifier.heightIn(max = 360.dp)) {
-                DropdownMenuItem(text = { Text("Entire workspace") }, onClick = { selected = null; locationMenu = false })
-                entries.filter { it.kind == "Folder" }.forEach { f -> DropdownMenuItem(text = { Text(resourceFolderPath(f, entries.filter { it.kind == "Folder" })) }, onClick = { selected = f.id; locationMenu = false }) }
+                DropdownMenuItem(text = { Text("Entire workspace") }, onClick = { vm.selectLocation(book.id, null); locationMenu = false })
+                entries.filter { it.kind == "Folder" }.forEach { f -> DropdownMenuItem(text = { Text(resourceFolderPath(f, entries.filter { it.kind == "Folder" })) }, onClick = { vm.selectLocation(book.id, f.id); locationMenu = false }) }
             }
         }
     }

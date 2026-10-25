@@ -29,6 +29,10 @@ constructor(
     private val session: EditorSession,
     private val manuscript: ManuscriptRepository,
 ) : FeatureViewModel() {
+    private val locationState = MutableStateFlow<Map<String, Long?>>(emptyMap())
+    val locations = locationState.asStateFlow()
+    fun selectLocation(bookId: String, folderId: Long?) { locationState.update { it + (bookId to folderId) } }
+
     private val links = MutableStateFlow<List<Pair<Long, Long>>>(emptyList())
     val state =
         combine(repository.books, repository.summaries, repository.trash, links, manuscript.placements) { b, e, t, l, p ->

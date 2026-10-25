@@ -1,3 +1,16 @@
+# Current milestone override — 25 October 2026
+
+This section supersedes navigation and file-placement requirements in the historical specification below.
+
+- Workspace tabs: Overview, Write, AI. AI uses an owl icon and only displays Coming soon. Plan, Arrange and Read are not tabs.
+- Overview: local cover import/removal, title, author, multi-genre, status, synopsis, goal and totals, with editable details and scrolling.
+- Write: all workspace content, location dropdown, nested folders, separate new-file/new-folder buttons, filename search and type/status filters. Creation exposes manuscript/reference purpose; naming and folder moves do not change purpose.
+- Long-press dragging uses before/after row edges and the middle of a folder for nesting. Move dialog excludes self/descendant destinations; domain validation still rejects cycles and cross-project moves. Duplicate remaps references inside copied subtrees.
+- Existing projects keep IDs, links, roles, text and ordering. Backup v8 adds normalized cover images; database schema 7 upgrades from schema 6 without destructive recreation.
+- Android 16 target, unsigned release-bundle CI and signing configuration prepare a release candidate. The LTS label requires verified results and the owner's production signing, release testing and publication decision.
+
+---
+
 # NovelForge: configurable writing workspace
 
 Status: implementation specification with a newer owner workflow amendment below; broader customization/reliability work remains incomplete.
