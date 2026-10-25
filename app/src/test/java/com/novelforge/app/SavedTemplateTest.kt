@@ -29,12 +29,13 @@ class SavedTemplateTest {
             val nested = workspace.createNode(source, "Nested", true, MANUSCRIPT_AREA, folder)
             val document = workspace.createNode(source, "Opening", false, MANUSCRIPT_AREA, nested, "My scene")
             db.dao().updateEntry(db.dao().entry(document)!!.copy(body = "PRIVATE PROSE"))
-            val template = templateFromStructure("custom-test", "My structure", db.dao().summaries().first(), true)
+            val template = templateFromStructure("custom-test", "My structure", db.dao().summaries().first(), true).copy(fields = listOf(FieldDefinition("mood", "Mood", FieldType.TEXT)))
             prefs.update(prefs.state.value.copy(savedTemplates = listOf(template)))
             val reopened = LocalPreferencesRepository(context)
             assertEquals(template, reopened.state.value.savedTemplates.single())
             val restoredWorkspace = LocalWorkspaceRepository(db, reopened)
             val newProject = restoredWorkspace.createBook("New project", "", emptyList(), 0, 0, true, template.id).bookId
+            assertEquals(template.fields, db.dao().bookRecord(newProject)!!.toModel().fields)
             val entries = db.dao().entries(newProject)
             val copy = entries.first { it.title == "Opening" }
             assertNotEquals(document, copy.id)

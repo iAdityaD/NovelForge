@@ -48,6 +48,7 @@ class LocalWritingRepository @Inject constructor(private val db: ForgeDb, privat
         db.withTransaction {
             // Never resurrect a file trashed while the editor was open.
             val existing = dao.entry(entry.id) ?: error("This file is unavailable.")
+            FieldCodec.values(FieldCodec.encodeValues(entry.metadata))
             val book = requireNotNull(dao.book(entry.bookId))
             book.fields.forEach { field ->
                 val values = entry.metadata[field.id].orEmpty()

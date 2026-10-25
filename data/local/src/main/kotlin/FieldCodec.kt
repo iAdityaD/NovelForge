@@ -16,7 +16,7 @@ object FieldCodec {
         validateFields(fields)
         return fields
     }
-    fun encodeValues(values: Map<String, List<String>>): String = JSONObject().apply { values.forEach { (key, value) -> put(key, JSONArray(value)) } }.toString()
+    fun encodeValues(values: Map<String, List<String>>): String = JSONObject().apply { values.toSortedMap().forEach { (key, value) -> put(key, JSONArray(value)) } }.toString()
     fun values(raw: String): Map<String, List<String>> {
         val obj = JSONObject(raw)
         require(obj.length() <= 500) { "Too many stored field values." }

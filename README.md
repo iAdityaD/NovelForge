@@ -29,7 +29,7 @@ Room schema **6** adds optional custom field definitions and values. Schema 5 ad
 
 Everything works without an account or network connection. The app has no internet permission. The explorer is a logical SQLite tree, not a live external Markdown vault.
 
-Recovery backup **v6** preserves project metadata, documents, custom labels/statuses, Plan/manuscript roles, folder order, trash, checkpoints and writing history. Restore validates bounded input and creates a separate project in one transaction, remapping IDs and internal links. Legacy v1–v5 backups remain supported. Markdown export contains the complete current manuscript in nested order, excluding Plan resources.
+Recovery backup **v7** preserves project metadata, documents, custom labels/statuses, Plan/manuscript roles, folder order, trash, checkpoints and writing history. Restore validates bounded input and creates a separate project in one transaction, remapping IDs and internal links. Legacy v1–v6 backups remain supported. Markdown export contains the complete current manuscript in nested order, excluding Plan resources.
 
 Project backups do **not** include app preferences, historical reader bookmarks/positions or pending unsaved drafts. Limits: 16 MB and 10,000 documents per backup. Export before uninstalling or changing devices. Android cloud backup is disabled.
 
