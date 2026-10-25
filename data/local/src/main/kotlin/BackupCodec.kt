@@ -4,6 +4,7 @@ import com.novelforge.core.model.*
 import com.novelforge.domain.story.*
 import com.novelforge.domain.workspace.*
 import com.novelforge.data.local.FieldCodec
+import com.novelforge.data.local.CoverImages
 import org.json.JSONArray
 import org.json.JSONObject
 
