@@ -284,3 +284,14 @@ Remaining broader release work: physical-device performance/accessibility valida
 - Overview provides spacious editable project details, synopsis, writing goal and imported cover. Cover is normalized locally and included in backup v8; schema 6→7 retains existing data.
 - Production signing is optional through environment variables; CI verifies an unsigned release bundle. Store publication is not performed.
 - Candidate verification is pending. Do not describe this checkpoint as a verified release.
+
+## Verified first-LTS candidate — 1.0.0-rc1, 25 October 2026
+Source f612f84c997f7e4e052f8f99f0c0e466c54d9b43, versionCode 11, min SDK 26, target SDK 36.
+CI https://github.com/iAdityaD/NovelForge/actions/runs/40169296217 passed build, device-test (34), and device-test (36).
+45 JVM tests and 9 tests on each Android version passed, plus debug/release lint and architecture checks. The minified unsigned release App Bundle compiled successfully. Debug APK signature verified. ARM64 native PT_LOAD segments use 16 KB alignment in both APK and AAB; this is not a substitute for physical-device validation.
+APK SHA256: 348a70133702d9ffeba95581c516376f8c6a08691ec96efe71f0538d88095bab.
+Unsigned AAB SHA256: e7828ac6e8b916bd3e8ef9d57acb39f6a17d2a11e8f00738ec841c27ea45738f.
+Artifacts: APK 12590057772, release bundle 12589448753, unit/lint reports 12589703405, API34 reports 12589982584, API36 reports 12589458567.
+Implemented Overview / Write / owl AI placeholder, editable novel details and local covers, complete workspace location dropdown, before/inside/after drag arrangement, move/rename/duplicate/trash, stable IDs and references, schema 7 and backup v8. AI intentionally says Coming soon.
+Automated device screenshots captured transient surfaces immediately after creation; native-rendered Overview and settled Write/AI screenshots were inspected. Device interaction assertions passed. Physical-device keyboard, accessibility and final signed-release installation remain release gates.
+Publishing still requires owner-controlled production signing credentials, Play Console listing/privacy/support setup, and release acceptance. See docs/RELEASE.md. No store submission or production-signing key was created.

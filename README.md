@@ -44,7 +44,7 @@ python3 scripts/check_architecture.py
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
 ```
 
-GitHub Actions also runs API 34 emulator journeys and migration checks. Successful builds provide the `NovelForge-debug` APK artifact, test reports and actual device screenshots. Version 0.6.1 source `ae07cc8c6783f531591ca01a5cbf59e1c0482b00` passed 43 JVM tests, eight API 34 Android tests, lint and architecture checks in [CI run 40148754361](https://github.com/iAdityaD/NovelForge/actions/runs/40148754361). APK SHA256: `b45db137b8885ffda0fa4e406fbfe2587c43a2912cbba495b8c7f9ce15506791`. See [PROGRESS.md](PROGRESS.md) for checkpoints and remaining work.
+GitHub Actions runs API 34 and API 36 emulator journeys, migrations, unit tests, debug/release lint, architecture checks and a minified release-bundle build. Candidate `1.0.0-rc1`, source `f612f84c997f7e4e052f8f99f0c0e466c54d9b43`, passed 45 JVM tests and 9 tests on each Android version in [CI run 40169296217](https://github.com/iAdityaD/NovelForge/actions/runs/40169296217). The APK is debug-signed and the release App Bundle is unsigned. See [PROGRESS.md](PROGRESS.md) for hashes and artifacts, and [release preparation](docs/RELEASE.md) for publishing gates.
 
 **Before replacing an older development build, export every project outside app storage.** CI debug signatures may differ. If Android rejects an update signature, do not uninstall until backups are secured. Uninstalling deletes local data. Production distribution requires an owner-controlled stable signing key.
 
