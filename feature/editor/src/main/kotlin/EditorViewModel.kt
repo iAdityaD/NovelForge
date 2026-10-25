@@ -44,12 +44,17 @@ constructor(
         val draft = repository.untitled(bookId)
         val id = preferences.lastEntry(bookId)
         val saved = repository.entry(id)
-        val opened = if (draft != null) session.openUntitled(bookId)
-            else if (saved?.bookId == bookId && !saved.deleted) session.open(id) else false
+        val opened = if (saved?.bookId == bookId && !saved.deleted) session.open(id)
+            else if (draft != null) session.openUntitled(bookId) else false
         done(opened)
     }
 
-    fun newDraft(bookId: String, done: () -> Unit) = launchWork { if (session.openUntitled(bookId)) done() }
+    fun newDraft(bookId: String, done: () -> Unit) = launchWork {
+        if (session.openUntitled(bookId)) {
+            state.value.entry?.let(preferences::rememberEntry)
+            done()
+        }
+    }
     private var committingDraft = false
     fun saveDraft(title: String, folderId: Long?, newFolder: String?, done: () -> Unit) = launchWork {
         if (committingDraft) return@launchWork
