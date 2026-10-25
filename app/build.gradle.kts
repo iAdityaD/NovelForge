@@ -8,11 +8,11 @@ plugins {
 
 android {
     namespace = "com.novelforge.app"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.novelforge.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 11
         versionName = "1.0.0-rc1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -33,8 +33,18 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    signingConfigs {
+        val keyPath = providers.environmentVariable("NOVELFORGE_KEYSTORE").orNull
+        if (!keyPath.isNullOrBlank()) create("production") {
+            storeFile = file(keyPath)
+            storePassword = providers.environmentVariable("NOVELFORGE_STORE_PASSWORD").get()
+            keyAlias = providers.environmentVariable("NOVELFORGE_KEY_ALIAS").get()
+            keyPassword = providers.environmentVariable("NOVELFORGE_KEY_PASSWORD").get()
+        }
+    }
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("production")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

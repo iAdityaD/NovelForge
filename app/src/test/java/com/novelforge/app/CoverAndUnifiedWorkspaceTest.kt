@@ -57,6 +57,12 @@ class CoverAndUnifiedWorkspaceTest {
             assertTrue(runCatching { repo.relocate(folder, folder) }.isFailure)
             repo.setArea(folder, MANUSCRIPT_AREA)
             assertEquals(MANUSCRIPT_AREA, db.dao().entry(note)!!.area)
+            val copy = repo.duplicate(folder)
+            val copiedChildren = db.dao().entries(book).filter { it.folderId == copy }
+            val copiedDraft = copiedChildren.single { it.title == "Draft" }
+            val copiedNote = copiedChildren.single { it.title == "Note" }
+            assertEquals("[[${copiedNote.id}|Note]]", copiedDraft.body)
+            assertNotEquals(draft, copiedDraft.id)
             repo.relocate(draft, null)
             assertNull(db.dao().entry(draft)!!.folderId)
         } finally { db.close() }

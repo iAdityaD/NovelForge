@@ -367,6 +367,11 @@ fun ExplorerTree(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                     }
+                    if (hover && arrange) {
+                        val rect = bounds[e.id]
+                        val inside = folder && rect != null && point.y in (rect.top + rect.height * .3f)..(rect.bottom - rect.height * .3f)
+                        Text(if (inside) "Inside" else if (point.y < (rect?.center?.y ?: point.y)) "Before" else "After", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
                     Box {
                         ActionIcon(
                             Icons.Outlined.MoreHoriz,
@@ -399,7 +404,7 @@ fun ExplorerTree(
                                 },
                             )
                             DropdownMenuItem(text = { Text(if (e.area == MANUSCRIPT_AREA) "Use as reference" else "Include in manuscript") }, onClick = { menu = false; action = "Role" to e })
-                            listOf("Rename", "Move", "Trash").forEach { name ->
+                            listOf("Rename", "Duplicate", "Move", "Trash").forEach { name ->
                                 DropdownMenuItem(
                                     text = { Text(name) },
                                     onClick = {
@@ -423,6 +428,7 @@ fun ExplorerTree(
     }, confirmButton = { TextButton(onClick = { filters = false }) { Text("Done") } })
     action?.let { (name, e) ->
         when (name) {
+            "Duplicate" -> LaunchedEffect(e.id) { vm.duplicate(e.id); action = null }
             "Role" -> AlertDialog(onDismissRequest = { action = null }, title = { Text(if (e.area == MANUSCRIPT_AREA) "Use as reference?" else "Include in manuscript?") }, text = { Text(if (e.kind == "Folder") "Applies to this folder and everything inside it. Manuscript items are included in export and writing totals." else "Manuscript files are included in export and writing totals. References remain available in the workspace.") }, confirmButton = { TextButton(onClick = { vm.setArea(e.id, if (e.area == MANUSCRIPT_AREA) PLAN_AREA else MANUSCRIPT_AREA); action = null }) { Text("Apply") } }, dismissButton = { TextButton(onClick = { action = null }) { Text("Cancel") } })
             "Rename" ->
                 NameDialog(
@@ -476,7 +482,14 @@ fun ExplorerTree(
                                 }
                             }
                             items(
-                                entries.filter { it.kind == "Folder" && it.id != e.id },
+                                entries.filter { candidate ->
+                                    if (candidate.kind != "Folder") false else {
+                                        var ancestor: Long? = candidate.id
+                                        val seen = mutableSetOf<Long>()
+                                        while (ancestor != null && ancestor != e.id && seen.add(ancestor)) ancestor = entries.find { it.id == ancestor }?.folderId
+                                        ancestor != e.id
+                                    }
+                                },
                                 key = { it.id },
                             ) { f ->
                                 TextButton(

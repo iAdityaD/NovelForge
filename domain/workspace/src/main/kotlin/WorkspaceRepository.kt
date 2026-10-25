@@ -41,6 +41,8 @@ interface WorkspaceRepository {
 
     suspend fun renameEntry(id: Long, title: String)
 
+    suspend fun duplicate(id: Long): Long
+
     suspend fun setArea(id: Long, area: String)
 
     suspend fun relocate(id: Long, destination: Long?)

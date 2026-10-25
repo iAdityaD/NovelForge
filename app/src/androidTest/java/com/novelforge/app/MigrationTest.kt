@@ -132,4 +132,19 @@ class MigrationTest {
         } finally { db.close() }
     }
 
+    @Test fun v6AddsCoverWithoutChangingFieldsAndDocumentIdentity() = kotlinx.coroutines.runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        helper.createDatabase("migration-v6", 6).apply {
+            execSQL("INSERT INTO Book(id,title,author,genre,synopsis,cover,target,status,updated,fieldsJson) VALUES ('v6','Existing','','','Keep',0,0,'In progress',0,'[]')")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId,area,metadataJson) VALUES (51,'v6','Draft','Keep [[51|self]]','Document','Draft',NULL,3,2,0,0,NULL,'manuscript','{}')")
+            close()
+        }
+        val db = androidx.room.Room.databaseBuilder(context, ForgeDb::class.java, "migration-v6").addMigrations(MIGRATION_6_7).build()
+        try {
+            Assert.assertEquals("", db.dao().book("v6")!!.coverImage)
+            Assert.assertEquals("[]", db.dao().book("v6")!!.fieldsJson)
+            Assert.assertEquals("Keep [[51|self]]", db.dao().entry(51)!!.body)
+        } finally { db.close() }
+    }
+
 }

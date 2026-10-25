@@ -251,6 +251,31 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
         }
     }
 
+    override suspend fun duplicate(id: Long): Long = db.withTransaction {
+        val original = requireNotNull(dao.entry(id))
+        require(!original.deleted)
+        val all = dao.entries(original.bookId)
+        val book = requireNotNull(dao.book(original.bookId))
+        val subtree = descendantIds(id, all)
+        val copies = all.filter { it.id in subtree }
+        val names = all.filter { it.folderId == original.folderId }.map { it.title.lowercase() }.toSet()
+        var name = original.title.take(180) + " (copy)"
+        var number = 2
+        while (name.lowercase() in names) name = original.title.take(180) + " (copy ${number++})"
+        val ids = mutableMapOf<Long, Long>()
+        copies.forEach { entry -> ids[entry.id] = dao.addEntry(entry.copy(id = 0, folderId = null, parentId = null)) }
+        copies.forEach { entry ->
+            dao.updateEntry(entry.copy(id = ids.getValue(entry.id), title = if (entry.id == id) name else entry.title,
+                folderId = if (entry.id == id) original.folderId else ids[entry.folderId],
+                parentId = ids[entry.parentId] ?: entry.parentId,
+                body = remapLinks(entry.body, ids), metadata = FieldCodec.remap(entry.metadata, book.fields, ids),
+                position = if (entry.id == id) (all.filter { it.folderId == original.folderId }.maxOfOrNull { it.position } ?: -1) + 1 else entry.position,
+                updated = System.currentTimeMillis()))
+        }
+        dao.touch(original.bookId, System.currentTimeMillis())
+        ids.getValue(id)
+    }
+
     override suspend fun setArea(id: Long, area: String) = db.withTransaction {
         require(area in listOf(PLAN_AREA, MANUSCRIPT_AREA))
         val entry = requireNotNull(dao.entry(id))

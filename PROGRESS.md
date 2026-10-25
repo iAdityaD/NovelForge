@@ -276,3 +276,11 @@ APK SHA256: b45db137b8885ffda0fa4e406fbfe2587c43a2912cbba495b8c7f9ce15506791.
 Artifacts: APK 12581961001; verification reports 12582000908; device reports 12582525982.
 Includes recovery journal, reusable project structures, custom fields, migration 5→6, backup v7, updated Guide and Settings. Write owns manuscript arrangement; no active Arrange or Read navigation.
 Remaining broader release work: physical-device performance/accessibility validation, production signing, full-app snapshots, structural undo and media import. This is a verified development build, not a production-store release.
+
+## First LTS milestone — release candidate implementation
+- Workspace tabs are Overview / Write / AI (owl placeholder, Coming soon).
+- Write browses the complete project through a folder-location dropdown; separate file/folder creation buttons, search, filters, nesting, before/inside/after drag targets, move/rename/duplicate/trash actions.
+- Manuscript/reference roles remain explicit to prevent research content from entering exports accidentally. Location and names never redefine the role.
+- Overview provides spacious editable project details, synopsis, writing goal and imported cover. Cover is normalized locally and included in backup v8; schema 6→7 retains existing data.
+- Production signing is optional through environment variables; CI verifies an unsigned release bundle. Store publication is not performed.
+- Candidate verification is pending. Do not describe this checkpoint as a verified release.

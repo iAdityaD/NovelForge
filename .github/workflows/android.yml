@@ -17,15 +17,19 @@ jobs:
           java-version: '17'
       - uses: android-actions/setup-android@v3
         with:
-          packages: platform-tools platforms;android-35 build-tools;35.0.0
+          packages: platform-tools platforms;android-36 build-tools;35.0.0 build-tools;36.0.0
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Compile, unit tests and lint
-        run: python3 scripts/check_architecture.py && ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
+        run: python3 scripts/check_architecture.py && ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest :app:bundleRelease :app:lintRelease
       - uses: actions/upload-artifact@v4
         with:
           name: NovelForge-debug
           path: app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NovelForge-unsigned-release-bundle
+          path: app/build/outputs/bundle/release/app-release.aab
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -37,6 +41,10 @@ jobs:
             app/build/reports/lint-results-debug.html
 
   device-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [34, 36]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -47,7 +55,7 @@ jobs:
           java-version: '17'
       - uses: android-actions/setup-android@v3
         with:
-          packages: platform-tools platforms;android-35 build-tools;35.0.0
+          packages: platform-tools platforms;android-36 build-tools;35.0.0 build-tools;36.0.0
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Enable KVM
@@ -57,15 +65,15 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ matrix.api }}
           arch: x86_64
-          target: default
+          target: google_apis
           disable-animations: true
           script: bash scripts/device-tests.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: device-test-reports
+          name: device-test-reports-${{ matrix.api }}
           path: |
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
