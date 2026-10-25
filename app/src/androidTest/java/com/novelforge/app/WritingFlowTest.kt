@@ -109,6 +109,7 @@ class WritingFlowTest {
         compose.waitUntil(10000) { compose.onAllNodesWithText("Files").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Files").performClick()
         compose.onNodeWithText("My own category").assertExists()
+        compose.onNodeWithContentDescription("Expand My own category").performClick()
         compose.onNodeWithText("World Two").assertExists()
         compose.onNodeWithText("Magic system.md").assertDoesNotExist()
     }
