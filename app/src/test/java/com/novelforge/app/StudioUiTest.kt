@@ -60,7 +60,14 @@ class StudioUiTest {
         compose
             .onNodeWithContentDescription("Manuscript text")
             .performTextReplacement("A new world begins here.")
-        compose.onNodeWithContentDescription("Read this page").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Save file").performClick()
+        compose.onNodeWithContentDescription("Switch to read mode").performClick()
+        compose.onNodeWithContentDescription("Manuscript text").assertDoesNotExist()
+        compose.onNodeWithText("A new world begins here.").assertExists()
+        shot("11-file-read-mode")
+        compose.onNodeWithContentDescription("Switch to write mode").performClick()
+        compose.onNodeWithContentDescription("Manuscript text").assertExists()
+        shot("12-file-write-mode")
         compose.onNodeWithContentDescription("Back to workspace").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Back to library").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Back to library").performClick()

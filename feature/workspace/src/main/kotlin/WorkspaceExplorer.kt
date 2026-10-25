@@ -204,7 +204,8 @@ fun ExplorerTree(
             state = listState,
             contentPadding = PaddingValues(8.dp, 8.dp, 8.dp, 16.dp),
         ) {
-            item {
+            item(key = 0L) {
+                DisposableEffect(Unit) { onDispose { bounds.remove(0L) } }
                 Row(
                     Modifier.fillMaxWidth()
                         .onGloballyPositioned { bounds[0] = it.boundsInRoot() }
@@ -294,7 +295,8 @@ fun ExplorerTree(
                                         bounds.entries
                                             .firstOrNull { (id, rect) ->
                                                 id != e.id &&
-                                                    rect.contains(point) &&
+                                                    listState.layoutInfo.visibleItemsInfo.any { it.key == id } &&
+                                                    viewport.contains(point) && rect.contains(point) &&
                                                     (id == 0L ||
                                                         entries.any {
                                                             it.id == id && (canArrange || it.kind == "Folder")

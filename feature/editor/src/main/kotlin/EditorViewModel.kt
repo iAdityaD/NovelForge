@@ -58,12 +58,12 @@ constructor(
         val draft = state.value.entry
         val position = draft?.let { preferences.editingPosition(it.bookId, it.id) } ?: (0 to 0)
         if (session.saveUntitled(title, folderId, newFolder)) {
-            state.value.entry?.let { preferences.rememberEntry(it); preferences.editingPosition(it.bookId, it.id, position.first, position.second) }
+            state.value.entry?.let { preferences.rememberEntry(it); preferences.editingPosition(it.bookId, it.id, position.first, position.second); preferences.editingPosition(it.bookId, 0, 0, 0) }
             done()
         }
         } finally { committingDraft = false }
     }
-    fun discardDraft(done: () -> Unit) = launchWork { session.discardUntitled(); done() }
+    fun discardDraft(done: () -> Unit) = launchWork { val bookId = state.value.entry?.bookId; session.discardUntitled(); bookId?.let { preferences.editingPosition(it, 0, 0, 0) }; done() }
     fun position(entry: Entry) = preferences.editingPosition(entry.bookId, entry.id)
     fun position(entry: Entry, cursor: Int, scroll: Int) = preferences.editingPosition(entry.bookId, entry.id, cursor, scroll)
 

@@ -49,7 +49,7 @@ class WritingFlowTest {
         compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Manuscript text").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Manuscript text").assertTextContains("Magic has a cost.")
         compose.onNodeWithContentDescription("Open file explorer").performClick()
-        compose.onNodeWithContentDescription("Expand My own category").performClick()
+        compose.onNodeWithContentDescription("Collapse My own category").assertExists()
         compose.onNodeWithText("Magic system.md").assertExists()
         compose.onNodeWithText("My own category").performClick()
         compose.onNodeWithContentDescription("New folder").performClick()

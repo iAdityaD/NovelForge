@@ -97,7 +97,7 @@ class LocalPreferencesRepository @Inject constructor(@ApplicationContext context
 
     override fun lastEntry() = prefs.getLong("lastEntry", 0)
 
-    override fun lastEntry(bookId: String) = prefs.getLong("last-entry-$bookId", 0)
+    override fun lastEntry(bookId: String) = prefs.getLong("last-entry-$bookId", if (lastBook() == bookId) lastEntry() else 0)
     override fun editingPosition(bookId: String, id: Long) = prefs.getInt("cursor-$bookId-$id", 0) to prefs.getInt("editor-scroll-$bookId-$id", 0)
     override fun editingPosition(bookId: String, id: Long, cursor: Int, scroll: Int) {
         prefs.edit().putInt("cursor-$bookId-$id", cursor).putInt("editor-scroll-$bookId-$id", scroll).apply()

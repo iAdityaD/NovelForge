@@ -101,7 +101,7 @@ fun EditorScreen(
         }, confirmButton = { TextButton(onClick = { vm.metadata(type, status); properties = false }, enabled = type.isNotBlank() && type.trim() != "Folder" && status.isNotBlank()) { Text("Save details") } }, dismissButton = { TextButton(onClick = { properties = false }) { Text("Cancel") } })
     }
     if (customFields) CustomFieldValues(book?.fields.orEmpty(), e, entries, { customFields = false }, vm::fields)
-    val scroll = rememberScrollState(vm.position(e).second)
+    val scroll = rememberSaveable(e.bookId, e.id, saver = ScrollState.Saver) { ScrollState(vm.position(e).second) }
     LaunchedEffect(e.bookId, e.id) {
         snapshotFlow { field.selection.end to scroll.value }.distinctUntilChanged().collect { (cursor, offset) -> vm.position(e, cursor, offset) }
     }
