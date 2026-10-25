@@ -32,7 +32,7 @@ class WritingFlowTest {
         compose.waitUntil(10000) { compose.onAllNodesWithText("My own category").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("My own category").performClick()
         compose.onNodeWithContentDescription("Add file").performClick()
-        compose.onNodeWithText("Title").performTextInput("My first resource")
+        compose.onNode(hasText("Title") and hasAnyAncestor(isDialog())).performTextInput("My first resource")
         compose.onNodeWithText("Type label (optional)").performTextInput("Ideas")
         compose.onNodeWithText("Create").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithContentDescription("Manuscript text").fetchSemanticsNodes().isNotEmpty() }
@@ -50,7 +50,7 @@ class WritingFlowTest {
         compose.waitUntil(10000) { compose.onAllNodesWithText("Two worlds share one secret.").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Recent documents").assertDoesNotExist()
         compose.onNodeWithText("Files").performClick()
-        compose.onNodeWithText("Manuscript").assertDoesNotExist()
+        compose.onNode(hasText("Manuscript") and hasAnyAncestor(hasTestTag("explorer-tree"))).assertDoesNotExist()
         compose.onNodeWithText("My own category").performClick()
         compose.onNodeWithContentDescription("New folder").performClick()
         compose.onNodeWithText("Folder name").performTextInput("World Two")
@@ -58,7 +58,7 @@ class WritingFlowTest {
         compose.waitUntil(10000) { compose.onAllNodesWithText("World Two").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("World Two").performClick()
         compose.onNodeWithContentDescription("New file").performClick()
-        compose.onNodeWithText("Title").performTextInput("Magic system")
+        compose.onNode(hasText("Title") and hasAnyAncestor(isDialog())).performTextInput("Magic system")
         compose.onNodeWithText("Create").performClick()
         compose.waitUntil(10000) {
             compose
