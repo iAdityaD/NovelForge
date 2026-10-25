@@ -263,6 +263,8 @@ fun ForgeApp() {
                         )
                     Destination.New ->
                         NewWorkspaceScreen(prefs.starterFolders, prefs.savedTemplates, { screen = Destination.Library }) { title, author, genre, cover, target, standard, templateId ->
+                            focus.clearFocus(force = true)
+                            keyboard?.hide()
                             workspace.createBook(title, author, genre, cover, target, standard, templateId) { created ->
                                 project(created.bookId)
                                 workspaceTab = 0

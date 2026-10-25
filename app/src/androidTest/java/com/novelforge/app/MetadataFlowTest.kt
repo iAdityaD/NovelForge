@@ -64,6 +64,10 @@ class MetadataFlowTest {
         compose.onNodeWithText("Create workspace").performClick()
         compose.waitUntil(10000) { compose.onAllNodesWithText("Open writing workspace").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("workspace-tab-0").assertIsDisplayed()
+        compose.waitUntil(10000) {
+            val insets = androidx.core.view.ViewCompat.getRootWindowInsets(compose.activity.window.decorView)
+            insets?.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime()) != true
+        }
         screenshot("workspace-overview")
         compose.onNodeWithTag("workspace-content").performScrollToNode(hasText("Open project notes"))
         compose.onNodeWithText("Open project notes").performClick()
