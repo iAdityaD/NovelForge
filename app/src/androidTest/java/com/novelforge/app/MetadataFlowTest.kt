@@ -103,7 +103,7 @@ class MetadataFlowTest {
         compose.onNodeWithText("Reorder files").performClick()
         compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("Chapter 2.md"))
         // Keep both chapters away from the edge-autoscroll zone before dragging.
-        compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("Scene Ideas"))
+        compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("World maps"))
         screenshot("workspace-write-outline")
 
         val firstBounds = compose.onNodeWithContentDescription("Drag Chapter 1 to reorder").fetchSemanticsNode().boundsInRoot

@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -94,6 +95,7 @@ fun ExplorerTree(
     val listState = rememberLazyListState()
     val expanded = remember(book.id) { mutableStateMapOf<Long, Boolean>() }
     val bounds = remember { mutableMapOf<Long, Rect>() }
+    val origins = remember { mutableMapOf<Long, Offset>() }
     var dragging by remember { mutableStateOf<Long?>(null) }
     var point by remember { mutableStateOf(Offset.Zero) }
     var viewport by remember { mutableStateOf(Rect.Zero) }
@@ -248,7 +250,7 @@ fun ExplorerTree(
             if (visibleIds != null && rows.isEmpty())
                 item { Text("No matching files", Modifier.padding(16.dp)) }
             items(rows, key = { it.first.id }) { (e, depth) ->
-                DisposableEffect(e.id) { onDispose { bounds.remove(e.id) } }
+                DisposableEffect(e.id) { onDispose { bounds.remove(e.id); origins.remove(e.id) } }
                 var menu by remember { mutableStateOf(false) }
                 val folder = e.kind == "Folder"
                 val hover =
@@ -268,7 +270,7 @@ fun ExplorerTree(
                                 if (!inside) drawLine(dropColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx())
                             }
                         }
-                        .onGloballyPositioned { bounds[e.id] = it.boundsInRoot() }
+                        .onGloballyPositioned { bounds[e.id] = it.boundsInRoot(); origins[e.id] = it.positionInRoot() }
                         .clip(RoundedCornerShape(4.dp))
                         .background(
                             if (hover || activeFileId == e.id)
@@ -283,12 +285,12 @@ fun ExplorerTree(
                             detectDragGesturesAfterLongPress(
                                 onDragStart = { local ->
                                     dragging = e.id
-                                    point = (bounds[e.id]?.topLeft ?: Offset.Zero) + local
+                                    point = (origins[e.id] ?: Offset.Zero) + local
                                 },
                                 onDrag = { change, _ ->
                                     change.consume()
                                     // Resolve the pointer against the current row origin after scrolling.
-                                    point = (bounds[e.id]?.topLeft ?: Offset.Zero) + change.position
+                                    point = (origins[e.id] ?: Offset.Zero) + change.position
                                 },
                                 onDragCancel = { dragging = null },
                                 onDragEnd = {
