@@ -5,7 +5,7 @@ internal data class GuideArticle(val id: String, val category: String, val title
 
 internal val guideArticles = listOf(
     GuideArticle("start", "Getting started", "Start a writing project", listOf(
-        "Choose your starting point" to "Create a workspace from Library. Standard structure offers optional Novel, Short story, Screenplay, Nonfiction and Essay templates. Build from scratch starts empty. Only a title is required.",
+        "Choose your starting point" to "Create a workspace from Library. Standard structure offers optional Novel, Short story, Screenplay, Nonfiction and Essay templates. Build from scratch starts empty. Only a title is required. Save your own structures in Settings → Writing → My templates; optionally include empty documents. Saved templates also preserve custom field definitions.",
         "Make it yours" to "Optional details include author, multiple genres and color. Use the workspace pencil to change these and the project status. Edit the synopsis separately on Overview. A word goal of zero disables the goal.",
         "Keep the structure flexible" to "Templates create ordinary folders and files. Rename, move, reorder or delete them as your work evolves. Settings → Writing → Workspace structure customizes the Novel starter folders for future projects. Existing projects stay unchanged."
     )),
@@ -33,6 +33,7 @@ internal val guideArticles = listOf(
     GuideArticle("editor", "Writing", "Formatting and saving", listOf(
         "Markdown" to "Use ## Heading, **bold**, *italic*, > quote and - bullet. The toolbar inserts syntax at the cursor or wraps selected text. Callouts use > [!NOTE]. The editor retains Markdown source.",
         "Your writing canvas" to "Focus mode hides extra controls. Settings → Editor controls writing text size, monospace text and syntax colors. The writing canvas scrolls as your text grows.",
+        "Custom fields" to "Add optional project fields in Settings → Writing → Custom fields. In a document, open Page actions → Custom fields to enter text, numbers, dates, choices, URLs or document references. All values are optional. Fields and values travel with project recovery backups.",
         "Save state" to "Edits save locally after a short pause and before navigation. Saved locally means the database write succeeded. If saving fails, retry before leaving. Draft recovery is written before the normal autosave. Reopening a document recovers durable pending text; a conflicting saved version is kept and the recovery opens as a separate copy. An edit interrupted before the recovery write completes can still be lost.",
         "Undo and checkpoints" to "Undo and redo belong to the editing session. Checkpoints are persistent saved versions. Neither replaces an exported backup."
     )),

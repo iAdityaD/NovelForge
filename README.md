@@ -21,9 +21,9 @@ The UI uses charcoal/violet and light themes, compact rows and scrollable forms.
 
 The existing Android stack is retained. A domain-based modular monolith separates pure Kotlin models/contracts, application services, Room repositories, feature ViewModels and Compose UI. No SQL belongs in UI components. See [architecture](docs/ARCHITECTURE.md) and [the current product specification](docs/PRODUCT_REDESIGN.md).
 
-Room schema **5** adds the explicit document area while retaining IDs, content, references, folders and revisions. Legacy mixed folders can appear as ancestors in both Plan and Write; migration does not silently reorganize or delete their text. Prior manuscript exclusion records remain for historical compatibility, but no longer hide documents from the current manuscript. Nested folder/sibling order is now shared by Write, export and manuscript statistics.
+Room schema **6** adds optional custom field definitions and values. Schema 5 added the explicit document area while retaining IDs, content, references, folders and revisions. Legacy mixed folders can appear as ancestors in both Plan and Write; migration does not silently reorganize or delete their text. Prior manuscript exclusion records remain for historical compatibility, but no longer hide documents from the current manuscript. Nested folder/sibling order is now shared by Write, export and manuscript statistics.
 
-`WorkspaceRepository.createNode` creates generic documents/folders and optional resource categories transactionally. `placeBefore` validates project/area ownership and cycles, then changes parent/sibling order atomically. `orderedManuscript` is the iterative depth-first projection used for canonical manuscript order. Type labels and document statuses remain portable freeform values; this is not yet a schema-based custom metadata/type registry.
+`WorkspaceRepository.createNode` creates generic documents/folders and optional resource categories transactionally. `placeBefore` validates project/area ownership and cycles, then changes parent/sibling order atomically. `orderedManuscript` is the iterative depth-first projection used for canonical manuscript order. Type labels and document statuses remain portable freeform values; project-owned field definitions support optional typed metadata. Field types are immutable after creation; used choices cannot be removed.
 
 ## Storage, backup and recovery
 
@@ -50,6 +50,8 @@ GitHub Actions also runs API 34 emulator journeys and migration checks. Successf
 
 ## Remaining scope
 
-This is a development build, not physical-device performance/accessibility certification. Full custom field schemas and reusable user-authored project recipes, full-app snapshots, structural undo, media/cover import and production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
+This is a development build, not physical-device performance/accessibility certification. Full-app snapshots, structural undo, media/cover import and production signing remain separate work. Screenplay templates do not provide professional pagination. Cloud sync, collaboration and AI are not required for the local writing workflow.
 
 Read `PROGRESS.md` and the latest owner amendments in `docs/PRODUCT_REDESIGN.md` before continuing. Older screenshots and design documents may show retired Arrange/Read workflows.
+
+Custom fields are managed in Settings → Writing → Custom fields and edited from Page actions → Custom fields. Reusable structures are saved in Settings → Writing → My templates. They copy names, types, roles, nesting and field definitions, with optional empty documents; manuscript text is never copied. Project backups include field definitions and values, with reference IDs remapped on restore.

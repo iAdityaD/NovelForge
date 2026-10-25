@@ -260,3 +260,10 @@ Source `0c3fb6ccfa2a6c39bb30f8bee7aca3c64e7f50a7`; CI run `40114860066` passed b
 APK version 0.6.0 (9), min API 26 / target 35; signature verified. SHA256 `e70d9a903dabb8f53b0514769797bee09782250eae6d48c5b4f9de5a168143b4`. Artifacts: APK `12567674545`, verification reports `12567694682`, device reports `12568296226`. Local delivery ZIP contains APK and installation/backup instructions.
 
 Actual rendered Write/Guide/Settings screens reviewed. No physical-device performance or full accessibility certification claimed. Remaining wider architecture roadmap: schema-based custom metadata/type registry, user-saved reusable recipes, durable pending-draft journal, complete app snapshots, persisted structural undo and stable owner-controlled signing. Current freeform labels/statuses and editable folders are implemented; do not confuse these with a completed custom field schema system.
+
+## 0.6.1 implementation checkpoint
+- Atomic per-document recovery journal; conflict recovery preserves the saved document.
+- Reusable user project structures, optionally including empty documents; independent IDs for each new project.
+- Project-owned optional custom fields with typed validation, editor controls, schema 5→6 migration and backup v7 reference remapping.
+- Settings and Guide integrated. Existing field types remain immutable; removing a used choice is rejected without changing stored content.
+- Latest implementation is undergoing CI and API 34 emulator verification. Do not treat this checkpoint as a verified APK release.

@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 class WritingFlowTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
-    @Test(timeout = 90000)
+    @Test(timeout = 120000)
     fun createsCustomWorkspaceFileAndAnalytics() {
         compose.onNodeWithTag("new-workspace").performClick()
         compose.onNodeWithText("Project title").performTextInput("The Glass World")
@@ -86,6 +86,12 @@ class WritingFlowTest {
         compose.onNodeWithText("Your writing portfolio").assertDoesNotExist()
         compose.onNodeWithText("Settings").performClick()
         compose.onNodeWithText("Writing").performScrollTo().performClick()
+        compose.onNodeWithText("Custom fields").performClick()
+        compose.onNodeWithText("Add field").performClick()
+        compose.onNodeWithText("Field name").performTextInput("Atmosphere")
+        compose.onNodeWithText("Save field").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithText("Atmosphere").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithContentDescription("Back to writing settings").performClick()
         compose.onNodeWithText("My templates").performClick()
         compose.onNodeWithText("Save project structure").performClick()
         compose.onNodeWithText("Template name").performTextInput("Reusable layout")

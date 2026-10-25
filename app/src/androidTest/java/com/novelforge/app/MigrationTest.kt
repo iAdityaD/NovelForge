@@ -114,4 +114,22 @@ class MigrationTest {
         }
         db.close()
     }
+    @Test fun v5AddsOptionalFieldsWithoutChangingTextOrIdentity() = kotlinx.coroutines.runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        helper.createDatabase("migration-v5", 5).apply {
+            execSQL("INSERT INTO Book(id,title,author,genre,synopsis,cover,target,status,updated) VALUES ('v5','Existing','','','Keep',0,0,'In progress',0)")
+            execSQL("INSERT INTO Entry(rowid,bookId,title,body,kind,status,parentId,position,words,updated,deleted,folderId,area) VALUES (41,'v5','Draft','Keep [[41|self]]','Document','Draft',NULL,3,2,0,0,NULL,'manuscript')")
+            close()
+        }
+        val db = androidx.room.Room.databaseBuilder(context, ForgeDb::class.java, "migration-v5").addMigrations(MIGRATION_5_6).build()
+        try {
+            Assert.assertEquals("[]", db.dao().book("v5")!!.fieldsJson)
+            val entry = db.dao().entry(41)!!
+            Assert.assertEquals("{}", entry.metadataJson)
+            Assert.assertEquals("Keep [[41|self]]", entry.body)
+            Assert.assertEquals(3, entry.position)
+            Assert.assertEquals("manuscript", entry.area)
+        } finally { db.close() }
+    }
+
 }
