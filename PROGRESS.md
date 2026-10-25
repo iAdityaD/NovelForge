@@ -304,3 +304,14 @@ Publishing still requires owner-controlled production signing credentials, Play 
 - Save / Keep draft / Discard protects navigation; one private draft per workspace is resumable through New file and excluded from backups until saved.
 - Cursor/scroll preferences persist per document; attached source links store a URL with editable notes.
 - Updated device journeys and added a restart/idempotency/deletion test. Validation pending; do not distribute this checkpoint as verified.
+
+
+## Verified document-first Write — 1.0.0-rc2, 26 October 2026 (IST)
+Source: c3428f2c5bb0544a3615daf7c77d56b1f60c72ad; versionCode 12; schema 7 and backup v8 unchanged.
+CI: https://github.com/iAdityaD/NovelForge/actions/runs/40244902819
+47 JVM tests passed, and 10 device tests passed on each of API 34 and API 36 (zero failures/errors/skips). Debug/release lint, architecture checks, APK compilation and minified unsigned release-bundle generation passed. APK signature verified.
+APK SHA256: c0b73bb3ecf7d6f2ca0e3c46dcdae79a1046d49e4fdaece8da18526c47a0457b.
+Artifacts: APK 12618661491, unsigned release bundle 12618816057, unit/lint/visual reports 12619000458, API34 reports 12618123177, API36 reports 12618975319.
+Write now opens New file / Attach link initially, then resumes the last selected document. Untitled drafts recover privately without appearing in the tree until Save. Save / Keep draft / Discard protects departure; first save chooses filename, destination and optional new folder atomically. Named documents retain autosave plus manual Save. File-level Read / Write uses the shared Markdown renderer; source attachment stores URLs and notes.
+Files owns search, filters and an explicit reorder mode. Drag hit-testing excludes off-screen targets, uses unclipped row origins and current pointer coordinates. Device screenshots confirm Chapter 2 moves before Chapter 1; Read/Write rendering was inspected. Guide and README match this workflow.
+One private draft per workspace is supported and is excluded from backups until explicitly saved as a file. Production signing, physical-device acceptance and store publication remain owner-controlled release gates; this APK is a debug-signed candidate.
