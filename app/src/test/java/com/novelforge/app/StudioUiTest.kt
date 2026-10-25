@@ -39,7 +39,7 @@ class StudioUiTest {
         compose.onNodeWithContentDescription("Cancel workspace creation").performClick()
         compose.onNodeWithText("Open demo").performScrollTo().performClick()
         compose.waitUntil(20000) {
-            compose.onAllNodesWithText("Your story, at a glance").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithText("Open writing workspace").fetchSemanticsNodes().isNotEmpty()
         }
         shot("10-overview")
         compose.onNodeWithText("Files").performClick()

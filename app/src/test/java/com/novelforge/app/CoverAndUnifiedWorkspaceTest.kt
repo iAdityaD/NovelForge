@@ -17,6 +17,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
+@org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
 class CoverAndUnifiedWorkspaceTest {
     @Test fun coverIsLocalPortableAndInvalidReplacementKeepsOriginal() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()

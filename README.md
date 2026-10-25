@@ -1,6 +1,6 @@
 # NovelForge — local Android writing workspace
 
-NovelForge 0.6.0 is a local-first writing app built with Kotlin, Jetpack Compose, Room, Hilt and Coroutines/Flow. Organize research in **Plan** and write/reorder a nested manuscript in **Write**. The workspace has three tabs: **Overview, Plan, Write**. Separate Arrange and Read screens are no longer part of active navigation.
+NovelForge 1.0.0-rc1 is a local-first writing app built with Kotlin, Jetpack Compose, Room, Hilt and Coroutines/Flow. The workspace tabs are **Overview, Write, AI**. Write manages manuscript and reference files together; the owl AI tab displays Coming soon. Plan, Arrange and Read are no longer separate tabs.
 
 ## Current workflow
 
