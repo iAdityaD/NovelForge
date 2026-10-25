@@ -12,6 +12,7 @@ data class EditorState(
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
     val error: String? = null,
+    val savingAs: Boolean = false,
 )
 
 /** One editing session shared by explorer mutations and the editor. No Android dependency. */
@@ -48,7 +49,47 @@ class EditorSession(private val repository: WritingRepository, private val scope
         return true
     }
 
+    suspend fun openUntitled(bookId: String): Boolean {
+        if (!flush()) return false
+        val recovered = repository.untitled(bookId)
+        if (recovered != null && recovered.id > 0) return open(recovered.id)
+        val draft = recovered ?: Entry(bookId = bookId, title = "Untitled", kind = "Document",
+            metadata = mapOf("_draftToken" to listOf(java.util.UUID.randomUUID().toString())))
+        repository.stageUntitled(draft)
+        persisted = null; journaled = draft; undo.clear(); redo.clear()
+        mutable.value = EditorState(draft, "Draft kept on this device")
+        return true
+    }
+
+    suspend fun saveUntitled(title: String, folderId: Long?, newFolder: String?): Boolean {
+        saveJob?.cancel()
+        return mutex.withLock {
+            val draft = state.value.entry ?: return@withLock false
+            if (draft.id != 0L) return@withLock false
+            mutable.update { it.copy(savingAs = true) }
+            try {
+            repository.stageUntitled(draft)
+            val saved = repository.commitUntitled(draft, title, folderId, newFolder)
+            persisted = saved; journaled = null
+            mutable.value = EditorState(saved)
+            true
+            } finally { mutable.update { it.copy(savingAs = false) } }
+        }
+    }
+
+    suspend fun discardUntitled() {
+        saveJob?.cancel()
+        mutex.withLock {
+            val draft = state.value.entry ?: return@withLock
+            require(draft.id == 0L)
+            repository.discardUntitled(draft.bookId)
+            persisted = null; journaled = null; undo.clear(); redo.clear()
+            mutable.value = EditorState()
+        }
+    }
+
     fun body(text: String) {
+        if (state.value.savingAs) return
         val entry = state.value.entry ?: return
         if (entry.body == text) return
         val now = System.currentTimeMillis()
@@ -62,6 +103,7 @@ class EditorSession(private val repository: WritingRepository, private val scope
     }
 
     fun title(text: String) {
+        if (state.value.savingAs) return
         state.value.entry?.let { change(it.copy(title = text)) }
     }
 
@@ -106,7 +148,7 @@ class EditorSession(private val repository: WritingRepository, private val scope
                 val current = state.value.entry ?: return@withLock
                 if (current != persisted && current != journaled) {
                     try {
-                        repository.stageDraft(current, persisted)
+                        if (current.id == 0L) repository.stageUntitled(current) else repository.stageDraft(current, persisted)
                         journaled = current
                     } catch (e: CancellationException) { throw e }
                     catch (_: Exception) {
@@ -126,6 +168,18 @@ class EditorSession(private val repository: WritingRepository, private val scope
     private suspend fun persist(): Boolean =
         mutex.withLock {
             val snapshot = state.value.entry ?: return@withLock true
+            if (snapshot.id == 0L) {
+                try {
+                    repository.stageUntitled(snapshot)
+                    journaled = snapshot
+                    mutable.update { if (it.entry == snapshot) it.copy(saveStatus = "Draft kept on this device") else it }
+                    return@withLock true
+                } catch (e: CancellationException) { throw e }
+                catch (_: Exception) {
+                    mutable.update { it.copy(saveStatus = "Draft recovery failed", error = "Could not preserve this draft. Retry before leaving.") }
+                    return@withLock false
+                }
+            }
             if (snapshot == persisted) {
                 mutable.update { it.copy(saveStatus = "Saved locally") }
                 return@withLock true
@@ -167,6 +221,7 @@ class EditorSession(private val repository: WritingRepository, private val scope
 
     suspend fun reload() {
         val id = state.value.entry?.id ?: return
+        if (id == 0L) return
         val e = repository.entry(id)
         persisted = e
         mutable.update { it.copy(entry = e) }

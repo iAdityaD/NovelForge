@@ -99,6 +99,7 @@ constructor(private val db: ForgeDb, private val preferences: PreferencesReposit
             db.dao().deleteBook(bookId)
         }
         ids.forEach { journal?.clear(it) }
+        journal?.clearUntitled(bookId)
         preferences.forgetWorkspace(bookId, ids)
     }
 

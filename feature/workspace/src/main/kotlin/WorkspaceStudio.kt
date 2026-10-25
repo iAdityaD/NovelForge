@@ -22,6 +22,7 @@ fun WorkspaceStudio(
     vm: WorkspaceViewModel, book: Book, entries: List<EntrySummary>, tab: Int,
     onTab: (Int) -> Unit, onBack: () -> Unit, onOpen: (Long) -> Unit,
     onEdit: () -> Unit, onExport: (Boolean) -> Unit, onExplorer: () -> Unit, synopsisLimit: Int = 500,
+    onNewDraft: () -> Unit = {}, onAttachLink: () -> Unit = {},
 ) {
     var menu by remember { mutableStateOf(false) }
     var delete by remember { mutableStateOf(false) }
@@ -53,7 +54,13 @@ fun WorkspaceStudio(
         if (currentTab == 0) {
             WorkspaceOverview(vm, book, entries, onEdit, { editSynopsis = true }, { onTab(1) }, onOpen, Modifier.weight(1f))
         } else if (currentTab == 1) {
-            WorkspaceArea(vm, book, entries, MANUSCRIPT_AREA, true, onOpen, Modifier.weight(1f))
+            Column(Modifier.weight(1f).fillMaxWidth().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.Outlined.EditNote, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(24.dp))
+                Button(onClick = onNewDraft) { Icon(Icons.Outlined.NoteAdd, null); Spacer(Modifier.width(8.dp)); Text("New file") }
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onAttachLink) { Icon(Icons.Outlined.Link, null); Spacer(Modifier.width(8.dp)); Text("Attach link") }
+            }
         } else {
             Column(Modifier.weight(1f).fillMaxWidth().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 OwlIcon(Modifier.size(72.dp))

@@ -59,6 +59,17 @@ fun ForgeApp() {
     var newDrawerFolder by remember { mutableStateOf(false) }
     var exportBook by rememberSaveable { mutableStateOf("") }
     var markdown by rememberSaveable { mutableStateOf(false) }
+    var attachLink by rememberSaveable { mutableStateOf(false) }
+    var requestDraftSave by remember { mutableStateOf(false) }
+    var pendingDraftAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var saveThenLeave by remember { mutableStateOf(false) }
+    fun guardDraft(action: () -> Unit) {
+        if (editorUi.entry?.id == 0L && screen == Destination.Editor) pendingDraftAction = action
+        else action()
+    }
+    fun newDraft() {
+        editor.newDraft(bookId) { workspaceTab = 1; screen = Destination.Editor }
+    }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val keyboard = LocalSoftwareKeyboardController.current
@@ -79,9 +90,12 @@ fun ForgeApp() {
         screen = Destination.Project
     }
     fun open(id: Long, read: Boolean? = null) {
-        editor.openEntry(id) {
-            bookId = editor.state.value.entry?.bookId ?: bookId
-            screen = Destination.Editor
+        guardDraft {
+            editor.openEntry(id) {
+                bookId = editor.state.value.entry?.bookId ?: bookId
+                workspaceTab = 1
+                screen = Destination.Editor
+            }
         }
     }
     val export =
@@ -107,11 +121,16 @@ fun ForgeApp() {
     }
     LaunchedEffect(Unit) {
         if (screen in listOf(Destination.Editor) && editorUi.entry == null) {
-            val id = nav.lastEntry()
-            if (id > 0) editor.openEntry(id) {} else screen = Destination.Library
+            editor.resume(bookId) { if (!it) screen = Destination.Project }
         }
     }
-    LaunchedEffect(editorUi.entry?.id) { drawerFolder = editorUi.entry?.folderId }
+    LaunchedEffect(editorUi.entry?.id) {
+        drawerFolder = editorUi.entry?.folderId
+        if (saveThenLeave && (editorUi.entry?.id ?: 0) > 0) {
+            saveThenLeave = false
+            val action = pendingDraftAction; pendingDraftAction = null; action?.invoke()
+        }
+    }
     LaunchedEffect(editorUi.entry?.deleted) {
         if (
             editorUi.entry?.deleted == true &&
@@ -122,7 +141,7 @@ fun ForgeApp() {
     BackHandler(screen != Destination.Library || drawer.isOpen) {
         if (drawer.isOpen) scope.launch { drawer.close() }
         else if (screen in listOf(Destination.Editor))
-            editor.leave { screen = Destination.Project }
+            guardDraft { editor.leave { screen = Destination.Project } }
         else screen = Destination.Library
     }
     val roots =
@@ -165,7 +184,7 @@ fun ForgeApp() {
                                             TextButton(
                                                 onClick = {
                                                     scope.launch { drawer.close() }
-                                                    editor.leave { screen = Destination.Project }
+                                                    guardDraft { editor.leave { screen = Destination.Project } }
                                                 },
                                                 modifier = Modifier.weight(1f),
                                             ) {
@@ -175,16 +194,11 @@ fun ForgeApp() {
                                                 Icons.Outlined.NoteAdd,
                                                 "New file",
                                                 {
-                                                    entryFolder = drawerFolder
-                                                    showEntry =
-                                                        defaultKindForFolder(
-                                                            bookEntries
-                                                                .find { it.id == drawerFolder }
-                                                                ?.title
-                                                        )
                                                     scope.launch { drawer.close() }
+                                                    guardDraft { newDraft() }
                                                 },
                                             )
+                                            ActionIcon(Icons.Outlined.Link, "Attach link", { scope.launch { drawer.close() }; guardDraft { attachLink = true } })
                                             ActionIcon(
                                                 Icons.Outlined.CreateNewFolder,
                                                 "New folder",
@@ -290,10 +304,14 @@ fun ForgeApp() {
                         selected?.let { b ->
                             WorkspaceStudio(
                                 workspace, b, bookEntries, workspaceTab,
-                                { workspaceTab = it },
+                                { tab ->
+                                    workspaceTab = tab
+                                    if (tab == 1) editor.resume(b.id) { opened -> if (opened) screen = Destination.Editor }
+                                },
                                 { screen = Destination.Library },
                                 { open(it) }, { editBook = b },
                                 { backup(b.id, it) }, { scope.launch { drawer.open() } }, prefs.synopsisLimit,
+                                { newDraft() }, { attachLink = true },
                             )
                         }
                     Destination.Editor ->
@@ -304,12 +322,15 @@ fun ForgeApp() {
                                     e,
                                     selected,
                                     bookEntries,
-                                    { editor.leave { screen = Destination.Project } },
+                                    { guardDraft { editor.leave { screen = Destination.Project } } },
                                     { open(it) },
                                     {
                                         workspace.deleteEntry(e.id) { screen = Destination.Project }
                                     },
                                     { scope.launch { drawer.open() } },
+                                    { guardDraft { newDraft() } },
+                                    { guardDraft { attachLink = true } },
+                                    requestDraftSave, { requestDraftSave = false }, { saveThenLeave = false; pendingDraftAction = null },
                                 )
                         }
 
@@ -337,6 +358,21 @@ fun ForgeApp() {
             open(id)
         }
     }
+    if (attachLink) DocumentDestinationDialog("Attach link", "", bookEntries, source = true, onDismiss = { attachLink = false }) { title, folder, newFolder, url ->
+        workspace.createNode(bookId, title, false, PLAN_AREA, folder, "Source", url, newFolder) { id ->
+            attachLink = false
+            editor.openEntry(id) { workspaceTab = 1; screen = Destination.Editor }
+        }
+    }
+    if (pendingDraftAction != null && !saveThenLeave) AlertDialog(
+        onDismissRequest = { pendingDraftAction = null }, title = { Text("Keep this untitled draft?") },
+        text = { Text("Save it as a file, keep it privately on this device, or discard it.") },
+        confirmButton = { TextButton(onClick = { saveThenLeave = true; requestDraftSave = true }) { Text("Save") } },
+        dismissButton = { Row {
+            TextButton(onClick = { editor.leave { val action = pendingDraftAction; pendingDraftAction = null; action?.invoke() } }) { Text("Keep draft") }
+            TextButton(onClick = { editor.discardDraft { val action = pendingDraftAction; pendingDraftAction = null; action?.invoke() } }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+        } },
+    )
     error?.let { message ->
         AlertDialog(
             onDismissRequest = {

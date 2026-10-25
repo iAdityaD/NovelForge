@@ -64,4 +64,35 @@ class DraftRecoveryTest {
             assertEquals(2, db.dao().entries(project).size)
         } finally { db.close() }
     }
+    @Test fun untitledDraftIsPrivateRecoverableAndCommittedOnlyOnce() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        java.io.File(context.filesDir, "writing-recovery").deleteRecursively()
+        val name = "untitled-restart"
+        context.deleteDatabase(name)
+        var db = Room.databaseBuilder(context, ForgeDb::class.java, name).build()
+        try {
+            val book = LocalWorkspaceRepository(db, LocalPreferencesRepository(context)).createBook("Blank", "", emptyList(), 0, 0, false).bookId
+            val draft = Entry(bookId = book, title = "Untitled", body = "An unsaved world", kind = "Document", metadata = mapOf("_draftToken" to listOf("test-token")))
+            LocalWritingRepository(db, LocalDraftJournal(context)).stageUntitled(draft)
+            assertTrue(db.dao().entries(book).isEmpty())
+            db.close()
+            db = Room.databaseBuilder(context, ForgeDb::class.java, name).build()
+            val repository = LocalWritingRepository(db, LocalDraftJournal(context))
+            assertEquals(draft.body, repository.untitled(book)!!.body)
+            try { repository.commitUntitled(draft, "", null, "Parts"); fail("Empty title accepted") } catch (_: IllegalArgumentException) { }
+            assertTrue(db.dao().entries(book).isEmpty())
+            val saved = repository.commitUntitled(draft, "First chapter", null, "Parts")
+            assertTrue(saved.id > 0)
+            assertNotNull(saved.folderId)
+            assertEquals(draft.body, saved.body)
+            assertNull(repository.untitled(book))
+            assertEquals(saved.id, repository.commitUntitled(draft, "First chapter", null, "Parts").id)
+            assertEquals(2, db.dao().entries(book).size)
+            repository.stageUntitled(draft.copy(metadata = mapOf("_draftToken" to listOf("discard-me"))))
+            repository.discardUntitled(book)
+            assertNull(repository.untitled(book))
+            assertEquals(draft.body, repository.entry(saved.id)!!.body)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
 }

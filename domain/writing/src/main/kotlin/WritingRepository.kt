@@ -14,6 +14,11 @@ interface WritingRepository {
     /** May return a separate recovered copy if the saved document has diverged. */
     suspend fun recoverDraft(entry: Entry): Entry? = null
 
+    suspend fun untitled(bookId: String): Entry? = null
+    suspend fun stageUntitled(entry: Entry) { error("Draft storage unavailable") }
+    suspend fun discardUntitled(bookId: String) {}
+    suspend fun commitUntitled(entry: Entry, title: String, folderId: Long?, newFolder: String?): Entry = error("Draft storage unavailable")
+
     suspend fun checkpoint(entry: Entry)
 
     suspend fun revisions(id: Long): List<Revision>

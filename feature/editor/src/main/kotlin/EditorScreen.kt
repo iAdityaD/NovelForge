@@ -1,6 +1,11 @@
 package com.novelforge.app.ui
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalUriHandler
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,9 +47,24 @@ fun EditorScreen(
     onOpen: (Long) -> Unit,
     onDelete: () -> Unit,
     onExplorer: () -> Unit = onBack,
+    onNew: () -> Unit = {},
+    onAttach: () -> Unit = {},
+    requestSave: Boolean = false,
+    onSaveHandled: () -> Unit = {},
+    onSaveCancelled: () -> Unit = {},
 ) {
     val ui by vm.state.collectAsStateWithLifecycle()
     val refs by vm.references.collectAsStateWithLifecycle()
+    var reading by rememberSaveable(e.bookId, e.id) { mutableStateOf(false) }
+    var saveDialog by rememberSaveable(e.bookId, e.id) { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val uriHandler = LocalUriHandler.current
+    LaunchedEffect(reading) { if (reading) { focusManager.clearFocus(); keyboard?.hide() } }
+    LaunchedEffect(requestSave) { if (requestSave) { saveDialog = true; onSaveHandled() } }
+    if (saveDialog) DocumentDestinationDialog("Save file", e.title, entries, busy = ui.savingAs, onDismiss = { saveDialog = false; onSaveCancelled() }) { title, folder, newFolder, _ ->
+        vm.saveDraft(title, folder, newFolder) { saveDialog = false }
+    }
     var focus by rememberSaveable { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
     var statusMenu by remember { mutableStateOf(false) }
@@ -52,7 +72,7 @@ fun EditorScreen(
     var confirmDelete by remember { mutableStateOf(false) }
     var customFields by remember { mutableStateOf(false) }
     var properties by remember { mutableStateOf(false) }
-    var field by remember(e.id) { mutableStateOf(TextFieldValue(e.body)) }
+    var field by remember(e.bookId, e.id) { mutableStateOf(TextFieldValue(e.body, TextRange(vm.position(e).first.coerceIn(0, e.body.length)))) }
     LaunchedEffect(e.body) {
         if (field.text != e.body)
             field =
@@ -81,7 +101,11 @@ fun EditorScreen(
         }, confirmButton = { TextButton(onClick = { vm.metadata(type, status); properties = false }, enabled = type.isNotBlank() && type.trim() != "Folder" && status.isNotBlank()) { Text("Save details") } }, dismissButton = { TextButton(onClick = { properties = false }) { Text("Cancel") } })
     }
     if (customFields) CustomFieldValues(book?.fields.orEmpty(), e, entries, { customFields = false }, vm::fields)
-    val scroll = rememberScrollState()
+    val scroll = rememberScrollState(vm.position(e).second)
+    LaunchedEffect(e.bookId, e.id) {
+        snapshotFlow { field.selection.end to scroll.value }.distinctUntilChanged().collect { (cursor, offset) -> vm.position(e, cursor, offset) }
+    }
+    DisposableEffect(e.bookId, e.id) { onDispose { vm.position(e, field.selection.end, scroll.value) } }
     val words = remember(e.body) { wordCount(e.body) }
     Column(Modifier.fillMaxSize().imePadding()) {
         Row(
@@ -91,7 +115,7 @@ fun EditorScreen(
             ActionIcon(Icons.Outlined.MenuOpen, "Open file explorer", onExplorer)
             Column(Modifier.weight(1f)) {
                 Text(
-                    if (focus) "Focus mode" else book?.title?.replace('\n', ' ') ?: "Your story",
+                    e.title.ifBlank { "Untitled" },
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -105,15 +129,16 @@ fun EditorScreen(
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            ActionIcon(
-                if (focus) Icons.Outlined.FullscreenExit else Icons.Outlined.Fullscreen,
-                if (focus) "Exit focus mode" else "Enter focus mode",
-                { focus = !focus },
-            )
+            TextButton(onClick = { reading = !reading }, modifier = Modifier.semantics { contentDescription = if (reading) "Switch to write mode" else "Switch to read mode" }) { Text(if (reading) "Write" else "Read") }
+            ActionIcon(Icons.Outlined.Save, "Save file", { if (e.id == 0L) saveDialog = true else vm.flushBackground() })
 
             Box {
                 ActionIcon(Icons.Outlined.MoreVert, "Page actions", { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("New file") }, onClick = { menu = false; onNew() })
+                    DropdownMenuItem(text = { Text("Attach link") }, onClick = { menu = false; onAttach() })
+                    DropdownMenuItem(text = { Text(if (focus) "Exit focus mode" else "Focus mode") }, onClick = { menu = false; focus = !focus })
+                    if (e.id > 0) {
                     DropdownMenuItem(text = { Text("Custom fields") }, onClick = { menu = false; customFields = true })
                     DropdownMenuItem(text = { Text("Document details") }, onClick = { menu = false; properties = true })
                     DropdownMenuItem(
@@ -153,6 +178,7 @@ fun EditorScreen(
                             confirmDelete = true
                         },
                     )
+                    }
                 }
             }
         }
@@ -175,7 +201,7 @@ fun EditorScreen(
                 .widthIn(max = 760.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            if (!focus)
+            if (!focus && !reading && e.id > 0)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Eyebrow(e.kind, Modifier.weight(1f))
                     Box {
@@ -199,8 +225,17 @@ fun EditorScreen(
                         }
                     }
                 }
+            if (reading) {
+                Text(e.title, style = MaterialTheme.typography.headlineLarge)
+                SelectionContainer {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        e.body.split("\n\n").forEach { MarkdownParagraph(it, preferences.fontSize, preferences.readerSerif, onOpen) }
+                    }
+                }
+            } else {
             BasicTextField(
                 value = e.title,
+                readOnly = ui.savingAs,
                 onValueChange = { vm.updateTitle(it.take(200)) },
                 textStyle =
                     MaterialTheme.typography.headlineLarge.copy(
@@ -220,6 +255,7 @@ fun EditorScreen(
             )
             BasicTextField(
                 value = field,
+                readOnly = ui.savingAs,
                 visualTransformation =
                     if (preferences.syntaxColors) MarkdownSyntax(MaterialTheme.colorScheme.primary)
                     else androidx.compose.ui.text.input.VisualTransformation.None,
@@ -253,12 +289,16 @@ fun EditorScreen(
                     inner()
                 },
             )
-            Spacer(Modifier.height(120.dp))
+            }
+            Regex("https?://[^\\s]+").find(e.body)?.value?.let { url ->
+                if (e.area == PLAN_AREA) TextButton(onClick = { runCatching { uriHandler.openUri(url) } }) { Text("Open website") }
+            }
+            Spacer(Modifier.height(80.dp))
         }
         Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
             Column {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                if (!focus)
+                if (!focus && !reading)
                     Row(
                         Modifier.fillMaxWidth()
                             .horizontalScroll(rememberScrollState())

@@ -101,9 +101,11 @@ fun ExplorerTree(
     var viewMenu by remember { mutableStateOf(false) }
     var typeFilter by rememberSaveable(book.id, rootLabel) { mutableStateOf<String?>(null) }
     var statusFilter by rememberSaveable(book.id, rootLabel) { mutableStateOf<String?>(null) }
+    var reorder by rememberSaveable(book.id) { mutableStateOf(arrange) }
+    val canArrange = reorder && query.isBlank() && typeFilter == null && statusFilter == null
     val types = entries.filter { it.kind != "Folder" }.map { it.kind }.distinct().sorted()
     LaunchedEffect(dragging, point, viewport) {
-        if (dragging != null && arrange) {
+        if (dragging != null && canArrange) {
             val direction = when {
                 point.y < viewport.top + 80 -> -1
                 point.y > viewport.bottom - 80 -> 1
@@ -190,6 +192,7 @@ fun ExplorerTree(
             Box {
                 ActionIcon(Icons.Outlined.MoreVert, "Outline options", { viewMenu = true })
                 DropdownMenu(viewMenu, { viewMenu = false }) {
+                    DropdownMenuItem(text = { Text(if (reorder) "Finish reordering" else "Reorder files") }, onClick = { reorder = !reorder; query = ""; typeFilter = null; statusFilter = null; viewMenu = false })
                     DropdownMenuItem(text = { Text("Expand all folders") }, onClick = { entries.filter { it.kind == "Folder" }.forEach { expanded[it.id] = true }; viewMenu = false })
                     DropdownMenuItem(text = { Text("Collapse all folders") }, onClick = { expanded.clear(); viewMenu = false })
                     DropdownMenuItem(text = { Text("Clear search and filters") }, onClick = { query = ""; typeFilter = null; statusFilter = null; viewMenu = false })
@@ -250,15 +253,15 @@ fun ExplorerTree(
                 val hover =
                     dragging != null &&
                         dragging != e.id &&
-                        (folder || arrange) &&
+                        (folder || canArrange) &&
                         bounds[e.id]?.contains(point) == true
                 val dropColor = MaterialTheme.colorScheme.primary
                 Row(
                     Modifier.fillMaxWidth()
-                        .alpha(if (arrange && dragging == e.id) .45f else 1f)
+                        .alpha(if (canArrange && dragging == e.id) .45f else 1f)
                         .drawWithContent {
                             drawContent()
-                            if (hover && arrange) {
+                            if (hover && canArrange) {
                                 val inside = folder && bounds[e.id]?.let { point.y in (it.top + it.height * .3f)..(it.bottom - it.height * .3f) } == true
                                 val y = if (point.y > (bounds[e.id]?.center?.y ?: point.y)) size.height - 1.dp.toPx() else 1.dp.toPx()
                                 if (!inside) drawLine(dropColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx())
@@ -273,8 +276,8 @@ fun ExplorerTree(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .4f)
                             else Color.Transparent
                         )
-                        .border(if (hover && arrange) 1.dp else 0.dp, if (hover && arrange) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(4.dp))
-                        .pointerInput(e.id, entries, arrange) {
+                        .border(if (hover && canArrange) 1.dp else 0.dp, if (hover && canArrange) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(4.dp))
+                        .pointerInput(e.id, entries, canArrange) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = { local ->
                                     dragging = e.id
@@ -293,7 +296,7 @@ fun ExplorerTree(
                                                     rect.contains(point) &&
                                                     (id == 0L ||
                                                         entries.any {
-                                                            it.id == id && (arrange || it.kind == "Folder")
+                                                            it.id == id && (canArrange || it.kind == "Folder")
                                                         })
                                             }
                                             ?.key
@@ -302,7 +305,7 @@ fun ExplorerTree(
                                         val rect = bounds[target]
                                         val inside = targetNode?.kind == "Folder" && rect != null && point.y in (rect.top + rect.height * .3f)..(rect.bottom - rect.height * .3f)
                                         if (target == 0L) vm.relocate(e.id, rootId)
-                                        else if (inside || !arrange) { vm.relocate(e.id, target); expanded[target] = true }
+                                        else if (inside || !canArrange) { vm.relocate(e.id, target); expanded[target] = true }
                                         else vm.placeBefore(e.id, target, point.y > (rect?.center?.y ?: point.y))
                                     }
                                     dragging = null
@@ -322,7 +325,7 @@ fun ExplorerTree(
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (arrange) Icon(Icons.Outlined.DragHandle, "Drag ${e.title} to reorder", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (canArrange) Icon(Icons.Outlined.DragHandle, "Drag ${e.title} to reorder", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (folder)
                         IconButton(
                             onClick = { expanded[e.id] = expanded[e.id] != true },
@@ -338,7 +341,7 @@ fun ExplorerTree(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                    else Spacer(Modifier.width(if (arrange) 12.dp else 24.dp))
+                    else Spacer(Modifier.width(if (canArrange) 12.dp else 24.dp))
                     Icon(
                         if (folder) Icons.Outlined.Folder else kindIcon(e.kind),
                         null,
@@ -367,7 +370,7 @@ fun ExplorerTree(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                     }
-                    if (hover && arrange) {
+                    if (hover && canArrange) {
                         val rect = bounds[e.id]
                         val inside = folder && rect != null && point.y in (rect.top + rect.height * .3f)..(rect.bottom - rect.height * .3f)
                         Text(if (inside) "Inside" else if (point.y < (rect?.center?.y ?: point.y)) "Before" else "After", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)

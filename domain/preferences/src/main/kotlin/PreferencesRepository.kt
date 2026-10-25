@@ -24,6 +24,9 @@ interface PreferencesRepository {
     fun lastBook(): String
 
     fun lastEntry(): Long
+    fun lastEntry(bookId: String): Long = lastEntry()
+    fun editingPosition(bookId: String, id: Long): Pair<Int, Int> = 0 to 0
+    fun editingPosition(bookId: String, id: Long, cursor: Int, scroll: Int) {}
 
     fun rememberBook(id: String)
 

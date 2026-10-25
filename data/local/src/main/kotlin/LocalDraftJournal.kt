@@ -44,6 +44,34 @@ class LocalDraftJournal @Inject constructor(@ApplicationContext context: Context
 
     internal suspend fun clear(id: Long) = withContext(Dispatchers.IO) { file(id).delete() }
 
+    private fun untitledFile(bookId: String): AtomicFile {
+        val key = MessageDigest.getInstance("SHA-256").digest(bookId.toByteArray()).joinToString("") { "%02x".format(it) }
+        return AtomicFile(File(directory, "untitled-$key.json"))
+    }
+
+    internal suspend fun writeUntitled(entry: Entry) = withContext(Dispatchers.IO) {
+        check(directory.exists() || directory.mkdirs())
+        val json = JSONObject().apply {
+            put("bookId", entry.bookId); put("title", entry.title); put("body", entry.body)
+            put("metadata", JSONObject(FieldCodec.encodeValues(entry.metadata)))
+        }
+        val target = untitledFile(entry.bookId)
+        val stream = target.startWrite()
+        try { stream.write(json.toString().toByteArray(Charsets.UTF_8)); target.finishWrite(stream) }
+        catch (e: Exception) { target.failWrite(stream); throw e }
+    }
+
+    internal suspend fun readUntitled(bookId: String): Entry? = withContext(Dispatchers.IO) {
+        val target = untitledFile(bookId)
+        if (!target.baseFile.exists() && !File(target.baseFile.path + ".bak").exists()) return@withContext null
+        val json = JSONObject(target.readFully().toString(Charsets.UTF_8))
+        require(json.getString("bookId") == bookId)
+        Entry(bookId = bookId, title = json.getString("title"), body = json.getString("body"), kind = "Document",
+            metadata = FieldCodec.values(json.getJSONObject("metadata").toString()))
+    }
+
+    internal suspend fun clearUntitled(bookId: String) = withContext(Dispatchers.IO) { untitledFile(bookId).delete() }
+
     internal fun fingerprint(entry: Entry): String {
         val value = JSONObject().apply { put("title", entry.title); put("body", entry.body); put("kind", entry.kind); put("status", entry.status); put("metadata", JSONObject(FieldCodec.encodeValues(entry.metadata))) }.toString()
         return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }

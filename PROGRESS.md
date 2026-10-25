@@ -295,3 +295,12 @@ Artifacts: APK 12590057772, release bundle 12589448753, unit/lint reports 125897
 Implemented Overview / Write / owl AI placeholder, editable novel details and local covers, complete workspace location dropdown, before/inside/after drag arrangement, move/rename/duplicate/trash, stable IDs and references, schema 7 and backup v8. AI intentionally says Coming soon.
 Automated device screenshots captured transient surfaces immediately after creation; native-rendered Overview and settled Write/AI screenshots were inspected. Device interaction assertions passed. Physical-device keyboard, accessibility and final signed-release installation remain release gates.
 Publishing still requires owner-controlled production signing credentials, Play Console listing/privacy/support setup, and release acceptance. See docs/RELEASE.md. No store submission or production-signing key was created.
+
+
+## Document-first Write — 1.0.0-rc2 implementation checkpoint
+- Write starts with New file / Attach link, then resumes the active or remembered document per workspace.
+- Untitled drafts use atomic, private recovery files outside the document tree. First Save atomically creates the document and optional folder; retry tokens prevent duplicate creation. Named documents retain autosave and manual Save.
+- File-level Read/Write uses the shared Markdown renderer. Sidebar owns file navigation, search, filters and explicit reorder controls.
+- Save / Keep draft / Discard protects navigation; one private draft per workspace is resumable through New file and excluded from backups until saved.
+- Cursor/scroll preferences persist per document; attached source links store a URL with editable notes.
+- Updated device journeys and added a restart/idempotency/deletion test. Validation pending; do not distribute this checkpoint as verified.

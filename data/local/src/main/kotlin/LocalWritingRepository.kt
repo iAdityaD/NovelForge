@@ -79,6 +79,45 @@ class LocalWritingRepository @Inject constructor(private val db: ForgeDb, privat
         journal?.clear(entry.id)
     }
 
+    override suspend fun untitled(bookId: String): Entry? {
+        if (dao.book(bookId) == null) return null
+        val draft = journal?.readUntitled(bookId) ?: return null
+        val token = draft.metadata["_draftToken"]
+        return dao.entries(bookId).firstOrNull { token != null && it.metadata["_draftToken"] == token } ?: draft
+    }
+
+    override suspend fun stageUntitled(entry: Entry) { requireNotNull(journal).writeUntitled(entry) }
+    override suspend fun discardUntitled(bookId: String) { journal?.clearUntitled(bookId) }
+
+    override suspend fun commitUntitled(entry: Entry, title: String, folderId: Long?, newFolder: String?): Entry {
+        require(title.trim().isNotEmpty() && title.trim().length <= 200) { "Use a filename of 1–200 characters." }
+        val saved = db.withTransaction {
+            require(dao.book(entry.bookId) != null) { "Workspace is unavailable." }
+            val token = requireNotNull(entry.metadata["_draftToken"])
+            dao.entries(entry.bookId).firstOrNull { it.metadata["_draftToken"] == token }?.let { return@withTransaction it }
+            val parent = folderId?.let { id -> requireNotNull(dao.entry(id)).also {
+                require(it.bookId == entry.bookId && it.kind == "Folder" && !it.deleted) { "Folder is unavailable." }
+            } }
+            val area = parent?.area ?: MANUSCRIPT_AREA
+            val destination = if (newFolder != null) {
+                val name = MetadataPolicy.folder(newFolder)
+                require(dao.entries(entry.bookId).none { it.kind == "Folder" && it.folderId == folderId && it.title.equals(name, true) }) { "A folder with this name already exists." }
+                dao.addEntry(Entry(bookId = entry.bookId, title = name, kind = "Folder", folderId = folderId, area = area))
+            } else folderId
+            val position = (dao.entries(entry.bookId).filter { it.folderId == destination }.maxOfOrNull { it.position } ?: -1) + 1
+            val document = entry.copy(title = title.trim(), folderId = destination, area = area, position = position, words = wordCount(entry.body), updated = System.currentTimeMillis())
+            val result = document.copy(id = dao.addEntry(document))
+            dao.touch(entry.bookId, result.updated)
+            val day = java.time.LocalDate.now().toString()
+            dao.ensureDay(entry.bookId, day)
+            dao.recordWriting(entry.bookId, day, result.words)
+            result
+        }
+        // A retried commit is idempotent even if cleanup was interrupted after the transaction.
+        journal?.clearUntitled(entry.bookId)
+        return saved
+    }
+
     override suspend fun checkpoint(entry: Entry) =
         db.withTransaction {
             dao.addRevision(Revision(entryId = entry.id, title = entry.title, body = entry.body))
