@@ -267,3 +267,12 @@ Actual rendered Write/Guide/Settings screens reviewed. No physical-device perfor
 - Project-owned optional custom fields with typed validation, editor controls, schema 5→6 migration and backup v7 reference remapping.
 - Settings and Guide integrated. Existing field types remain immutable; removing a used choice is rejected without changing stored content.
 - Latest implementation is undergoing CI and API 34 emulator verification. Do not treat this checkpoint as a verified APK release.
+
+## Verified 0.6.1 — 25 October 2026
+Source: ae07cc8c6783f531591ca01a5cbf59e1c0482b00.
+CI: https://github.com/iAdityaD/NovelForge/actions/runs/40148754361 — build and device-test passed.
+43 JVM tests, 8 API 34 Android tests, lint and architecture checks passed. APK signature verified; versionCode 10, min SDK 26, target SDK 35.
+APK SHA256: b45db137b8885ffda0fa4e406fbfe2587c43a2912cbba495b8c7f9ce15506791.
+Artifacts: APK 12581961001; verification reports 12582000908; device reports 12582525982.
+Includes recovery journal, reusable project structures, custom fields, migration 5→6, backup v7, updated Guide and Settings. Write owns manuscript arrangement; no active Arrange or Read navigation.
+Remaining broader release work: physical-device performance/accessibility validation, production signing, full-app snapshots, structural undo and media import. This is a verified development build, not a production-store release.
