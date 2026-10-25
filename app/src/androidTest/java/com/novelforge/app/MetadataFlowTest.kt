@@ -106,9 +106,9 @@ class MetadataFlowTest {
         compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("Scene Ideas"))
         screenshot("workspace-write-outline")
 
-        val firstBounds = compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot
-        val secondBounds = compose.onNodeWithText("Chapter 2.md").fetchSemanticsNode().boundsInRoot
-        compose.onNodeWithText("Chapter 2.md").performTouchInput {
+        val firstBounds = compose.onNodeWithContentDescription("Drag Chapter 1 to reorder").fetchSemanticsNode().boundsInRoot
+        val secondBounds = compose.onNodeWithContentDescription("Drag Chapter 2 to reorder").fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithContentDescription("Drag Chapter 2 to reorder").performTouchInput {
             down(center)
             advanceEventTime(700)
             moveTo(Offset(center.x, firstBounds.top + 3f - secondBounds.top))

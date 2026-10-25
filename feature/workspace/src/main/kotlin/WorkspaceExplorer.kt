@@ -285,9 +285,10 @@ fun ExplorerTree(
                                     dragging = e.id
                                     point = (bounds[e.id]?.topLeft ?: Offset.Zero) + local
                                 },
-                                onDrag = { change, delta ->
+                                onDrag = { change, _ ->
                                     change.consume()
-                                    point += delta
+                                    // Resolve the pointer against the current row origin after scrolling.
+                                    point = (bounds[e.id]?.topLeft ?: Offset.Zero) + change.position
                                 },
                                 onDragCancel = { dragging = null },
                                 onDragEnd = {
