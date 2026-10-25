@@ -102,6 +102,8 @@ class MetadataFlowTest {
         compose.onNodeWithContentDescription("Outline options").performClick()
         compose.onNodeWithText("Reorder files").performClick()
         compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("Chapter 2.md"))
+        // Keep both chapters away from the edge-autoscroll zone before dragging.
+        compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("Scene Ideas"))
         screenshot("workspace-write-outline")
 
         val firstBounds = compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot
@@ -113,6 +115,8 @@ class MetadataFlowTest {
             advanceEventTime(100)
             up()
         }
+        screenshot("after-drag-before-assert")
+        compose.onNodeWithTag("explorer-tree").performScrollToNode(hasText("Chapter 2.md"))
         compose.waitUntil(10000) {
             compose.onNodeWithText("Chapter 2.md").fetchSemanticsNode().boundsInRoot.top <
                 compose.onNodeWithText("Chapter 1.md").fetchSemanticsNode().boundsInRoot.top

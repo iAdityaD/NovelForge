@@ -188,7 +188,7 @@ fun ForgeApp() {
                                                 },
                                                 modifier = Modifier.weight(1f),
                                             ) {
-                                                Text("Open workspace")
+                                                Text("Workspace", maxLines = 1)
                                             }
                                             ActionIcon(
                                                 Icons.Outlined.NoteAdd,
